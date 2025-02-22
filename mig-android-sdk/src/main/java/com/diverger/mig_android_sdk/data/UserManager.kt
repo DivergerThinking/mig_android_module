@@ -1,0 +1,111 @@
+package com.diverger.mig_android_sdk.data
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Query
+import com.google.gson.annotations.SerializedName
+
+object UserManager {
+    private var user: User? = null
+    private const val BASE_URL = "https://premig.randomkesports.com/cms/items/"
+    private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+
+    private val apiService: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+
+    suspend fun initializeUser(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val response = apiService.getUserByEmail(email, token = TOKEN)
+            if (response.data.isNotEmpty()) {
+                val fetchedUser = response.data.first()
+                val teams = apiService.getTeamsByUser(fetchedUser.id, token = TOKEN).data
+                user = fetchedUser.copy(teams = teams)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No user found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getUser(): User? = user
+
+    interface ApiService {
+        @GET("users")
+        suspend fun getUserByEmail(
+            @Query("filter[email][_eq]") email: String,
+            @Query("fields") fields: String = "*,teams.teams_id.id,teams.teams_id.name",
+            @Header("Authorization") token: String
+        ): UserResponse
+
+        @GET("teams")
+        suspend fun getTeamsByUser(
+            @Query("filter[users][users_id][_eq]") userId: String,
+            @Query("fields") fields: String = "id,name,description,picture,apply_membership,status,discord,users.roles.*,users.users_id.id,users.users_id.username,competitions.competitions_id,date_edited",
+            @Header("Authorization") token: String
+        ): TeamResponse
+    }
+}
+
+data class UserResponse(val data: List<User>)
+data class TeamResponse(val data: List<Team>)
+
+data class User(
+    val id: String,
+    val status: String,
+    val username: String,
+    val email: String,
+    val dni: String?,
+    val token: String?,
+    @SerializedName("first_name") val firstName: String,
+    @SerializedName("last_name") val lastName: String,
+    val avatar: String?,
+    @SerializedName("reserves_allowed") val reservesAllowed: Int,
+    val phone: String?,
+    val trainings: List<Int>,
+    @SerializedName("gaming_space_reserves") val gamingSpaceReserves: List<Int>,
+    val invitations: List<Int>,
+    var teams: List<Team> = emptyList()
+)
+
+data class Team(
+    val id: String,
+    val name: String?,
+    val description: String?,
+    val picture: String?,
+    @SerializedName("apply_membership") val applyMembership: Boolean?,
+    val status: String?,
+    val discord: String?,
+    @SerializedName("date_edited") val dateEdited: String?,
+    val users: List<TeamUser>?,
+    val competitions: List<TeamCompetition>?
+)
+
+data class TeamUser(
+    @SerializedName("roles") val role: Role?,
+    @SerializedName("users_id") val userId: UserId
+)
+
+data class Role(
+    val id: String,
+    val name: String
+)
+
+data class UserId(
+    val id: String,
+    val username: String
+)
+
+data class TeamCompetition(
+    @SerializedName("competitions_id") val id: String
+)
