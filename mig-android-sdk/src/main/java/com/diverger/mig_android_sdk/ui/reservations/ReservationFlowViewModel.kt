@@ -26,6 +26,10 @@ class ReservationFlowViewModel : ViewModel() {
     private val _selectedSpace = MutableStateFlow<Space?>(null)
     val selectedSpace: StateFlow<Space?> = _selectedSpace
 
+    // Estado de carga para mostrar un indicador de progreso al crear la reserva
+    private val _isProcessing = MutableStateFlow(false)
+    val isProcessing: StateFlow<Boolean> = _isProcessing
+
     // Datos cargados desde el backend
     private val _blockedDates = MutableStateFlow<List<String>>(emptyList())
     val blockedDates: StateFlow<List<String>> = _blockedDates
@@ -166,14 +170,14 @@ class ReservationFlowViewModel : ViewModel() {
         _selectedSpace.value = if (_selectedSpace.value?.id == space.id) null else space
     }
 
-    fun createReservation(userId: String) {
+    suspend fun createReservation(userId: String): Boolean {
         val date = _selectedDate.value
         val space = _selectedSpace.value
         val slots = _selectedSlots.value
 
         if (date == null || space == null || slots.isEmpty()) {
             Log.e("ReservationFlow", "Datos incompletos para crear la reserva")
-            return
+            return false
         }
 
         val mappedTimes = slots.map { mapOf("gaming_space_times_id" to it) }
@@ -192,19 +196,26 @@ class ReservationFlowViewModel : ViewModel() {
             peripheralLoans = emptyList()
         )
 
-        _isLoading.value = true
+        _isProcessing.value = true
+        //_reservationSuccess.value = null
 
-        viewModelScope.launch {
+        return try {
             val result = ReservationApi.createReservation(reservation)
-            result.onSuccess {
+            if (result.isSuccess) {
                 _reservationSuccess.value = true
                 Log.i("ReservationFlow", "Reserva creada exitosamente")
-            }.onFailure { error ->
+                true
+            } else {
                 _reservationSuccess.value = false
-                Log.e("ReservationFlow", "Error al crear la reserva: ${error.message}")
+                Log.e("ReservationFlow", "Error al crear la reserva")
+                false
             }
-
-            _isLoading.value = false
+        } catch (e: Exception) {
+            _reservationSuccess.value = false
+            Log.e("ReservationFlow", "Excepción al crear la reserva: ${e.message}")
+            false
+        } finally {
+            _isProcessing.value = false
         }
     }
 }

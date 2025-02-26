@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.ReservationApi
+import com.diverger.mig_android_sdk.data.UserManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -13,6 +14,13 @@ class ReservationViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage
+
+    fun clearToastMessage() {
+        _toastMessage.value = null
+    }
 
     fun fetchReservations(userId: String) {
         viewModelScope.launch {
@@ -28,11 +36,20 @@ class ReservationViewModel : ViewModel() {
 
     fun deleteReservation(id: Int) {
         viewModelScope.launch {
-            try {
-                ReservationApi.deleteReservation(id)
-                _reservations.value = _reservations.value.filter { it.id != id }
-            } catch (e: Exception) {
-                // Manejo de errores
+            viewModelScope.launch {
+                _isLoading.value = true
+                val result = runCatching { ReservationApi.deleteReservation(id) }
+
+                result.onSuccess {
+                    _isLoading.value = false
+                    _toastMessage.value = "Reserva cancelada con éxito"
+                    UserManager.getUser()?.id.let {
+                        fetchReservations(UserManager.getUser()!!.id)
+                    }
+                }.onFailure {
+                    _isLoading.value = false
+                    _toastMessage.value = "Error al cancelar la reserva"
+                }
             }
         }
     }

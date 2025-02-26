@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
@@ -39,8 +40,9 @@ fun ProfileTextField(
     onValueChange: (String) -> Unit
 ) {
     Column {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Cyan)
         BasicTextField(
+            textStyle = TextStyle(color = Color.White),
             value = value,
             onValueChange = onValueChange,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
@@ -49,6 +51,7 @@ fun ProfileTextField(
                 .padding(8.dp)
                 .background(Color.Gray.copy(alpha = 0.2f), shape = MaterialTheme.shapes.medium)
                 .padding(12.dp)
+
         )
     }
 }

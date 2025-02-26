@@ -1,3 +1,4 @@
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -5,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,17 +19,24 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -36,6 +45,7 @@ import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Space
 import com.diverger.mig_android_sdk.ui.components.CustomCalendarView
 import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ReservationFlowDialog(
@@ -45,15 +55,35 @@ fun ReservationFlowDialog(
 ) {
     val viewModel = ReservationFlowViewModel()
     val currentStep by viewModel.currentStep.collectAsState()
+    val isProcessing by viewModel.isProcessing.collectAsState() // Nuevo estado para saber si está procesando
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
+                .fillMaxWidth()
+                .fillMaxHeight(0.6f)
+                .background(Color.DarkGray, shape = RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
             Column {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    IconButton(
+                        onClick = { if (!isProcessing) onDismiss() },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(Color.Transparent, shape = CircleShape)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Indicador de progreso
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -70,12 +100,27 @@ fun ReservationFlowDialog(
                     0 -> SelectDateView(viewModel, onNext = { viewModel.goToNextStep() })
                     1 -> SelectSlotView(viewModel, onNext = { viewModel.goToNextStep() })
                     2 -> SelectSpaceView(viewModel, onConfirm = {
-                        viewModel.createReservation(userId)
-                        onReservationSuccess()
+                        coroutineScope.launch {
+                            viewModel.createReservation(userId).let { result ->
+                                if (result) {
+                                    Toast.makeText(context, "Reserva creada con éxito", Toast.LENGTH_SHORT).show()
+                                    onReservationSuccess() // Actualizar lista
+                                } else {
+                                    Toast.makeText(context, "Error al crear la reserva", Toast.LENGTH_SHORT).show()
+                                }
+                                onDismiss()
+                            }
+                        }
                     })
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (isProcessing) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                }
 
                 // Botón de cierre
                 Button(
@@ -148,7 +193,7 @@ fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
         } else {
             // Mostrar los slots en un Grid
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),  // 3 columnas por fila
+                columns = GridCells.Fixed(2),  // 3 columnas por fila
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(availableSlots) { slot ->
@@ -213,7 +258,7 @@ fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit) 
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),  // Grid con 3 columnas
+                columns = GridCells.Fixed(2),  // Grid con 3 columnas
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(availableSpaces) { space ->

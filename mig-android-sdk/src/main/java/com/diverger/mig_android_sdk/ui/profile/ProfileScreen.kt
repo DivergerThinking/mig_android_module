@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,15 +38,16 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f))
+            .background(Color.Black)
             .padding(16.dp)
+            .padding(top = 80.dp)
     ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("SOBRE MÍ", style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Text("SOBRE MÍ", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(20.dp))
 

@@ -94,8 +94,13 @@ object ReservationApi {
         }
     }
 
-    suspend fun deleteReservation(id: Int) {
-        service.deleteReservation(id, token = TOKEN)
+    suspend fun deleteReservation(id: Int): Result<Unit> {
+        return try {
+            service.deleteReservation(id, token = TOKEN)
+            Result.success(Unit) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
+        } catch (e: Exception) {
+            Result.failure(e) // ❌ Si hay error, devolvemos `Result.failure`
+        }
     }
 }
 

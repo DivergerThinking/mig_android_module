@@ -161,6 +161,20 @@ fun formatDate(dateString: String?): String {
     }
 }
 
+// 📅 **Función para formatear la fecha a dd/MM/yyyy desde yyy-MM-dd**
+fun formatDateFromShort(dateString: String?): String {
+    if (dateString.isNullOrEmpty()) return "Fecha desconocida"
+
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        outputFormat.format(date ?: return "Fecha inválida")
+    } catch (e: Exception) {
+        "Fecha inválida"
+    }
+}
+
 // 📝 **Función para limpiar el HTML del overview**
 fun cleanHtml(html: String): String {
     return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY).toString().trim()

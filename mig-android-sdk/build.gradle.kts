@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
+    id("maven-publish")
 }
 
 hilt {
@@ -46,6 +47,20 @@ android {
     }
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            groupId = "com.github.DivergerThinking" // Namespace en JitPack
+            artifactId = "mig-android-module"
+            version = "1.0.0"
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -75,3 +90,4 @@ dependencies {
     implementation(libs.retrofit.gson) // 🔹 Para convertir JSON en objetos Kotlin
     implementation(libs.gson)
 }
+

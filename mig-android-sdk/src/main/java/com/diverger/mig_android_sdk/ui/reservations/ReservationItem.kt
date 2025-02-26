@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.ui.competitions.formatDate
+import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 
 enum class IndividualReservationsCellOptions {
     SEE_RESERVATION,
@@ -52,7 +54,7 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                     fontSize = 18.sp
                 )
                 Text(
-                    text = "Fecha: ${reservation.date}",
+                    text = "Fecha: ${formatDateFromShort(reservation.date)}",
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp
                 )
@@ -65,9 +67,9 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
 
             // Botones de acción
             Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
+                /*TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
                     Text("Ver reserva", color = Color.Cyan, fontSize = 14.sp)
-                }
+                }*/
                 TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.CANCEL_RESERVATION, reservation) }) {
                     Text("Cancelar", color = Color.Red, fontSize = 14.sp)
                 }
