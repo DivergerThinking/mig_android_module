@@ -1,6 +1,8 @@
 package com.diverger.mig_android_sdk
 
+import CompetitionDetailScreen
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +26,6 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.UserManager
-import com.diverger.mig_android_sdk.ui.competitions.CompetitionDetailScreen
 import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
 import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
@@ -80,10 +82,13 @@ fun MainScreen(user: com.diverger.mig_android_sdk.data.User) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Madrid In Game") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Black // Fondo negro
+                    ),
+                    title = {},
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                            Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
                         }
                     }
                 )
@@ -115,14 +120,16 @@ fun DrawerContent(
     ModalDrawerSheet(
         modifier = Modifier
             .fillMaxHeight()
-            .width(250.dp)
-            .background(Color.Black)
+            .fillMaxWidth(),
+        drawerContainerColor = Color.Black,
+        drawerShape = RoundedCornerShape(1.dp),
+
     ) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "Menú",
-            color = Color.DarkGray,
+            color = Color.White,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
         )
@@ -131,37 +138,51 @@ fun DrawerContent(
             items(items) { item ->
                 val isSelected = item.route == currentScreen
 
-                Button(
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onScreenSelected(item.route)
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) Color.White else Color.Transparent,
-                        contentColor = Color.DarkGray
-                    ),
-                    shape = RoundedCornerShape(8.dp)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .border(
+                            width = if (isSelected) 2.dp else 0.dp, // 🔹 Borde blanco en el seleccionado
+                            color = if (isSelected) Color.White else Color.Transparent,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .background(
+                            color = Color.Transparent, // 🔹 Fondo transparente
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                    Button(
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onScreenSelected(item.route)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent, // 🔹 Fondo transparente para evitar color sólido
+                            contentColor = Color.White // 🔹 Texto e iconos en blanco
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.label,
-                            tint = Color.DarkGray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.label,
+                                tint = Color.White, // 🔹 Iconos en blanco
+                                modifier = Modifier.size(24.dp)
                             )
-                        )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = item.label,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = Color.White // 🔹 Texto en blanco
+                            )
+                        }
                     }
                 }
             }

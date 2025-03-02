@@ -2,9 +2,11 @@ package com.diverger.mig_android_sdk.ui.competitions
 
 import android.text.Html
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,13 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.diverger.mig_android_sdk.data.Competition
+import com.diverger.mig_android_sdk.data.Game
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,32 +45,32 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
         // 📌 Título
         Text(
             "COMPETICIONES",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
             color = Color.White,
-            modifier = Modifier
-                .padding(bottom = 8.dp)
-                .shadow(5.dp, shape = RoundedCornerShape(10.dp))
+            modifier = Modifier.padding(bottom = 10.dp)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 📅 Dropdown de selección de año
-        DropdownMenuComponent(selectedYear, availableYears, onYearSelected = { viewModel.updateSelectedYear(it) })
+        // 📅 Dropdown de selección de año (similar a iOS)
+        DropdownMenuComponent(
+            selectedYear = selectedYear,
+            options = availableYears,
+            onYearSelected = { viewModel.updateSelectedYear(it) }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 📌 Contenido de competiciones (Loading, Error o Lista de competiciones)
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            when {
-                isLoading -> CircularProgressIndicator(color = Color.Cyan) // 🔄 Indicador de carga
-                !errorMessage.isNullOrEmpty() -> Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
-                competitions.isEmpty() -> Text("No hay competiciones disponibles", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(competitions) { competition ->
-                        CompetitionItem(competition) {
-                            navController.navigate("competition_detail/${competition.id}")
-                        }
-                    }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.Cyan)
+            }
+        } else if (!errorMessage.isNullOrEmpty()) {
+            Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
+        } else {
+            val leagues = viewModel.getLeaguesWithCompetitions()
+
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                items(leagues) { league ->
+                    CompetitionLeagueSection(league, navController)
                 }
             }
         }
@@ -79,7 +84,8 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Gray.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+            .background(Color.Transparent)
+            .border(1.dp, Color.White, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Column {
@@ -88,19 +94,23 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedYear.ifEmpty { "Selecciona un año" },
+                    text = selectedYear.ifEmpty { "Selecciona una temporada" },
                     color = Color.White,
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { expanded = !expanded }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir", tint = Color.White)
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir", tint = Color.Cyan)
                 }
             }
 
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(expanded = expanded,
+                modifier = Modifier
+                    .background(Color.Black)
+                    .border(1.dp, Color.White, RoundedCornerShape(12.dp))
+                , onDismissRequest = { expanded = false }) {
                 options.forEach { year ->
                     DropdownMenuItem(
-                        text = { Text(year, color = Color.Black) },
+                        text = { Text(year, color = Color.White) },
                         onClick = {
                             onYearSelected(year)
                             expanded = false
@@ -112,39 +122,124 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
     }
 }
 
+// 📌 **Sección de una liga con su carrusel de competiciones**
 @Composable
-fun CompetitionItem(competition: Competition, onClick: () -> Unit) {
-    val formattedDate = formatDate(competition.startDate)
-    val overviewText = cleanHtml(competition.overview ?: "Sin descripción disponible")
+fun CompetitionLeagueSection(league: LeagueModel, navController: NavController) {
+    Column {
+        Text(
+            text = league.title,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+        )
+
+        Text(
+            text = league.description,
+            color = Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+        )
+
+        Text(
+            text = league.overView,
+            color = Color.White,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+        )
+
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+            items(league.competitions) { competition ->
+                CompetitionCard(competition) {
+                    navController.navigate("competition_detail/${competition.id}")
+                }
+            }
+        }
+    }
+}
+
+// 📌 **Tarjeta de una competición en el carrusel**
+@Composable
+fun CompetitionCard(competition: Competition, onClick: () -> Unit) {
+    val imageUrl = "https://premig.randomkesports.com/cms/assets/${competition.game?.image ?: ""}"
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            //.width(200.dp)
+            //.height(300.dp)
+            .padding(8.dp)
+            .clip(RoundedCornerShape(10.dp))
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
-        shape = RoundedCornerShape(12.dp)
+        //colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = competition.title,
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "Imagen de ${competition.title}",
+                contentScale = ContentScale.FillHeight,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Fecha: $formattedDate",
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = overviewText,
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodySmall
-            )
+
+            /*Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = competition.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Inicio: ${formatDate(competition.startDate)}",
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }*/
         }
     }
+}
+
+// 📌 **Modelo de liga con competiciones**
+data class LeagueModel(
+    val title: String,
+    val description: String,
+    val overView: String,
+    val competitions: List<Competition>
+)
+
+// 📌 **Función para organizar las competiciones en ligas**
+fun CompetitionsViewModel.getLeaguesWithCompetitions(): List<LeagueModel> {
+    val allCompetitions = competitions.value
+
+    return listOf(
+        LeagueModel(
+            title = "Liga Municipal",
+            description = "Esports Series Madrid",
+            overView = "Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.",
+            competitions = allCompetitions.filter { it.game?.type == "esm" }
+        ),
+        LeagueModel(
+            title = "Liga Municipal Junior",
+            description = "Esports Series Madrid",
+            overView = "El equivalente de la Esports Series Madrid para colegios e institutos de la ciudad. La ESM Junior Esports es tu puerta de entrada para que puedas participar con tu centro educativo en la liga municipal junior de League of Legends y Rocket League.",
+            competitions = allCompetitions.filter { it.game?.type == "junior" }
+        ),
+        LeagueModel(
+            title = "Circuito Tormenta",
+            description = "Esports Series Madrid",
+            overView = "Las Esports Series Madrid de Madrid in Game serán parada oficial del Circuito de Tormenta. Contarán con las competiciones de League of Legends y Valorant, además de disputarse una gran Final presencial. Los torneos otorgarán puntos para el ranking general del Circuito de Tormenta del Split correspondiente.",
+            competitions = allCompetitions.filter { it.game?.type == "stormCircuit" }
+        ),
+        LeagueModel(
+            title = "Otras competiciones",
+            description = "Esports Series Madrid",
+            overView = "siisisi",
+            competitions = allCompetitions.filter { it.game?.type == "other" }
+        )
+    )
 }
 
 // 📅 **Función para formatear la fecha a dd/MM/yyyy**

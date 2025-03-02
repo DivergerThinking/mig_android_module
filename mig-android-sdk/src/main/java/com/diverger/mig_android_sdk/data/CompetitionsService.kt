@@ -9,14 +9,18 @@ import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+// 📌 **Respuesta del API**
 data class CompetitionResponse(
     val data: List<Competition>
 )
 
 data class CompetitionWrapper(val data: Competition)
 
+// 📌 **Modelo de Competición**
 data class Competition(
     val id: String,
+    @SerializedName("date_created") val dateCreated: String?,
+    @SerializedName("date_updated") val dateUpdated: String?,
     @SerializedName("start_date") val startDate: String,
     @SerializedName("end_sign_date") val endSignDate: String?,
     @SerializedName("start_sign_date") val startSignDate: String?,
@@ -26,39 +30,41 @@ data class Competition(
     val details: String?,
     val contact: String?,
     val splits: List<Split>?,
-    val game: Game?,
-    val teams: List<TeamWrapper>?
+    val game: Game?
 )
 
+// 📌 **Modelo de Juego**
 data class Game(
     val id: String,
     val name: String,
     val image: String?,
-    val banner: String?
+    val banner: String?,
+    val type: String,
+    val description: String?
 )
 
+// 📌 **Modelo de Split**
 data class Split(
     val id: Int,
     val name: String,
-    val tournaments: List<Tournament>
+    val tournaments: List<Tournament>?
 )
 
+// 📌 **Modelo de Torneo**
 data class Tournament(
     val id: Int,
     val name: String,
     @SerializedName("date") val tournamentDate: String?,
-    val link: String?
-)
-
-data class TeamWrapper(
-    @SerializedName("teams_id") val team: Team
+    val link: String?,
+    val split: Int?,
+    val status: String?
 )
 
 interface CompetitionsService {
 
     @GET("competitions")
     suspend fun getAllCompetitions(
-        @Query("fields") fields: String = "*,teams.teams_id.name,teams.teams_id.picture,teams.teams_id.id,translations.*,game.*,splits.*,splits.tournaments.*",
+        @Query("fields") fields: String = "*,game.*, splits.*, splits.tournaments.*",
         @Query("filter[start_date][_between]") yearRange: String?,
         @Header("Authorization") token: String
     ): CompetitionResponse
@@ -81,6 +87,7 @@ interface CompetitionsService {
 
 object CompetitionsApi {
     private const val BASE_URL = "https://premig.randomkesports.com/cms/items/"
+    //private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     val service: CompetitionsService by lazy {
@@ -92,12 +99,12 @@ object CompetitionsApi {
     }
 
     suspend fun getAllCompetitions(year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01,$it-12-31" }
+        val yearRange = year?.let { "$it-01-01$it-12-31" }
         return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
     }
 
     suspend fun getCompetitionsByTeam(teamId: String, year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01,$it-12-31" }
+        val yearRange = year?.let { "$it-01-01$it-12-31" }
         // TODO : Cambiar cuando haya competiciones para mi team
         //return service.getCompetitionsByTeam(teamId = teamId, yearRange = yearRange, token = TOKEN).data
         return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data

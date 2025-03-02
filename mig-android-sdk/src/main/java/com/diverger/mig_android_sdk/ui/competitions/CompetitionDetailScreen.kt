@@ -1,36 +1,41 @@
-package com.diverger.mig_android_sdk.ui.competitions
-
 import CompetitionDetailViewModel
 import android.text.Html
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
+import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun CompetitionDetailScreen(
@@ -39,69 +44,96 @@ fun CompetitionDetailScreen(
     viewModel: CompetitionDetailViewModel = viewModel()
 ) {
     val competition by viewModel.competition.collectAsState()
-    var selectedSplit by remember { mutableStateOf<Split?>(null) }
-    var showTournamentPopup by remember { mutableStateOf(false) }
+    val selectedSplit by viewModel.selectedSplit.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
 
     LaunchedEffect(competitionId) {
         viewModel.fetchCompetition(competitionId)
     }
 
-    competition?.let { comp ->
-        selectedSplit = selectedSplit ?: comp.splits?.firstOrNull()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        competition?.let { comp ->
+            Column(modifier = Modifier
+                //.fillMaxHeight()
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp)) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .padding(16.dp)
-        ) {
-            // 🔙 **Barra Superior con Botón de Atrás y Título**
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
-                }
-                Text(
-                    text = comp.title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                Button(
-                    onClick = { showTournamentPopup = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                // 🔙 **Barra Superior**
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Torneos", color = Color.White)
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+                    }
+                    Text(
+                        text = comp.title.uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 📌 **Selector de Splits**
-            DropdownMenuComponent(
-                selectedSplit = selectedSplit,
-                splits = comp.splits ?: emptyList(),
-                onSplitSelected = { selectedSplit = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 📄 **Pestañas con Información**
-            TabLayout(competition = comp)
-
-            // 🎟️ **Popup de Torneos**
-            if (showTournamentPopup) {
-                TournamentPopup(
-                    tournaments = selectedSplit?.tournaments ?: emptyList(),
-                    onDismiss = { showTournamentPopup = false }
+                // 📌 **Banner**
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("https://premig.randomkesports.com/cms/assets/${comp.game?.banner}")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Banner",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .background(Color.Gray, shape = RoundedCornerShape(30.dp))
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 📌 **Dropdown de Splits**
+                DropdownMenuComponent(
+                    selectedSplit = selectedSplit,
+                    splits = comp.splits ?: emptyList(),
+                    onSplitSelected = { viewModel.selectSplit(it) }
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                when (selectedTab) {
+                    0 -> Text(text = "SOBRE ESTA COMPETICIÓN...", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    1 -> Text(text = "DETALLES", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    2 -> Text(text = "REGLAS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    3 -> Text(text = "CONTACTO", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    4 -> Text(text = "TORNEOS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                }
+
+                //Spacer(modifier = Modifier.height(16.dp))
+
+                // 📌 **Contenido de la pestaña seleccionada (Scroll habilitado)**
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f) // 🔹 IMPORTANTE para que la bottom bar se muestre bien
+                        //.verticalScroll(rememberScrollState())
+                        .padding(8.dp)
+                ) {
+                    SelectedTabContent(competition = comp, selectedTab = selectedTab)
+                }
+
+                // 📌 **Tab Layout en la parte inferior**
+                BottomNavigationTabs(viewModel)
             }
-        }
-    } ?: run {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.Cyan)
+        } ?: run {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.Cyan)
+            }
         }
     }
 }
@@ -111,130 +143,237 @@ fun CompetitionDetailScreen(
 fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSelected: (Split) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
-        Button(onClick = { expanded = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
-            Text(text = selectedSplit?.name ?: "Selecciona un Split", color = Color.White)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.White)
-        }
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            splits.forEach { split ->
-                DropdownMenuItem(
-                    text = { Text(split.name, color = Color.Black) },
-                    onClick = {
-                        onSplitSelected(split)
-                        expanded = false
-                    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Transparent)
+            .border(1.dp, Color.White, RoundedCornerShape(22.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selectedSplit?.name ?: "Selecciona un Split",
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir", tint = Color.Cyan)
+                }
+            }
+
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.Black)
+                .border(1.dp, Color.White, RoundedCornerShape(12.dp))) {
+                splits.forEach { split ->
+                    DropdownMenuItem(
+                        text = { Text(split.name, color = Color.White) },
+                        onClick = {
+                            onSplitSelected(split)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
 }
 
-// 📄 **Tab Layout**
 @Composable
-fun TabLayout(competition: Competition) {
-    val tabs = listOf("Overview", "Detalles", "Reglas", "Contacto")
-    var selectedTab by remember { mutableStateOf(0) }
+fun SelectedTabContent(competition: Competition, selectedTab: Int) {
+    when (selectedTab) {
+        0 -> Text(text = cleanHtml(competition.overview ?: "Sin información"), color = Color.White, modifier = Modifier.padding(16.dp))
+        1 -> Text(text = cleanHtml(competition.details ?: "Sin información"), color = Color.White, modifier = Modifier.padding(16.dp))
+        2 -> Text(text = cleanHtml(competition.rules ?: "Sin reglas definidas"), color = Color.White, modifier = Modifier.padding(16.dp))
+        3 -> Text(text = cleanHtml(competition.contact ?: "Sin contacto disponible"), color = Color.White, modifier = Modifier.padding(16.dp))
+        4 -> TournamentTab(competition)
+    }
+}
 
-    Column {
-        TabRow(selectedTabIndex = selectedTab) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(title, color = Color.DarkGray) }
+// 📌 **Tab Layout en la parte inferior**
+@Composable
+fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
+    val selectedTab by viewModel.selectedTab.collectAsState()
+
+    NavigationBar(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = Color.DarkGray
+    ) {
+        val tabs = listOf(
+            "Overview" to Icons.Default.Info,
+            "Detalles" to Icons.Default.List,
+            "Reglas" to Icons.Default.CheckCircle,
+            "Contacto" to Icons.Default.Email,
+            "Torneos" to Icons.Default.Star
+        )
+
+        tabs.forEachIndexed { index, (title, icon) ->
+            NavigationBarItem(
+                icon = { Icon(icon, contentDescription = title, tint = if (selectedTab == index) Color.Cyan else Color.White) },
+                label = { Text(title, color = if (selectedTab == index) Color.Cyan else Color.White) },
+                selected = selectedTab == index,
+                onClick = { viewModel.selectTab(index) }
+            )
+        }
+    }
+}
+
+// 📌 **Pestaña de Torneos**
+@Composable
+fun TournamentTab(competition: Competition) {
+    val selectedSplit by remember { mutableStateOf(competition.splits?.firstOrNull()) }
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (selectedSplit?.tournaments.isNullOrEmpty()) {
+            item {
+                Text(
+                    text = "No hay torneos disponibles",
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            items(selectedSplit?.tournaments ?: emptyList()) { tournament ->
+                TournamentCard(tournament)
+            }
+        }
+    }
+}
+
+@Composable
+fun TournamentCard(tournament: Tournament) {
+    val formattedDate = getFormattedDate(tournament.tournamentDate)
+    val (day, month) = getDayAndMonth(tournament.tournamentDate)
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.9f), RoundedCornerShape(20.dp))
+            .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
+            .padding(8.dp)
+            .shadow(2.dp, RoundedCornerShape(20.dp))
+            .clickable {
+                tournament.link?.let { link ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                    context.startActivity(intent)
+                } ?: Toast.makeText(context, "Enlace no disponible", Toast.LENGTH_SHORT).show()
+            }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 📆 **Fecha en cuadro con gradiente**
+            DateBox(day = day, month = month)
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // 🎮 **Nombre del torneo y estado**
+            Column {
+                Text(
+                    text = tournament.name.uppercase(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "${tournament.status?.capitalize()}",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(state = rememberLazyListState(), modifier = Modifier.fillMaxSize()) {
-            item {
-                val content = when (selectedTab) {
-                    0 -> competition.overview.takeUnless { it.isNullOrBlank() } ?: "Sin información"
-                    1 -> competition.details.takeUnless { it.isNullOrBlank() } ?: "Sin información"
-                    2 -> competition.rules.takeUnless { it.isNullOrBlank() } ?: "Sin reglas definidas"
-                    3 -> competition.contact.takeUnless { it.isNullOrBlank() } ?: "Sin contacto disponible"
-                    else -> "No hay datos disponibles"
-                }
-                InfoSection(content)
-            }
+        // 📌 **Botón de inscripción**
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    tournament.link?.let { link ->
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                        context.startActivity(intent)
+                    } ?: Toast.makeText(context, "Enlace no disponible", Toast.LENGTH_SHORT).show()
+                },
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "INSCRÍBETE",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color.White)
         }
     }
 }
 
-// 📄 **Sección de Información (Scrollable)**
+// 📌 **Componente de fecha con Gradiente (Igual que en iOS)**
 @Composable
-fun InfoSection(content: String) {
-    Text(
-        text = Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY).toString(),
-        color = Color.White,
-        modifier = Modifier.padding(8.dp)
-    )
-}
-
-// 🎟️ **Popup de Torneos**
-@Composable
-fun TournamentPopup(tournaments: List<Tournament>, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = true),
-        containerColor = Color.DarkGray,
-        title = { Text("Torneos", color = Color.White) },
-        text = {
-            LazyColumn {
-                items(tournaments) { tournament ->
-                    TournamentItem(tournament)
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)) {
-                Text("Cerrar", color = Color.White)
-            }
-        }
-    )
-}
-
-// 🏆 **Item de Torneo**
-@Composable
-fun TournamentItem(tournament: Tournament) {
-    val formattedDate = formatDate(tournament.tournamentDate)
-    val context = LocalContext.current
-
-    Column(modifier = Modifier.padding(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Yellow)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(tournament.name, color = Color.White)
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text("Fecha: $formattedDate", color = Color.Cyan)
-
-        tournament.link?.takeIf { it.isNotBlank() }?.let { link ->
-            Spacer(modifier = Modifier.height(4.dp))
+fun DateBox(day: String, month: String) {
+    Box(
+        modifier = Modifier
+            .size(70.dp)
+            .background(
+                Brush.linearGradient(listOf(Color(0xFFFF007F), Color(0xFF8000FF))), // 🎨 Rosa a Morado
+                shape = RoundedCornerShape(10.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Acceder al Torneo",
-                color = Color.Yellow,
-                modifier = Modifier.clickable {
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // Manejo de error si no se puede abrir el enlace
-                        Toast.makeText(context, "No se puede abrir el enlace", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                text = day,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color.White
             )
-        } ?: run {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Enlace no disponible", color = Color.Gray)
+            Text(
+                text = month.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                maxLines = 1
+            )
         }
+    }
+}
 
-        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+// 📌 **Función para obtener el Día y Mes separados**
+fun getDayAndMonth(dateString: String?): Pair<String, String> {
+    if (dateString.isNullOrEmpty()) return Pair("?", "?")
+
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+
+        val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
+        val monthFormat = SimpleDateFormat("MMMM", Locale("es", "ES"))
+
+        Pair(dayFormat.format(date ?: return Pair("?", "?")), monthFormat.format(date))
+    } catch (e: Exception) {
+        Pair("?", "?")
+    }
+}
+
+// 📌 **Función para formatear la fecha en "DD/MM/YYYY"**
+fun getFormattedDate(dateString: String?): String {
+    if (dateString.isNullOrEmpty()) return "Fecha desconocida"
+
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        outputFormat.format(date ?: return "Fecha inválida")
+    } catch (e: Exception) {
+        "Fecha inválida"
     }
 }
