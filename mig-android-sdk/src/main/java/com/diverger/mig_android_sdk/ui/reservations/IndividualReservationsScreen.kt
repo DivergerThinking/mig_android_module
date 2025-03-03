@@ -1,5 +1,7 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
+import ReservationBottomSheet
+import ReservationDetailScreen
 import ReservationFlowDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -29,6 +31,7 @@ fun IndividualReservationsScreen(userId: String) {
     val isProcessingCancel = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val showDetailBottomSheet = remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         viewModel.fetchReservations(userId)
@@ -80,7 +83,8 @@ fun IndividualReservationsScreen(userId: String) {
                                 onReservationPressed = { option, res ->
                                     when (option) {
                                         IndividualReservationsCellOptions.SEE_RESERVATION -> {
-                                            // TODO: Implementar lógica para ver reserva
+                                            selectedReservation = res
+                                            showDetailBottomSheet.value = true
                                         }
                                         IndividualReservationsCellOptions.CANCEL_RESERVATION -> {
                                             selectedReservation = res
@@ -119,6 +123,14 @@ fun IndividualReservationsScreen(userId: String) {
                 }
             )
         }
+    }
+
+    // 📌 Bottom Sheet para mostrar detalle de la reserva
+    if (showDetailBottomSheet.value && selectedReservation != null) {
+        ReservationBottomSheet(
+            reservation = selectedReservation!!,
+            onDismiss = { showDetailBottomSheet.value = false }
+        )
     }
 
     // 📌 Popup de cancelación
