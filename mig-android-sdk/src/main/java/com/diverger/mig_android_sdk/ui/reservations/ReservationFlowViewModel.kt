@@ -182,7 +182,7 @@ class ReservationFlowViewModel : ViewModel() {
 
         val mappedTimes = slots.map { mapOf("gaming_space_times_id" to it) }
 
-        val reservation = Reservation(
+        val reservation = ReservationWrapper(
             id = null,
             status = "active",
             slot = space.slots.first(),

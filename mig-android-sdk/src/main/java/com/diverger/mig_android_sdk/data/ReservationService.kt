@@ -13,13 +13,13 @@ interface ReservationService {
         @Query("filter[status][_neq]") status: String = "cancelled",
         ///@Query("filter[date][_gte]") date: String = "\$NOW",
         @Query("filter[team][_null]") team: String = "true",
-        @Query("fields") fields: String = "id,date,slot.*,qrImage,times.gaming_space_times_id.time,times.gaming_space_times_id.id",
+        @Query("fields") fields: String = "id,date,slot.*,qrImage,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
     ): ReservationResponse
 
     @POST("gaming_space_reserves")
     suspend fun createReservation(
-        @Body reservation: Reservation,
+        @Body reservation: ReservationWrapper,
         @Header("Authorization") token: String
     ): Unit
 
@@ -61,8 +61,13 @@ object ReservationApi {
             .create(ReservationService::class.java)
     }
 
-    suspend fun getReservations(userId: String): List<Reservation> {
-        return service.getReservationsByUser(userId, token = TOKEN).data
+    suspend fun getReservations(userId: String): Result<List<Reservation>> {
+        return try {
+            val response = service.getReservationsByUser(userId, token = TOKEN)
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     // ✅ Obtener reservas de equipo
@@ -85,7 +90,7 @@ object ReservationApi {
         }
     }
 
-    suspend fun createReservation(reservation: Reservation): Result<Unit> {
+    suspend fun createReservation(reservation: ReservationWrapper): Result<Unit> {
         return try {
             service.createReservation(reservation, token = TOKEN)
             Result.success(Unit) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
@@ -107,6 +112,23 @@ object ReservationApi {
 data class ReservationResponse(val data: List<Reservation>)
 
 data class Reservation(
+    val id: Int?,
+    val status: String?,
+    val slot: SlotReservation,
+    val date: String,
+    val user: String?,
+    val team: String?,
+    val training: String?,
+    @SerializedName("qrImage") val qrImage: String?,
+    @SerializedName("qrValue") val qrValue: String?,
+    @SerializedName("times") val timesContainer: List<Map<String, GamingSpaceTime>>,
+    @SerializedName("peripheral_loans") val peripheralLoans: List<Int>?,
+) {
+    // Extraemos `gaming_space_times_id` correctamente
+    val times: List<GamingSpaceTime> get() = timesContainer.mapNotNull { it["gaming_space_times_id"] }
+}
+
+data class ReservationWrapper(
     val id: Int?,
     val status: String?,
     val slot: Slot,

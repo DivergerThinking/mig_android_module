@@ -101,9 +101,11 @@ fun IndividualReservationsScreen(userId: String) {
             colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
             modifier = Modifier
                 .fillMaxWidth()
+                .height(80.dp)
                 .padding(vertical = 16.dp)
+                .padding(horizontal = 50.dp)
         ) {
-            Text("Reservar", color = Color.White)
+            Text("RESERVAR", color = Color.Black, fontWeight = FontWeight.ExtraBold)
         }
 
         // 📌 Mostrar el flujo de reserva

@@ -63,6 +63,12 @@ data class Slot(
     val space: Int
 )
 
+data class SlotReservation(
+    val id: Int,
+    val position: String,
+    val space: SpaceItemReservation
+)
+
 data class SpaceResponse(
     val data: List<SpaceItem>
 )
@@ -72,6 +78,12 @@ data class SpaceItem(
     val group: Boolean,
     val translations: List<Translation>,
     val slots: List<Slot>
+)
+
+data class SpaceItemReservation(
+    val id: Int,
+    val group: Boolean,
+    val translations: List<Translation>,
 )
 
 data class Translation(

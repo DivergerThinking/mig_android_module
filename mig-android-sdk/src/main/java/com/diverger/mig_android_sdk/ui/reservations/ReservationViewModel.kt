@@ -25,12 +25,15 @@ class ReservationViewModel : ViewModel() {
     fun fetchReservations(userId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                _reservations.value = ReservationApi.getReservations(userId)
-            } catch (e: Exception) {
+            val result = ReservationApi.getReservations(userId)
+            result.onSuccess { reservations ->
+                _reservations.value = reservations
+                _isLoading.value = false
+            }.onFailure {
+                _isLoading.value = false
                 _reservations.value = emptyList()
             }
-            _isLoading.value = false
+            //_isLoading.value = false
         }
     }
 
