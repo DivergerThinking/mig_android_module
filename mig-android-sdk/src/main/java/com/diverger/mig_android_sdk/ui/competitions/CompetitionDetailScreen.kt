@@ -34,6 +34,10 @@ import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
 import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
+import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FontAwesomeIcons
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.solid.Trophy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -51,88 +55,90 @@ fun CompetitionDetailScreen(
         viewModel.fetchCompetition(competitionId)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        competition?.let { comp ->
-            Column(modifier = Modifier
-                //.fillMaxHeight()
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp)) {
+    MIGAndroidSDKTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            competition?.let { comp ->
+                Column(modifier = Modifier
+                    //.fillMaxHeight()
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)) {
 
-                // 🔙 **Barra Superior**
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+                    // 🔙 **Barra Superior**
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+                        }
+                        Text(
+                            text = comp.title.uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                    Text(
-                        text = comp.title.uppercase(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.weight(1f)
+
+                    // 📌 **Banner**
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data("https://premig.randomkesports.com/cms/assets/${comp.game?.banner}")
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Banner",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .background(Color.Gray, shape = RoundedCornerShape(30.dp))
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 📌 **Dropdown de Splits**
+                    DropdownMenuComponent(
+                        selectedSplit = selectedSplit,
+                        splits = comp.splits ?: emptyList(),
+                        onSplitSelected = { viewModel.selectSplit(it) }
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    when (selectedTab) {
+                        0 -> Text(text = "SOBRE ESTA COMPETICIÓN...", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        1 -> Text(text = "DETALLES", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        2 -> Text(text = "REGLAS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        3 -> Text(text = "CONTACTO", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        4 -> Text(text = "TORNEOS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    }
+
+                    //Spacer(modifier = Modifier.height(16.dp))
+
+                    // 📌 **Contenido de la pestaña seleccionada (Scroll habilitado)**
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f) // 🔹 IMPORTANTE para que la bottom bar se muestre bien
+                            //.verticalScroll(rememberScrollState())
+                            .padding(8.dp)
+                    ) {
+                        SelectedTabContent(competition = comp, selectedTab = selectedTab)
+                    }
+
+                    // 📌 **Tab Layout en la parte inferior**
+                    BottomNavigationTabs(viewModel)
                 }
-
-                // 📌 **Banner**
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data("https://premig.randomkesports.com/cms/assets/${comp.game?.banner}")
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Banner",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .background(Color.Gray, shape = RoundedCornerShape(30.dp))
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 📌 **Dropdown de Splits**
-                DropdownMenuComponent(
-                    selectedSplit = selectedSplit,
-                    splits = comp.splits ?: emptyList(),
-                    onSplitSelected = { viewModel.selectSplit(it) }
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                when (selectedTab) {
-                    0 -> Text(text = "SOBRE ESTA COMPETICIÓN...", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                    1 -> Text(text = "DETALLES", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                    2 -> Text(text = "REGLAS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                    3 -> Text(text = "CONTACTO", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                    4 -> Text(text = "TORNEOS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            } ?: run {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.Cyan)
                 }
-
-                //Spacer(modifier = Modifier.height(16.dp))
-
-                // 📌 **Contenido de la pestaña seleccionada (Scroll habilitado)**
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f) // 🔹 IMPORTANTE para que la bottom bar se muestre bien
-                        //.verticalScroll(rememberScrollState())
-                        .padding(8.dp)
-                ) {
-                    SelectedTabContent(competition = comp, selectedTab = selectedTab)
-                }
-
-                // 📌 **Tab Layout en la parte inferior**
-                BottomNavigationTabs(viewModel)
-            }
-        } ?: run {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color.Cyan)
             }
         }
     }
@@ -197,27 +203,52 @@ fun SelectedTabContent(competition: Competition, selectedTab: Int) {
 fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
     val selectedTab by viewModel.selectedTab.collectAsState()
 
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))
+                )
+            )
+    ) {
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.DarkGray
+        containerColor = Color.Transparent,
+        contentColor = Color.White
     ) {
         val tabs = listOf(
             "Overview" to Icons.Default.Info,
             "Detalles" to Icons.Default.List,
-            "Reglas" to Icons.Default.CheckCircle,
+            "Reglas" to Icons.Default.Rule,
             "Contacto" to Icons.Default.Email,
-            "Torneos" to Icons.Default.Star
+            "Torneos" to FontAwesomeIcons.Solid.Trophy
         )
 
         tabs.forEachIndexed { index, (title, icon) ->
             NavigationBarItem(
-                icon = { Icon(icon, contentDescription = title, tint = if (selectedTab == index) Color.Cyan else Color.White) },
-                label = { Text(title, color = if (selectedTab == index) Color.Cyan else Color.White) },
+                modifier = Modifier.size(22.dp),
+                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
+                icon = {
+                    Icon(
+                        icon,
+                        contentDescription = title,
+                        tint = if (selectedTab == index) Color.Cyan else Color.White
+                    )
+                },
+                label = {
+                    Text(
+                        title,
+                        color = if (selectedTab == index) Color.Cyan else Color.White
+                    )
+                },
                 selected = selectedTab == index,
                 onClick = { viewModel.selectTab(index) }
             )
         }
     }
+}
 }
 
 // 📌 **Pestaña de Torneos**

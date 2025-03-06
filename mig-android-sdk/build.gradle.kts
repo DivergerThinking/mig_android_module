@@ -80,6 +80,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.foundation:foundation:1.4.0")
     implementation("io.coil-kt:coil-compose:2.2.2")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4") // Material Icons
+    implementation("br.com.devsrsouza.compose.icons:font-awesome:1.1.0") // FontAwesome
+    implementation("br.com.devsrsouza.compose.icons:feather:1.1.0")
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

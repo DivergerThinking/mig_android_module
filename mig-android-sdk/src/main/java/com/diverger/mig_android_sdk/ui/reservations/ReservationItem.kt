@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,6 +19,21 @@ import androidx.compose.ui.unit.sp
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.competitions.formatDate
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
+import compose.icons.AllIcons
+import compose.icons.FeatherIcons
+import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.Eye
+import compose.icons.feathericons.MinusCircle
+import compose.icons.fontawesomeicons.Brands
+import compose.icons.fontawesomeicons.Regular
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.regular.StopCircle
+import compose.icons.fontawesomeicons.solid.Desktop
+import compose.icons.fontawesomeicons.solid.Gamepad
+import compose.icons.fontawesomeicons.solid.Keyboard
+import compose.icons.fontawesomeicons.solid.Laptop
+import compose.icons.fontawesomeicons.solid.MinusCircle
+import compose.icons.fontawesomeicons.solid.MobileAlt
 
 enum class IndividualReservationsCellOptions {
     SEE_RESERVATION,
@@ -44,10 +61,18 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Ícono de la reserva
                 Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = "Reserva",
+                    imageVector = when (reservation.slot.space.translations.first().device.lowercase()) {
+                        "pc", "desktop" -> FontAwesomeIcons.Solid.Desktop
+                        "playstation", "ps5", "ps4", "console" -> FontAwesomeIcons.Solid.Gamepad
+                        "xbox", "xbox series x", "xbox one" -> FontAwesomeIcons.Solid.Gamepad
+                        "nintendo switch", "switch" -> FontAwesomeIcons.Solid.Gamepad
+                        "laptop" -> FontAwesomeIcons.Solid.Laptop
+                        "mobile", "tablet", "ipad", "smartphone" -> FontAwesomeIcons.Solid.MobileAlt
+                        "keyboard" -> FontAwesomeIcons.Solid.Keyboard
+                        else -> FontAwesomeIcons.Solid.Gamepad // Default
+                    },
+                    contentDescription = "Reserva en ${reservation.slot.space}",
                     tint = Color.Cyan,
                     modifier = Modifier.size(32.dp)
                 )
@@ -60,18 +85,20 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                         text = "RESERVA - ${reservation.slot.space.translations.first().device.uppercase()}",
                         color = Color.White,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
                         text = "${formatDateFromShort(reservation.date)}",
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
                         text = "${reservation.times.joinToString { it.time }}",
                         color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
                     )
                 }
 
@@ -80,8 +107,14 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                     /*TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
                         Text("Ver reserva", color = Color.Cyan, fontSize = 14.sp)
                     }*/
-                    TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.CANCEL_RESERVATION, reservation) }) {
-                        Text("Cancelar", color = Color.Red, fontSize = 14.sp)
+                    IconButton(
+                        onClick = { onReservationPressed(IndividualReservationsCellOptions.CANCEL_RESERVATION, reservation) }
+                    ) {
+                        Icon(
+                            imageVector = FeatherIcons.MinusCircle,
+                            contentDescription = "Cancelar reserva",
+                            tint = Color.Red
+                        )
                     }
                 }
             }
@@ -91,10 +124,10 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(imageVector = Icons.Filled.AddCircle,
+                Icon(imageVector = FeatherIcons.Eye,
                     contentDescription = "Ver Reserva",
                     tint = Color.Cyan,
-                    modifier = Modifier.size(14.dp))
+                    modifier = Modifier.size(18.dp))
                 TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
                     Text("VER RESERVA", color = Color.Cyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }

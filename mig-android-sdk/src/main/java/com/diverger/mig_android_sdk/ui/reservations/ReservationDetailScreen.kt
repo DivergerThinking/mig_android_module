@@ -15,12 +15,17 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.XCircle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,86 +33,92 @@ fun ReservationDetailScreen(
     reservation: Reservation,
     onDismiss: () -> Unit
 ) {
-    val viewModel: ReservationDetailViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ReservationDetailViewModel(reservation) as T
-        }
-    })
-
-    val isFlipped by viewModel.isFlipped.collectAsState()
-    val rotationY by viewModel.rotationY.collectAsState()
-
-    val animatedRotation by animateFloatAsState(targetValue = rotationY)
-
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val bottomSheetState = rememberModalBottomSheetState()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = bottomSheetState,
-        modifier = Modifier.fillMaxSize(),
-        containerColor = Color.Black
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            // 🔙 **Botón de Cerrar**
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
+    MIGAndroidSDKTheme {
+            val viewModel: ReservationDetailViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return ReservationDetailViewModel(reservation) as T
                 }
-            }
+            })
 
-            // 📌 **Título**
-            Text(
-                text = "MADRID IN GAME",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            val isFlipped by viewModel.isFlipped.collectAsState()
+            val rotationY by viewModel.rotationY.collectAsState()
 
-            Spacer(modifier = Modifier.height(20.dp))
+            val animatedRotation by animateFloatAsState(targetValue = rotationY)
 
-            // 📌 **Tarjeta Giratoria**
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures { _, dragAmount ->
-                            if (dragAmount > 50) {
-                                viewModel.flipCard()
-                            }
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val bottomSheetState = rememberModalBottomSheetState()
+
+            ModalBottomSheet(
+                onDismissRequest = onDismiss,
+                sheetState = bottomSheetState,
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Black
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    // 🔙 **Botón de Cerrar**
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
                         }
                     }
-            ) {
-                if (isFlipped) {
-                    ReservationRulesCard()
-                } else {
-                    ReservationQrCard(viewModel)
+
+                    // 📌 **Título**
+                    Text(
+                        text = "MADRID IN GAME",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 📌 **Tarjeta Giratoria**
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures { _, dragAmount ->
+                                    if (dragAmount > 50) {
+                                        viewModel.flipCard()
+                                    }
+                                }
+                            }
+                    ) {
+                        if (isFlipped) {
+                            ReservationRulesCard()
+                        } else {
+                            ReservationQrCard(viewModel)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 📌 **Botón de Reglas**
+                    Button(
+                        onClick = { viewModel.flipCard() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
+                        modifier = Modifier.align(Alignment.CenterHorizontally).height(60.dp)
+                    ) {
+                        val title = when {
+                            isFlipped -> "DETALLES"
+                            else -> "NORMAS DE USO"
+                        }
+                        Text(title, color = Color.Black, fontWeight = FontWeight.ExtraBold)
+                    }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 📌 **Botón de Reglas**
-            Button(
-                onClick = { viewModel.flipCard() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
-                modifier = Modifier.align(Alignment.CenterHorizontally).height(60.dp)
-            ) {
-                Text("NORMAS DE USO", color = Color.Black, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
-}
 
 // 📌 **Tarjeta del Código QR**
 @Composable
@@ -125,11 +136,11 @@ fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
             .padding(horizontal = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("RESERVA CONFIRMADA", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold,)
-        Text("LOCALIZACIÓN: ${viewModel.getReservationLocation().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold)
-        Text("PLATAFORMA: ${viewModel.getReservationConsole().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold)
-        Text("FECHA: ${viewModel.getFormattedDate()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold)
-        Text("HORAS: ${viewModel.getFormattedTimes()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold)
+        Text("RESERVA CONFIRMADA", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
+        Text("LOCALIZACIÓN: ${viewModel.getReservationLocation().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
+        Text("PLATAFORMA: ${viewModel.getReservationConsole().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
+        Text("FECHA: ${viewModel.getFormattedDate()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
+        Text("HORAS: ${viewModel.getFormattedTimes()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
 
         Spacer(modifier = Modifier.height(20.dp))
 

@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Game
+import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -36,41 +37,43 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(16.dp)
-    ) {
-        // 📌 Título
-        Text(
-            "COMPETICIONES",
-            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 10.dp)
-        )
+    MIGAndroidSDKTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(16.dp)
+        ) {
+            // 📌 Título
+            Text(
+                "COMPETICIONES",
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
 
-        // 📅 Dropdown de selección de año (similar a iOS)
-        DropdownMenuComponent(
-            selectedYear = selectedYear,
-            options = availableYears,
-            onYearSelected = { viewModel.updateSelectedYear(it) }
-        )
+            // 📅 Dropdown de selección de año (similar a iOS)
+            DropdownMenuComponent(
+                selectedYear = selectedYear,
+                options = availableYears,
+                onYearSelected = { viewModel.updateSelectedYear(it) }
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color.Cyan)
-            }
-        } else if (!errorMessage.isNullOrEmpty()) {
-            Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
-        } else {
-            val leagues = viewModel.getLeaguesWithCompetitions()
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.Cyan)
+                }
+            } else if (!errorMessage.isNullOrEmpty()) {
+                Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
+            } else {
+                val leagues = viewModel.getLeaguesWithCompetitions()
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                items(leagues) { league ->
-                    CompetitionLeagueSection(league, navController)
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    items(leagues) { league ->
+                        CompetitionLeagueSection(league, navController)
+                    }
                 }
             }
         }

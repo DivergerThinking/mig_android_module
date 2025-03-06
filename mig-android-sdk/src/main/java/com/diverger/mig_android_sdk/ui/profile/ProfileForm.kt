@@ -9,8 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.diverger.mig_android_sdk.R
 
 @Composable
 fun ProfileForm(
@@ -40,9 +43,12 @@ fun ProfileTextField(
     onValueChange: (String) -> Unit
 ) {
     Column {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Cyan)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(0.5f))
         BasicTextField(
-            textStyle = TextStyle(color = Color.White),
+            textStyle = TextStyle(color = Color.White, fontFamily = FontFamily(
+                Font(R.font.madrid_in_game_font)
+            )
+            ),
             value = value,
             onValueChange = onValueChange,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),

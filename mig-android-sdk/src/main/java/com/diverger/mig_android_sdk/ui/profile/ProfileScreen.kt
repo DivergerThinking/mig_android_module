@@ -17,12 +17,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
@@ -34,63 +41,66 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     var email by remember { mutableStateOf(user?.email.orEmpty()) }
     var username by remember { mutableStateOf(user?.username.orEmpty()) }
     var phone by remember { mutableStateOf(user?.phone.orEmpty()) }
+    val avatar by remember { mutableStateOf(user?.avatar) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(16.dp)
-            .padding(top = 80.dp)
-    ) {
-        Column(
+    MIGAndroidSDKTheme {
+        Box(
             modifier = Modifier
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(16.dp)
+                .padding(top = 80.dp)
         ) {
-            Text("SOBRE MÍ", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("SOBRE MÍ", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineLarge, color = Color.White, textAlign = TextAlign.Start, fontWeight = FontWeight.Bold)
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            AvatarSelector()
+                ProfileAvatar(avatar)
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            ProfileForm(
-                firstName = firstName,
-                lastName = lastName,
-                dni = dni,
-                email = email,
-                username = username,
-                phone = phone,
-                onValueChange = { key, value ->
-                    when (key) {
-                        "firstName" -> firstName = value
-                        "lastName" -> lastName = value
-                        "dni" -> dni = value
-                        "email" -> email = value
-                        "username" -> username = value
-                        "phone" -> phone = value
+                ProfileForm(
+                    firstName = firstName,
+                    lastName = lastName,
+                    dni = dni,
+                    email = email,
+                    username = username,
+                    phone = phone,
+                    onValueChange = { key, value ->
+                        when (key) {
+                            "firstName" -> firstName = value
+                            "lastName" -> lastName = value
+                            "dni" -> dni = value
+                            "email" -> email = value
+                            "username" -> username = value
+                            "phone" -> phone = value
+                        }
                     }
-                }
-            )
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Row {
-                Button(
-                    onClick = { viewModel.discardChanges() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Descartar")
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Button(
-                    onClick = { viewModel.saveChanges(firstName, lastName, dni, email, username, phone) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Guardar")
+                Row {
+                    /*Button(
+                        onClick = { viewModel.discardChanges() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Descartar")
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))*/
+                    Button(
+                        onClick = { viewModel.saveChanges(firstName, lastName, dni, email, username, phone) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("EDITAR", style = MaterialTheme.typography.headlineSmall)
+                    }
                 }
             }
         }
@@ -98,19 +108,36 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun AvatarSelector() {
+fun ProfileAvatar(userAvatar: String?) {
     Box(
         modifier = Modifier
-            .size(100.dp)
+            .size(120.dp)
             .clip(CircleShape)
-            .background(Color.Gray),
+            .background(Color.Transparent),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Filled.AccountCircle,
-            contentDescription = "Avatar",
-            modifier = Modifier.size(80.dp),
-            tint = Color.White
-        )
+        if (!userAvatar.isNullOrEmpty()) {
+            // 📌 Mostrar la imagen si hay un avatar
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data("https://premig.randomkesports.com/cms/assets/${userAvatar}")
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+            )
+        } else {
+            // 📌 Mostrar ícono por defecto si no hay avatar
+            Icon(
+                imageVector = Icons.Filled.AccountCircle,
+                contentDescription = "Avatar",
+                modifier = Modifier.size(100.dp),
+                tint = Color.White
+            )
+        }
     }
 }
+

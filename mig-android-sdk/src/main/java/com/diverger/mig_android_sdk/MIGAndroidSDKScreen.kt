@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,12 @@ import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
+import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FontAwesomeIcons
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.solid.PeopleCarry
+import compose.icons.fontawesomeicons.solid.Trophy
+import compose.icons.fontawesomeicons.solid.UserCircle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -113,75 +120,77 @@ fun DrawerContent(
 ) {
     val items = listOf(
         DrawerItem("dashboard", "Dashboard", Icons.Filled.Home),
-        DrawerItem("teams", "Equipos", Icons.AutoMirrored.Filled.List),
-        DrawerItem("competitions", "Competiciones", Icons.Filled.Place)
+        DrawerItem("teams", "Equipos", FontAwesomeIcons.Solid.PeopleCarry),
+        DrawerItem("competitions", "Competiciones", FontAwesomeIcons.Solid.Trophy)
     )
 
-    ModalDrawerSheet(
-        modifier = Modifier
-            .fillMaxHeight()
-            .fillMaxWidth(),
-        drawerContainerColor = Color.Black,
-        drawerShape = RoundedCornerShape(1.dp),
+    MIGAndroidSDKTheme {
+        ModalDrawerSheet(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(),
+            drawerContainerColor = Color.Black,
+            drawerShape = RoundedCornerShape(1.dp),
 
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
+            ) {
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "Menú",
-            color = Color.White,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
-        )
+            Text(
+                text = "Menú",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+            )
 
-        LazyColumn {
-            items(items) { item ->
-                val isSelected = item.route == currentScreen
+            LazyColumn {
+                items(items) { item ->
+                    val isSelected = item.route == currentScreen
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                        .border(
-                            width = if (isSelected) 2.dp else 0.dp, // 🔹 Borde blanco en el seleccionado
-                            color = if (isSelected) Color.White else Color.Transparent,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .background(
-                            color = Color.Transparent, // 🔹 Fondo transparente
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                ) {
-                    Button(
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            onScreenSelected(item.route)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent, // 🔹 Fondo transparente para evitar color sólido
-                            contentColor = Color.White // 🔹 Texto e iconos en blanco
-                        ),
-                        shape = RoundedCornerShape(8.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                            .border(
+                                width = if (isSelected) 2.dp else 0.dp, // 🔹 Borde blanco en el seleccionado
+                                color = if (isSelected) Color.White else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .background(
+                                color = Color.Transparent, // 🔹 Fondo transparente
+                                shape = RoundedCornerShape(8.dp)
+                            )
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                        Button(
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                onScreenSelected(item.route)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent, // 🔹 Fondo transparente para evitar color sólido
+                                contentColor = Color.White // 🔹 Texto e iconos en blanco
+                            ),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                tint = Color.White, // 🔹 Iconos en blanco
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = item.label,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                ),
-                                color = Color.White // 🔹 Texto en blanco
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label,
+                                    tint = Color.White, // 🔹 Iconos en blanco
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = item.label,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    ),
+                                    color = Color.White // 🔹 Texto en blanco
+                                )
+                            }
                         }
                     }
                 }
@@ -227,18 +236,47 @@ fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         //BottomNavItem("dashboard", "Dashboard", Icons.Default.Home),
         BottomNavItem("individualReservations", "Reservas", Icons.Default.DateRange),
-        BottomNavItem("profile", "Perfil", Icons.Default.Person)
+        BottomNavItem("profile", "Perfil", FontAwesomeIcons.Solid.UserCircle)
     )
 
-    NavigationBar {
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-        items.forEach { item ->
-            NavigationBarItem(
-                icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                selected = currentRoute == item.route,
-                onClick = { navController.navigate(item.route) }
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))
+                )
             )
+    ) {
+        NavigationBar(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = Color.Transparent, // ✅ Hace que el fondo de NavigationBar sea transparente
+            contentColor = Color.White // ✅ Cambia el color de los íconos y texto
+        ) {
+            items.forEach { item ->
+                NavigationBarItem(
+                    modifier = Modifier.size(22.dp),
+                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
+                    icon = {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            tint = if (currentRoute == item.route) Color.Cyan else Color.White
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = item.label,
+                            color = if (currentRoute == item.route) Color.Cyan else Color.White
+                        )
+                    },
+                    selected = currentRoute == item.route,
+                    onClick = { navController.navigate(item.route) }
+                )
+            }
         }
     }
 }
