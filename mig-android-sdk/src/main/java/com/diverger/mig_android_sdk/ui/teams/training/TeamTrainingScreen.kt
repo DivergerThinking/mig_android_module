@@ -1,5 +1,8 @@
 package com.diverger.mig_android_sdk.ui.teams
 
+import CustomCalendarView
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.ui.components.CustomCalendarView
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
     var isCalendarVisible by remember { mutableStateOf(false) }
@@ -66,6 +69,7 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 }
 
 // 📅 **Componente de Calendario**
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarComponent(
     isCalendarVisible: Boolean,
@@ -95,9 +99,9 @@ fun CalendarComponent(
         if (isCalendarVisible) {
             CustomCalendarView(
                 canUserInteract = false,
-                markedDates = markedDates,
                 onDateSelected = {},
-                blockedDates = emptyList()
+                blockedDates = emptyList(),
+                reservations = emptyList()
             )
         }
     }

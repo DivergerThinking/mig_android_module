@@ -155,6 +155,7 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
             .background(Color.Transparent)
             .border(1.dp, Color.White, RoundedCornerShape(22.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { expanded = !expanded }
     ) {
         Column {
             Row(
@@ -190,11 +191,27 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
 @Composable
 fun SelectedTabContent(competition: Competition, selectedTab: Int) {
     when (selectedTab) {
-        0 -> Text(text = cleanHtml(competition.overview ?: "Sin información"), color = Color.White, modifier = Modifier.padding(16.dp))
-        1 -> Text(text = cleanHtml(competition.details ?: "Sin información"), color = Color.White, modifier = Modifier.padding(16.dp))
-        2 -> Text(text = cleanHtml(competition.rules ?: "Sin reglas definidas"), color = Color.White, modifier = Modifier.padding(16.dp))
-        3 -> Text(text = cleanHtml(competition.contact ?: "Sin contacto disponible"), color = Color.White, modifier = Modifier.padding(16.dp))
-        4 -> TournamentTab(competition)
+        0 -> ScrollableTextContent(competition.overview ?: "Sin información")
+        1 -> ScrollableTextContent(competition.details ?: "Sin información")
+        2 -> ScrollableTextContent(competition.rules ?: "Sin reglas definidas")
+        3 -> ScrollableTextContent(competition.contact ?: "Sin contacto disponible")
+        4 -> TournamentTab(competition) // ✅ Torneos se mantiene igual
+    }
+}
+
+@Composable
+fun ScrollableTextContent(content: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()) // 🔹 Habilita el scroll
+    ) {
+        Text(
+            text = cleanHtml(content),
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
 

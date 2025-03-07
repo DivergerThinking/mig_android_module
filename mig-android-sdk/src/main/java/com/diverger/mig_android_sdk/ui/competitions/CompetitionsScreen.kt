@@ -90,6 +90,7 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
             .background(Color.Transparent)
             .border(1.dp, Color.White, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { expanded = !expanded }
     ) {
         Column {
             Row(
@@ -101,7 +102,7 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
                     color = Color.White,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { expanded = !expanded }) {
+                IconButton(onClick = {expanded = !expanded}) {
                     Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir", tint = Color.Cyan)
                 }
             }

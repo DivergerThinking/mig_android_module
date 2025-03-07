@@ -1,4 +1,6 @@
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -43,10 +46,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Space
-import com.diverger.mig_android_sdk.ui.components.CustomCalendarView
 import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReservationFlowDialog(
     onDismiss: () -> Unit,
@@ -63,8 +66,12 @@ fun ReservationFlowDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
-                .background(Color.DarkGray, shape = RoundedCornerShape(16.dp))
+                .fillMaxHeight(0.9f)
+                .background(
+                   // Brush.verticalGradient(
+                    //colors = listOf(Color.Black, Color.Black, Color.White.copy(alpha = 0.15f))),
+                    Color.Black,
+                    shape = RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
             Column {
@@ -146,35 +153,40 @@ fun CircleIndicator(isActive: Boolean) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SelectDateView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text("Selecciona una fecha", color = Color.White, fontSize = 18.sp)
+        Spacer(Modifier.height(20.dp))
 
         val availableDates by viewModel.availableDates.collectAsState()
         val blockedDates by viewModel.blockedDates.collectAsState()
         val selectedDate by viewModel.selectedDate.collectAsState()
+        val reservations = viewModel.markedDates.collectAsState().value.filter { it.isReservation }.map { it.date } // 🔹 Filtramos solo reservas individuales
 
         if (availableDates.isEmpty() && blockedDates.isEmpty()) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             CustomCalendarView(
                 canUserInteract = true,
-                markedDates = viewModel.availableDates.collectAsState().value,
                 blockedDates = viewModel.blockedDates.collectAsState().value,
                 onDateSelected = { selectedDate ->
                     viewModel.setSelectedDate(selectedDate)
-                }
+                },
+                reservations = reservations
             )
         }
 
+        Spacer(Modifier.height(20.dp))
+
         Button(
             onClick = onNext,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, disabledContainerColor = Color.White.copy(0.35f)),
             enabled = selectedDate != null,
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Siguiente", color = Color.White)
+            Text("Siguiente", color = Color.Black)
         }
     }
 }
@@ -187,6 +199,7 @@ fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text("Selecciona un horario", color = Color.White, fontSize = 18.sp)
+        Spacer(Modifier.height(20.dp))
 
         if (availableSlots.isEmpty()) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -206,14 +219,14 @@ fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
                 }
             }
         }
-
+        Spacer(Modifier.height(20.dp))
         Button(
             onClick = onNext,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, disabledContainerColor = Color.White.copy(0.35f)),
             enabled = selectedSlots.isNotEmpty(),
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Siguiente", color = Color.White)
+            Text("Siguiente", color = Color.Black)
         }
     }
 }
@@ -225,15 +238,16 @@ fun SlotItem(slot: GamingSpaceTime, isSelected: Boolean, isEnabled: Boolean, onC
         colors = ButtonDefaults.buttonColors(
             containerColor = when {
                 isSelected -> Color.White  // Seleccionado -> Blanco
-                isEnabled -> Color.Gray    // Disponible -> Gris
+                isEnabled -> Color.Transparent    // Disponible -> Gris
                 else -> Color.DarkGray     // Deshabilitado -> Oscuro
-            }
+            },
         ),
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .height(50.dp),
-        enabled = isEnabled
+            .height(50.dp)
+            .border(2.dp, if (isEnabled && !isSelected) Color.White else Color.Transparent, RoundedCornerShape(40.dp)),
+    enabled = isEnabled
     ) {
         Text(
             text = slot.time,
@@ -250,6 +264,8 @@ fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit) 
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text("Selecciona un espacio", color = Color.White, fontSize = 18.sp)
+
+        Spacer(Modifier.height(20.dp))
 
         val availableSpaces by viewModel.availableSpaces.collectAsState()
         val selectedSpace by viewModel.selectedSpace.collectAsState()
@@ -271,13 +287,15 @@ fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit) 
             }
         }
 
+        Spacer(Modifier.height(20.dp))
+
         Button(
             onClick = onConfirm,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, disabledContainerColor = Color.White.copy(0.35f)),
             enabled = selectedSpace != null,
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Reservar", color = Color.White)
+            Text("Reservar", color = Color.Black)
         }
     }
 }
@@ -286,8 +304,9 @@ fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit) 
 fun SpaceItem(space: Space, isSelected: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) Color.White else Color.Gray),
-        modifier = Modifier.padding(4.dp)
+        colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) Color.White else Color.Transparent),
+        modifier = Modifier.padding(4.dp).border(2.dp, Color.White, RoundedCornerShape(40.dp)),
+
     ) {
         Text(space.device, color = if (isSelected) Color.Black else Color.White)
     }

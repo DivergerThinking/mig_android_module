@@ -47,11 +47,11 @@ fun ReservationDetailScreen(
 
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
-            val bottomSheetState = rememberModalBottomSheetState()
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
             ModalBottomSheet(
                 onDismissRequest = onDismiss,
-                sheetState = bottomSheetState,
+                sheetState = sheetState,
                 modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Black
             ) {

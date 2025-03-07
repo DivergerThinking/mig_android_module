@@ -39,9 +39,9 @@ object UserManager {
                 val fetchedUser = response.data.first()
                 val teams = apiService.getTeamsByUser(fetchedUser.id, token = TOKEN).data
                 user = fetchedUser.copy(teams = teams)
-                /*if (teams.isNotEmpty()) {
-                    selectedTeam = teams.first()
-                }*/
+                if (teams.isNotEmpty()) {
+                    _selectedTeam.value = teams.first()
+                }
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("No user found"))

@@ -83,6 +83,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.4") // Material Icons
     implementation("br.com.devsrsouza.compose.icons:font-awesome:1.1.0") // FontAwesome
     implementation("br.com.devsrsouza.compose.icons:feather:1.1.0")
+    implementation("com.kizitonwose.calendar:compose:2.2.0")
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
