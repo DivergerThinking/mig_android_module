@@ -89,7 +89,7 @@ fun CompetitionDetailScreen(
                     // 📌 **Banner**
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data("https://premig.randomkesports.com/cms/assets/${comp.game?.banner}")
+                            .data("https://webesports.madridingame.es/cms/assets/${comp.game?.banner}")
                             .crossfade(true)
                             .build(),
                         contentDescription = "Banner",

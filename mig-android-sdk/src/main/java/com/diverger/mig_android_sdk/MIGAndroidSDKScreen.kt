@@ -3,6 +3,7 @@ package com.diverger.mig_android_sdk
 import CompetitionDetailScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +39,7 @@ import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.PeopleCarry
 import compose.icons.fontawesomeicons.solid.Trophy
 import compose.icons.fontawesomeicons.solid.UserCircle
+import compose.icons.fontawesomeicons.solid.Users
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -118,11 +120,14 @@ fun DrawerContent(
     currentScreen: String,
     onScreenSelected: (String) -> Unit
 ) {
-    val items = listOf(
+    val items = mutableListOf(
         DrawerItem("dashboard", "Dashboard", Icons.Filled.Home),
-        DrawerItem("teams", "Equipos", FontAwesomeIcons.Solid.PeopleCarry),
         DrawerItem("competitions", "Competiciones", FontAwesomeIcons.Solid.Trophy)
     )
+
+    if (UserManager.getUser()?.teams?.isNotEmpty() == true) {
+        items.add(1, DrawerItem("teams", "Equipos", FontAwesomeIcons.Solid.Users))
+    }
 
     MIGAndroidSDKTheme {
         ModalDrawerSheet(
@@ -135,11 +140,21 @@ fun DrawerContent(
             ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
+            /*Text(
                 text = "Menú",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+            )*/
+
+            Text(
+                text = "x",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                    .clickable {
+                        scope.launch { drawerState.close() }
+                    }
             )
 
             LazyColumn {

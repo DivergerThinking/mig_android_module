@@ -29,8 +29,8 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }*/
-            //MIGAndroidSDKScreen(email = "adriortega19@gmail.com")
-            MIGAndroidSDKScreen(email = "cristian.martinez@diverger.ai")
+            MIGAndroidSDKScreen(email = "adriortega19@gmail.com")
+            //MIGAndroidSDKScreen(email = "cristian.martinez@diverger.ai")
         }
     }
 }

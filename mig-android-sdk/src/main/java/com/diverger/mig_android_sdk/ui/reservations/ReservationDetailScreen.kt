@@ -146,7 +146,7 @@ fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
 
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("https://premig.randomkesports.com/cms/assets/${reservation.qrImage ?: "1ff27f6e-a8ef-44f4-b21c-323e87c543bd"}")
+                .data("https://webesports.madridingame.es/cms/assets/${reservation.qrImage ?: "1ff27f6e-a8ef-44f4-b21c-323e87c543bd"}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Código QR",

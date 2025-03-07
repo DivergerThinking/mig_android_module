@@ -29,7 +29,15 @@ import compose.icons.fontawesomeicons.solid.PeopleCarry
 @Composable
 fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
     val navController = rememberNavController()
-    var showTeamSelection by remember { mutableStateOf(true) }
+    var showTeamSelection by remember { mutableStateOf(
+        (UserManager.getUser()?.teams?.size ?: 0) > 1
+    ) }
+
+    LaunchedEffect(Unit) {
+        if (UserManager.selectedTeam.value == null && UserManager.getUser()?.teams?.isNotEmpty() == true) {
+            UserManager.setSelectedTeam(UserManager.getUser()!!.teams.first())
+        }
+    }
 
     MIGAndroidSDKTheme {
         Scaffold(
@@ -58,12 +66,16 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 
 @Composable
 fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> Unit) {
-    val items = listOf(
+    val items = mutableListOf(
         TeamNavItem("training", "Entrenamiento", Icons.Default.DateRange),
         TeamNavItem("news", "Noticias", Icons.Default.Newspaper),
         TeamNavItem("players", "Jugadores", FontAwesomeIcons.Solid.PeopleCarry),
-        TeamNavItem("change_team", "Cambiar equipo", Icons.Default.SwapHoriz)
     )
+
+    if ((UserManager.getUser()?.teams?.size ?: 0) > 1) {
+        items.add(3, TeamNavItem("change_team", "Cambiar equipo", Icons.Default.SwapHoriz)
+        )
+    }
 
     Box(
         modifier = Modifier

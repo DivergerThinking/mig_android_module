@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.ui.teams.news
 
+import NewsViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +34,7 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
             Modifier.background(Color.Black)
         ) {
             Text(
-                "COMPETICIONES",
+                "NOTICIAS",
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 10.dp, start = 16.dp),
@@ -78,7 +79,7 @@ fun NewsItem(news: NewsModel, onNewsSelected: (NewsModel) -> Unit) {
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://premig.randomkesports.com/cms/assets/${news.image ?: ""}")
+                    .data("https://webesports.madridingame.es/cms/assets/${news.image ?: ""}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de noticia",

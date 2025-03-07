@@ -72,7 +72,7 @@ fun PlayerItem(player: TeamUser) {
             if (!player.userId.avatar.isNullOrEmpty()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data("https://premig.randomkesports.com/cms/assets/${player.userId.avatar}")
+                        .data("https://webesports.madridingame.es/cms/assets/${player.userId.avatar}")
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar de ${player.userId.username}",

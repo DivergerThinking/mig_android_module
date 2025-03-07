@@ -120,7 +120,7 @@ fun ProfileAvatar(userAvatar: String?) {
             // 📌 Mostrar la imagen si hay un avatar
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://premig.randomkesports.com/cms/assets/${userAvatar}")
+                    .data("https://webesports.madridingame.es/cms/assets/${userAvatar}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Avatar",

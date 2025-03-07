@@ -59,7 +59,7 @@ fun NewsDetailScreen(news: NewsModel, onDismiss: () -> Unit) {
 
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://premig.randomkesports.com/cms/assets/${news.image ?: ""}")
+                    .data("https://webesports.madridingame.es/cms/assets/${news.image ?: ""}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de noticia",

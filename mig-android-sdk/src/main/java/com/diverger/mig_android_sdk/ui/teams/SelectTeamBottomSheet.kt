@@ -1,6 +1,7 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -29,6 +33,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.Team
 import com.diverger.mig_android_sdk.data.User
+import com.diverger.mig_android_sdk.data.UserManager
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.CheckCircle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +89,7 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("https://premig.randomkesports.com/cms/assets/${team.picture}")
+                .data("https://webesports.madridingame.es/cms/assets/${team.picture}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Team Image",
@@ -95,7 +102,18 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
             Text(text = team.name ?: "Equipo sin nombre", color = Color.White, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = team.description ?: "Equipo sin nombre", color = Color.White.copy(0.5f), fontWeight = FontWeight.Thin, style = MaterialTheme.typography.titleSmall)
-
+        }
+        if (team.id == (UserManager.getSelectedTeam()?.id ?: "")) {
+            Box(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = FeatherIcons.CheckCircle,
+                    contentDescription = "Seleccionado",
+                    tint = Color.White
+                )
+            }
         }
     }
 }

@@ -164,7 +164,7 @@ fun CompetitionLeagueSection(league: LeagueModel, navController: NavController) 
 // 📌 **Tarjeta de una competición en el carrusel**
 @Composable
 fun CompetitionCard(competition: Competition, onClick: () -> Unit) {
-    val imageUrl = "https://premig.randomkesports.com/cms/assets/${competition.game?.image ?: ""}"
+    val imageUrl = "https://webesports.madridingame.es/cms/assets/${competition.game?.image ?: ""}"
 
     Card(
         modifier = Modifier

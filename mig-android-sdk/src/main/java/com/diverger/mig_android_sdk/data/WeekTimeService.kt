@@ -4,10 +4,16 @@ import android.util.Log
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import java.lang.Exception
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 // --------------------------- INTERFAZ API ---------------------------
 interface WeekTimeApiService {
@@ -21,11 +27,12 @@ interface WeekTimeApiService {
 
 // --------------------------- SERVICIO DE SEMANA ---------------------------
 object WeekTimeService {
-    private const val BASE_URL = "https://premig.randomkesports.com/cms/items/"
+    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     private val api: WeekTimeApiService by lazy {
         Retrofit.Builder()
+            .client(getUnsafeOkHttpClient())
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
