@@ -8,9 +8,13 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 object UserManager {
     private var user: User? = null
+    private val _selectedTeam = MutableStateFlow<Team?>(null)
+    val selectedTeam: StateFlow<Team?> = _selectedTeam
     private const val BASE_URL = "https://premig.randomkesports.com/cms/items/"
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
@@ -29,6 +33,9 @@ object UserManager {
                 val fetchedUser = response.data.first()
                 val teams = apiService.getTeamsByUser(fetchedUser.id, token = TOKEN).data
                 user = fetchedUser.copy(teams = teams)
+                /*if (teams.isNotEmpty()) {
+                    selectedTeam = teams.first()
+                }*/
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("No user found"))
@@ -39,6 +46,12 @@ object UserManager {
     }
 
     fun getUser(): User? = user
+
+    fun getSelectedTeam(): Team? = _selectedTeam.value
+
+    fun setSelectedTeam(team: Team) {
+       _selectedTeam.value = team
+    }
 
     interface ApiService {
         @GET("users")

@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.ui.teams.playersTeam
 
+import PlayersTeamViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

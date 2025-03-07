@@ -1,11 +1,9 @@
-package com.diverger.mig_android_sdk.ui.teams.playersTeam
-
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.TeamUser
 import com.diverger.mig_android_sdk.data.UserManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class PlayersTeamViewModel : ViewModel() {
@@ -23,23 +21,26 @@ class PlayersTeamViewModel : ViewModel() {
     val errorMessage: StateFlow<String?> = _errorMessage
 
     init {
-        loadTeamData()
+        observeSelectedTeam()
     }
 
-    private fun loadTeamData() {
+    private fun observeSelectedTeam() {
         viewModelScope.launch {
-            val user = UserManager.getUser()
-            if (user?.teams.isNullOrEmpty()) {
-                _errorMessage.value = "El usuario no pertenece a ningún equipo"
-                _isLoading.value = false
-                return@launch
-            }
+            UserManager.selectedTeam // Ahora `selectedTeam` es un `StateFlow` y Compose lo observará automáticamente
+                .collect { team ->
+                    _isLoading.value = true
 
-            val team = user!!.teams.first()
-            _teamName.value = team.name ?: "Sin equipo"
-            _teamPlayers.value = team.users ?: emptyList()
+                    if (team != null) {
+                        _teamName.value = team.name ?: "Sin equipo"
+                        _teamPlayers.value = team.users ?: emptyList()
+                        _errorMessage.value = null
+                    } else {
+                        _errorMessage.value = "No se ha seleccionado ningún equipo"
+                        _teamPlayers.value = emptyList()
+                    }
 
-            _isLoading.value = false
+                    _isLoading.value = false
+                }
         }
     }
 }
