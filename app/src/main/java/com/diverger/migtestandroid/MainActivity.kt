@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MIGAndroidSDKScreen(email = "adriortega19@gmail.com")
             //MIGAndroidSDKScreen(email = "cristian.martinez@diverger.ai")
+            //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
         }
     }
 }

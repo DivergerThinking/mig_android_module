@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Game
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -165,7 +166,7 @@ fun CompetitionLeagueSection(league: LeagueModel, navController: NavController) 
 // 📌 **Tarjeta de una competición en el carrusel**
 @Composable
 fun CompetitionCard(competition: Competition, onClick: () -> Unit) {
-    val imageUrl = "https://webesports.madridingame.es/cms/assets/${competition.game?.image ?: ""}"
+    val imageUrl = "${EnvironmentManager.getAssetsBaseUrl()}${competition.game?.image ?: ""}"
 
     Card(
         modifier = Modifier

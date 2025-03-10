@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.data
 
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.google.gson.annotations.SerializedName
 
 import retrofit2.Retrofit
@@ -86,8 +87,7 @@ interface CompetitionsService {
 }
 
 object CompetitionsApi {
-    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
-    //private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
+    private val BASE_URL = EnvironmentManager.getBaseUrl()
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     val service: CompetitionsService by lazy {
@@ -100,7 +100,7 @@ object CompetitionsApi {
     }
 
     suspend fun getAllCompetitions(year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01$it-12-31" }
+        val yearRange = year?.let { "$it-01-01,$it-12-31" }
         return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
     }
 

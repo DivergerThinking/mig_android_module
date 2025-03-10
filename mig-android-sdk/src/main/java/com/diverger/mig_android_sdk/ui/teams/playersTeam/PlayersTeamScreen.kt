@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.TeamUser
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 
 @Composable
 fun PlayersTeamScreen(viewModel: PlayersTeamViewModel = viewModel()) {
@@ -72,7 +73,7 @@ fun PlayerItem(player: TeamUser) {
             if (!player.userId.avatar.isNullOrEmpty()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data("https://webesports.madridingame.es/cms/assets/${player.userId.avatar}")
+                        .data("${EnvironmentManager.getBaseUrl()}${player.userId.avatar}")
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar de ${player.userId.username}",

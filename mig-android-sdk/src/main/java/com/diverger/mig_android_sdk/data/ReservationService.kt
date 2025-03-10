@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.data
 
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
@@ -34,7 +35,7 @@ interface ReservationService {
     suspend fun getReservationsByTeam(
         @Query("filter[team][_eq]") teamId: String,
         @Query("filter[status][_neq]") status: String = "cancelled",
-        @Query("fields") fields: String = "id,date,slot.*,times.gaming_space_times_id.time,times.gaming_space_times_id.id",
+        @Query("fields") fields: String = "id,date,slot.*,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
     ): ReservationResponse
 
@@ -50,7 +51,7 @@ interface ReservationService {
 }
 
 object ReservationApi {
-    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
+    private val BASE_URL = EnvironmentManager.getBaseUrl()
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     val service: ReservationService by lazy {
@@ -74,7 +75,7 @@ object ReservationApi {
     // ✅ Obtener reservas de equipo
     suspend fun getReservationsByTeam(teamId: String): Result<List<Reservation>> {
         return try {
-            val response = service.getReservationsByTeam(teamId, token = TOKEN)
+            val response = service.getReservationsByTeam("6d8fd820-5aa4-479a-89e9-1f85c906f189", token = TOKEN)
             Result.success(response.data)
         } catch (e: Exception) {
             Result.failure(e)

@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.NewsModel
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
@@ -79,7 +80,7 @@ fun NewsItem(news: NewsModel, onNewsSelected: (NewsModel) -> Unit) {
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://webesports.madridingame.es/cms/assets/${news.image ?: ""}")
+                    .data("${EnvironmentManager.getBaseUrl()}${news.image ?: ""}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de noticia",

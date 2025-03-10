@@ -26,7 +26,7 @@ class PlayersTeamViewModel : ViewModel() {
 
     private fun observeSelectedTeam() {
         viewModelScope.launch {
-            UserManager.selectedTeam // Ahora `selectedTeam` es un `StateFlow` y Compose lo observará automáticamente
+            UserManager.selectedTeam
                 .collect { team ->
                     _isLoading.value = true
 

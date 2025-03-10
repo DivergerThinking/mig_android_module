@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
@@ -120,7 +121,7 @@ fun ProfileAvatar(userAvatar: String?) {
             // 📌 Mostrar la imagen si hay un avatar
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://webesports.madridingame.es/cms/assets/${userAvatar}")
+                    .data("${EnvironmentManager.getAssetsBaseUrl()}${userAvatar}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Avatar",

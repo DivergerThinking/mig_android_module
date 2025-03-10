@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.data
 
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
@@ -20,7 +21,7 @@ object UserManager {
     private var user: User? = null
     private val _selectedTeam = MutableStateFlow<Team?>(null)
     val selectedTeam: StateFlow<Team?> = _selectedTeam
-    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
+    private val BASE_URL = EnvironmentManager.getBaseUrl()
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     private val apiService: ApiService by lazy {

@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.data
 
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
@@ -18,7 +19,7 @@ interface NewsService {
 
 object NewsApi {
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
-    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
+    private val BASE_URL = EnvironmentManager.getBaseUrl()
 
     val service: NewsService by lazy {
         Retrofit.Builder()

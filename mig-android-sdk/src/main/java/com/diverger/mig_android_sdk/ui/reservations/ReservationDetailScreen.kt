@@ -23,6 +23,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.XCircle
@@ -146,7 +147,7 @@ fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
 
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("https://webesports.madridingame.es/cms/assets/${reservation.qrImage ?: "1ff27f6e-a8ef-44f4-b21c-323e87c543bd"}")
+                .data("${EnvironmentManager.getBaseUrl()}${reservation.qrImage ?: "1ff27f6e-a8ef-44f4-b21c-323e87c543bd"}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Código QR",
@@ -180,16 +181,19 @@ fun ReservationRulesCard() {
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.align(Alignment.CenterHorizontally))
 
+        Spacer(Modifier.height(20.dp))
+
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("https://webesports.madridingame.es/_next/static/media/reserve-rules.e49650ad.png")
+                .data("https://premig.randomkesports.com/_next/static/media/reserve-rules.e49650ad.png")
                 .crossfade(true)
                 .build(),
             contentDescription = "Normas de Uso",
             contentScale = ContentScale.Fit,
             modifier = Modifier
-                .size(200.dp)
-                .background(Color.White, shape = RoundedCornerShape(10.dp))
+                //.size(200.dp)
+                .fillMaxSize()
+                .background(Color.Transparent, shape = RoundedCornerShape(10.dp))
                 .padding(16.dp)
         )
     }

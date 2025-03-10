@@ -35,6 +35,7 @@ import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.Team
 import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.CheckCircle
 
@@ -93,7 +94,7 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("https://webesports.madridingame.es/cms/assets/${team.picture}")
+                .data("${EnvironmentManager.getBaseUrl()}${team.picture}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Team Image",

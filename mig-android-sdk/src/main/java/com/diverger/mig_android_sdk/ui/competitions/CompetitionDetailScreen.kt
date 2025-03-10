@@ -33,6 +33,7 @@ import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FontAwesomeIcons
@@ -89,7 +90,7 @@ fun CompetitionDetailScreen(
                     // 📌 **Banner**
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data("https://webesports.madridingame.es/cms/assets/${comp.game?.banner}")
+                            .data("${EnvironmentManager.getAssetsBaseUrl()}${comp.game?.banner}")
                             .crossfade(true)
                             .build(),
                         contentDescription = "Banner",

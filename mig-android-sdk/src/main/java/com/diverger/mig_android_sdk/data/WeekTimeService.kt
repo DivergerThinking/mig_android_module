@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk.data
 
 import android.util.Log
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +28,7 @@ interface WeekTimeApiService {
 
 // --------------------------- SERVICIO DE SEMANA ---------------------------
 object WeekTimeService {
-    private const val BASE_URL = "https://webesports.madridingame.es/cms/items/"
+    private val BASE_URL = EnvironmentManager.getBaseUrl()
     private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 
     private val api: WeekTimeApiService by lazy {

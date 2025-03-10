@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.NewsModel
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +63,7 @@ fun NewsDetailScreen(news: NewsModel, onDismiss: () -> Unit) {
 
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://webesports.madridingame.es/cms/assets/${news.image ?: ""}")
+                    .data("${EnvironmentManager.getBaseUrl()}${news.image ?: ""}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de noticia",
