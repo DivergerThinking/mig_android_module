@@ -20,11 +20,11 @@ class MIGSDKViewModel @Inject constructor() : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    fun initializeUser(email: String) {
+    fun initializeUser(email: String, accessToken: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
-            val result = UserManager.initializeUser(email)
+            val result = UserManager.initializeUser(email, accessToken)
             result.fold(
                 onSuccess = {
                     _user.value = UserManager.getUser()

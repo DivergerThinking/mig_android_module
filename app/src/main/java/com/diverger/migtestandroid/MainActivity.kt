@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
+import com.diverger.mig_android_sdk.MadridInGameAndroidModule
 import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,8 +22,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MIGAndroidSDKScreen(email = "adriortega19@gmail.com")
-            //MIGAndroidSDKScreen(email = "cristian.martinez@diverger.ai")
+            MadridInGameAndroidModule(email = "adriortega19@gmail.com", accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY")
+            //MIGAndroidSDKScreen(email = " ")
             //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
         }
     }

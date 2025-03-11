@@ -44,14 +44,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun MIGAndroidSDKScreen(email: String) {
+fun MadridInGameAndroidModule(email: String,
+                              userName: String? = null,
+                              dni: String? = null,
+                              accessToken: String,
+                              logoMIG: ImageVector? = null,
+                              qrMiddleLogo: ImageVector? = null) {
+    MIGAndroidSDKScreen(email = email, accessToken)
+}
+
+@Composable
+fun MIGAndroidSDKScreen(email: String, accessToken: String) {
     val viewModel: MIGSDKViewModel = viewModel()
     val user by viewModel.user.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    LaunchedEffect(email) {
-        viewModel.initializeUser(email)
+    LaunchedEffect(email, accessToken) {
+        viewModel.initializeUser(email, accessToken)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

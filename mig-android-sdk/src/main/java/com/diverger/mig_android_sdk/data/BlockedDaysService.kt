@@ -19,7 +19,7 @@ interface BlockedDaysApi {
 
 object BlockedDaysService {
     private val BASE_URL = EnvironmentManager.getBaseUrl()
-    private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+    private val TOKEN = "Bearer ${UserManager.getAccessToken()}"
 
     private val service: BlockedDaysApi by lazy {
         Retrofit.Builder()

@@ -18,7 +18,7 @@ interface NewsService {
 }
 
 object NewsApi {
-    private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+    private val TOKEN = "Bearer ${UserManager.getAccessToken()}"
     private val BASE_URL = EnvironmentManager.getBaseUrl()
 
     val service: NewsService by lazy {

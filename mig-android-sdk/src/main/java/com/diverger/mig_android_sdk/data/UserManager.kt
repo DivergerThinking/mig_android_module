@@ -22,7 +22,7 @@ object UserManager {
     private val _selectedTeam = MutableStateFlow<Team?>(null)
     val selectedTeam: StateFlow<Team?> = _selectedTeam
     private val BASE_URL = EnvironmentManager.getBaseUrl()
-    private const val TOKEN = "Bearer 8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+    private var accessToken: String? = null
 
     private val apiService: ApiService by lazy {
         Retrofit.Builder()
@@ -33,12 +33,13 @@ object UserManager {
             .create(ApiService::class.java)
     }
 
-    suspend fun initializeUser(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun initializeUser(email: String, accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val response = apiService.getUserByEmail(email, token = TOKEN)
+            setAccessToken(accessToken)
+            val response = apiService.getUserByEmail(email, token = "Bearer $accessToken")
             if (response.data.isNotEmpty()) {
                 val fetchedUser = response.data.first()
-                val teams = apiService.getTeamsByUser(fetchedUser.id, token = TOKEN).data
+                val teams = apiService.getTeamsByUser(fetchedUser.id, token = "Bearer $accessToken").data
                 user = fetchedUser.copy(teams = teams)
                 if (teams.isNotEmpty()) {
                     _selectedTeam.value = teams.first()
@@ -59,6 +60,12 @@ object UserManager {
     fun setSelectedTeam(team: Team) {
        _selectedTeam.value = team
     }
+
+    fun setAccessToken(token: String) {
+        accessToken = token
+    }
+
+    fun getAccessToken(): String? = accessToken
 
     interface ApiService {
         @GET("users")
