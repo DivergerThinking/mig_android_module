@@ -4,13 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.UserManager
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class MIGSDKViewModel @Inject constructor() : ViewModel() {
+class MIGSDKViewModel : ViewModel() {
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
 

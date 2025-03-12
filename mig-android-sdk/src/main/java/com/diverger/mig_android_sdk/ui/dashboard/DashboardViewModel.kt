@@ -1,12 +1,9 @@
 package com.diverger.mig_android_sdk.ui.dashboard
 
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.*
 
-@HiltViewModel
-class DashboardViewModel @Inject constructor() : ViewModel() {
+class DashboardViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 

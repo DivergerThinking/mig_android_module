@@ -50,6 +50,9 @@ fun MadridInGameAndroidModule(email: String,
                               accessToken: String,
                               logoMIG: ImageVector? = null,
                               qrMiddleLogo: ImageVector? = null) {
+    LaunchedEffect(Unit) {
+        initializeKoin()
+    }
     MIGAndroidSDKScreen(email = email, accessToken)
 }
 

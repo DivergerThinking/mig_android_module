@@ -1,14 +1,9 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     id("maven-publish")
-}
-
-hilt {
-    enableAggregatingTask = false
 }
 
 android {
@@ -50,7 +45,7 @@ android {
 publishing {
     publications {
         create<MavenPublication>("release") {
-            groupId = "com.github.DivergerThinking" // Namespace en JitPack
+            groupId = "com.github.DivergerThinking"
             artifactId = "mig-android-module"
             version = "1.0.0"
 
@@ -80,20 +75,16 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.foundation:foundation:1.4.0")
     implementation("io.coil-kt:coil-compose:2.2.2")
-    implementation("androidx.compose.material:material-icons-extended:1.5.4") // Material Icons
-    implementation("br.com.devsrsouza.compose.icons:font-awesome:1.1.0") // FontAwesome
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("br.com.devsrsouza.compose.icons:font-awesome:1.1.0")
     implementation("br.com.devsrsouza.compose.icons:feather:1.1.0")
     implementation("com.kizitonwose.calendar:compose:2.2.0")
-
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-
+    implementation("io.insert-koin:koin-android:3.4.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.gson) // 🔹 Para convertir JSON en objetos Kotlin
+    implementation(libs.retrofit.gson)
     implementation(libs.gson)
 }
 

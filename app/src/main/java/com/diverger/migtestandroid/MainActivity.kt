@@ -14,10 +14,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
 import com.diverger.mig_android_sdk.MadridInGameAndroidModule
 import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

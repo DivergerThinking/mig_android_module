@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
@@ -33,7 +33,7 @@ import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
+fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
     val user by viewModel.user.collectAsState()
 
     var firstName by remember { mutableStateOf(user?.firstName.orEmpty()) }
