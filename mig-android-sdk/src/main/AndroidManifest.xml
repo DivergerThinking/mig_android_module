@@ -3,6 +3,10 @@
 
     <application
         android:allowBackup="true">
+        <activity
+            android:name=".MIGSDKActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>
 
 </manifest>

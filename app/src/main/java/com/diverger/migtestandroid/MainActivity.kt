@@ -13,17 +13,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
 import com.diverger.mig_android_sdk.MadridInGameAndroidModule
+import com.diverger.mig_android_sdk.MadridInGameAndroidModuleEntryPoint
 import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
 
  class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        /*enableEdgeToEdge()
         setContent {
-            MadridInGameAndroidModule(email = "adriortega19@gmail.com", accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY")
+
+            //MadridInGameAndroidModule(email = "adriortega19@gmail.com", accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY")
             //MIGAndroidSDKScreen(email = " ")
             //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
-        }
+        }*/
+
+        // Llamar al módulo de forma directa
+        MadridInGameAndroidModuleEntryPoint.launch(
+            context = this,
+            email = "adriortega19@gmail.com",
+            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+        )
+
+        // Opcional: Finalizar MainActivity si no quieres que quede en la pila
+        finish()
     }
 }
 

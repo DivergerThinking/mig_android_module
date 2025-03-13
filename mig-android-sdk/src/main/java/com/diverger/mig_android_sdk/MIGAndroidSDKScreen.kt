@@ -50,14 +50,16 @@ fun MadridInGameAndroidModule(email: String,
                               accessToken: String,
                               logoMIG: ImageVector? = null,
                               qrMiddleLogo: ImageVector? = null) {
-    LaunchedEffect(Unit) {
-        initializeKoin()
-    }
-    MIGAndroidSDKScreen(email = email, accessToken)
+    MIGAndroidSDKScreen(email = email, accessToken = accessToken)
 }
 
 @Composable
-fun MIGAndroidSDKScreen(email: String, accessToken: String) {
+fun MIGAndroidSDKScreen(email: String,
+                        userName: String? = null,
+                        dni: String? = null,
+                        accessToken: String,
+                        logoMIG: ImageVector? = null,
+                        qrMiddleLogo: ImageVector? = null) {
     val viewModel: MIGSDKViewModel = viewModel()
     val user by viewModel.user.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
