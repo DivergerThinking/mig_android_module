@@ -38,7 +38,7 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
         MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
             email = "hamzahods@gmail.com",
-            userName = "Hamza",
+            userName = "HamzaTest3",
             dni = "03427404J",
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
         )
