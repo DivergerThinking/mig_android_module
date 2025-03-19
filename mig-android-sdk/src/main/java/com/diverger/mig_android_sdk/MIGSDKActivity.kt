@@ -10,9 +10,11 @@ class MIGSDKActivity : ComponentActivity() {
 
         val email = intent.getStringExtra("EMAIL") ?: ""
         val accessToken = intent.getStringExtra("ACCESS_TOKEN") ?: ""
+        val userName = intent.getStringExtra("USERNAME") ?: ""
+        val dni = intent.getStringExtra("DNI") ?: ""
 
         setContent {
-            MIGAndroidSDKScreen(email = email, accessToken = accessToken)
+            MIGAndroidSDKScreen(email = email, userName = userName, dni = dni, accessToken = accessToken)
         }
     }
 }

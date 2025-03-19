@@ -17,7 +17,7 @@ object MadridInGameAndroidModuleEntryPoint {
         val intent = Intent(context, MIGSDKActivity::class.java).apply {
             putExtra("EMAIL", email)
             putExtra("ACCESS_TOKEN", accessToken)
-            putExtra("USER_NAME", userName ?: "")
+            putExtra("USERNAME", userName ?: "")
             putExtra("DNI", dni ?: "")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

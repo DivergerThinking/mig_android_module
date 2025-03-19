@@ -27,6 +27,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.diverger.mig_android_sdk.data.Competition
+import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
 import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
@@ -66,7 +67,12 @@ fun MIGAndroidSDKScreen(email: String,
     val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(email, accessToken) {
-        viewModel.initializeUser(email, accessToken)
+        viewModel.initializeUser(
+            email = email,
+            userName = userName.toString(),
+            dni = dni.toString(),
+            accessToken = accessToken
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -89,7 +95,7 @@ fun MIGAndroidSDKScreen(email: String,
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(user: com.diverger.mig_android_sdk.data.User) {
+fun MainScreen(user: User) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -230,7 +236,7 @@ fun DrawerContent(
 }
 
 @Composable
-fun DashboardNavigation(user: com.diverger.mig_android_sdk.data.User, modifier: Modifier) {
+fun DashboardNavigation(user: User, modifier: Modifier) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -248,7 +254,7 @@ fun DashboardNavigation(user: com.diverger.mig_android_sdk.data.User, modifier: 
 fun NavigationGraph(
     navController: NavHostController,
     modifier: Modifier,
-    user: com.diverger.mig_android_sdk.data.User,
+    user: User,
     screen: String
 ) {
     NavHost(navController, startDestination = screen, modifier = modifier) {

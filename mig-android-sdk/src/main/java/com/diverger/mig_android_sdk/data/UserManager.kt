@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 import okhttp3.OkHttpClient
+import retrofit2.http.Body
+import retrofit2.http.POST
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
@@ -33,7 +35,7 @@ object UserManager {
             .create(ApiService::class.java)
     }
 
-    suspend fun initializeUser(email: String, accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun initializeUser(email: String, userName: String, dni: String, accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             setAccessToken(accessToken)
             val response = apiService.getUserByEmail(email, token = "Bearer $accessToken")
@@ -46,7 +48,19 @@ object UserManager {
                 }
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("No user found"))
+                val newUserResponse = apiService.createUser(
+                    userRequest = UserRequest(email, userName, dni),
+                    token = "Bearer $accessToken"
+                )
+
+                if (newUserResponse.data == null) {
+                    return@withContext Result.failure(Exception("Error: No se pudo crear el usuario. Respuesta vacía."))
+                }
+
+                val newUser = newUserResponse.data
+                user = newUser
+
+                Result.success(Unit)
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -81,10 +95,23 @@ object UserManager {
             @Query("fields") fields: String = "id,name,description,picture,apply_membership,status,discord,users.roles.*,users.users_id.id,users.users_id.username,users.users_id.avatar,competitions.competitions_id,date_edited",
             @Header("Authorization") token: String
         ): TeamResponse
+
+        @POST("users")
+        suspend fun createUser(
+            @Body userRequest: UserRequest,
+            @Header("Authorization") token: String
+        ): UserCreatedResponse
     }
 }
 
+data class UserRequest(
+    val email: String,
+    val username: String,
+    val dni: String
+)
+
 data class UserResponse(val data: List<User>)
+data class UserCreatedResponse(val data: User?)
 data class TeamResponse(val data: List<Team>)
 
 data class User(

@@ -27,14 +27,22 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
             //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
         }*/
 
-        // Llamar al módulo de forma directa
-        MadridInGameAndroidModuleEntryPoint.launch(
+        /*MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
             email = "adriortega19@gmail.com",
+            userName = "Adri",
+            dni = "03427404J",
+            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+        )*/
+
+        MadridInGameAndroidModuleEntryPoint.launch(
+            context = this,
+            email = "hamzahods@gmail.com",
+            userName = "Hamza",
+            dni = "03427404J",
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
         )
 
-        // Opcional: Finalizar MainActivity si no quieres que quede en la pila
         finish()
     }
 }
