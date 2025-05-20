@@ -1,7 +1,14 @@
 package com.diverger.mig_android_sdk.ui.profile
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +41,7 @@ import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
+    val context = LocalContext.current
     val user by viewModel.user.collectAsState()
 
     var firstName by remember { mutableStateOf(user?.firstName.orEmpty()) }
@@ -43,6 +51,38 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
     var username by remember { mutableStateOf(user?.username.orEmpty()) }
     var phone by remember { mutableStateOf(user?.phone.orEmpty()) }
     val avatar by remember { mutableStateOf(user?.avatar) }
+
+    var newAvatarUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Lanzador para elegir imagen
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            newAvatarUri = it
+            // Iniciamos la subida y actualización
+            viewModel.onAvatarSelected(it, context)
+        }
+    }
+
+    // 2.1 Launchers: petición de permiso y selector de imagen
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        android.Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        android.Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    // Lanzador para petición de permiso
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // Ya tenemos permiso: lanzamos el picker
+            pickImageLauncher.launch("image/*")
+        } else {
+            Toast.makeText(context, "Permiso denegado", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     MIGAndroidSDKTheme {
         Box(
@@ -61,7 +101,37 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                ProfileAvatar(avatar)
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.Transparent)
+                        .clickable { pickImageLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        // Si acabamos de escoger uno, mostrar preview
+                        newAvatarUri != null -> AsyncImage(
+                            model = newAvatarUri,
+                            contentDescription = "Nuevo Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        // Si ya había un avatar en servidor, mostrarlo
+                        user?.avatar?.isNotEmpty() == true -> AsyncImage(
+                            model = "${EnvironmentManager.getAssetsBaseUrl()}${user!!.avatar}",
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        else -> Icon(
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = "Avatar por defecto",
+                            modifier = Modifier.size(100.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -95,12 +165,29 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         Text("Descartar")
                     }
                     Spacer(modifier = Modifier.width(10.dp))*/
-                    Button(
+                    /*Button(
                         onClick = { viewModel.saveChanges(firstName, lastName, dni, email, username, phone) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("EDITAR", style = MaterialTheme.typography.headlineSmall)
+                    }*/
+
+                    Button(
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://personal-area.azurewebsites.net")
+                            )
+                            context.startActivity(intent)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Cyan,
+                            contentColor = Color.Black
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("ÁREA PERSONAL", style = MaterialTheme.typography.headlineSmall)
                     }
                 }
             }
