@@ -79,6 +79,7 @@ dependencies {
     implementation("br.com.devsrsouza.compose.icons:font-awesome:1.1.0")
     implementation("br.com.devsrsouza.compose.icons:feather:1.1.0")
     implementation("com.kizitonwose.calendar:compose:2.2.0")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.12.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

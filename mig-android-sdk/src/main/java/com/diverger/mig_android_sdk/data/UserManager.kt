@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.Body
 import retrofit2.http.POST
 import java.security.SecureRandom
@@ -48,8 +49,9 @@ object UserManager {
                 }
                 Result.success(Unit)
             } else {
+                val dniValue = dni.takeIf { it.isNotBlank() }
                 val newUserResponse = apiService.createUser(
-                    userRequest = UserRequest(email, userName, dni),
+                    userRequest = UserRequest(email, userName, dniValue),
                     token = "Bearer $accessToken"
                 )
 
@@ -107,7 +109,7 @@ object UserManager {
 data class UserRequest(
     val email: String,
     val username: String,
-    val dni: String
+    val dni: String?
 )
 
 data class UserResponse(val data: List<User>)
@@ -176,10 +178,14 @@ fun getUnsafeOkHttpClient(): OkHttpClient {
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, SecureRandom())
 
+        val logging = HttpLoggingInterceptor()
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+
         val sslSocketFactory = sslContext.socketFactory
         OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
             .hostnameVerifier { _, _ -> true }
+            .addInterceptor(logging)
             .build()
     } catch (e: Exception) {
         throw RuntimeException(e)

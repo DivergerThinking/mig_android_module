@@ -1,5 +1,7 @@
 package com.diverger.mig_android_sdk.ui.profile
 
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -65,19 +67,16 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
         }
     }
 
-    // 2.1 Launchers: petición de permiso y selector de imagen
+    // Selección de permiso según versión de Android
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         android.Manifest.permission.READ_MEDIA_IMAGES
     } else {
         android.Manifest.permission.READ_EXTERNAL_STORAGE
     }
-
-    // Lanzador para petición de permiso
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            // Ya tenemos permiso: lanzamos el picker
             pickImageLauncher.launch("image/*")
         } else {
             Toast.makeText(context, "Permiso denegado", Toast.LENGTH_SHORT).show()
@@ -97,41 +96,81 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("SOBRE MÍ", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineLarge, color = Color.White, textAlign = TextAlign.Start, fontWeight = FontWeight.Bold)
+                Text(
+                    "SOBRE MÍ",
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color.White,
+                    textAlign = TextAlign.Start,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // ─────── Cambios mínimos aquí ───────
                 Box(
                     modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(Color.Transparent)
-                        .clickable { pickImageLauncher.launch("image/*") },
-                    contentAlignment = Alignment.Center
+                        .wrapContentSize()                         // Permite que el texto sea más ancho que 120dp
+                        .clickable {
+                            // Comprobamos permiso antes de lanzar el picker
+                            when {
+                                ContextCompat.checkSelfPermission(context, permission)
+                                        == PackageManager.PERMISSION_GRANTED -> {
+                                    pickImageLauncher.launch("image/*")
+                                }
+                                else -> {
+                                    permissionLauncher.launch(permission)
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.TopCenter         // Alinea la imagen circular en la parte superior
                 ) {
-                    when {
-                        // Si acabamos de escoger uno, mostrar preview
-                        newAvatarUri != null -> AsyncImage(
-                            model = newAvatarUri,
-                            contentDescription = "Nuevo Avatar",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        // Si ya había un avatar en servidor, mostrarlo
-                        user?.avatar?.isNotEmpty() == true -> AsyncImage(
-                            model = "${EnvironmentManager.getAssetsBaseUrl()}${user!!.avatar}",
-                            contentDescription = "Avatar",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        else -> Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "Avatar por defecto",
-                            modifier = Modifier.size(100.dp),
-                            tint = Color.White
-                        )
+                    // 1. El círculo de 120dp donde se recorta la imagen
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(Color.Transparent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            // Si se acaba de escoger uno, mostrar preview
+                            newAvatarUri != null -> AsyncImage(
+                                model = newAvatarUri,
+                                contentDescription = "Nuevo Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            // Si ya había un avatar en servidor, mostrarlo
+                            user?.avatar?.isNotEmpty() == true -> AsyncImage(
+                                model = "${EnvironmentManager.getAssetsBaseUrl()}${user!!.avatar}",
+                                contentDescription = "Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            else -> Icon(
+                                imageVector = Icons.Filled.AccountCircle,
+                                contentDescription = "Avatar por defecto",
+                                modifier = Modifier.size(100.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
+
+                    // 2. Texto “Pulsar para cambiar” justo debajo del círculo
+                    Text(
+                        text = "Pulsar para cambiar",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .padding(top = 128.dp)                     // 120dp de altura del círculo + 8dp de separación
+                            .background(Color.Black.copy(alpha = 0.4f)) // Fondo semitransparente
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
+                // ──────────────────────────────────────────────
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -157,22 +196,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row {
-                    /*Button(
-                        onClick = { viewModel.discardChanges() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Descartar")
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))*/
-                    /*Button(
-                        onClick = { viewModel.saveChanges(firstName, lastName, dni, email, username, phone) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("EDITAR", style = MaterialTheme.typography.headlineSmall)
-                    }*/
-
                     Button(
                         onClick = {
                             val intent = Intent(

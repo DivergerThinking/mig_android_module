@@ -35,11 +35,19 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
         )*/
 
+//        MadridInGameAndroidModuleEntryPoint.launch(
+//            context = this,
+//            email = "hamzahods35@gmail.com",
+//            userName = "",
+//            dni = "09987644D",
+//            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+//        )
+
         MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
-            email = "hamzahods@gmail.com",
-            userName = "HamzaTest3",
-            dni = "03427404J",
+            email = "hamza.elhamdaoui124@diverger.com",
+            userName = "hamzaelhamdaoui124",
+            //dni = "",
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
         )
 
