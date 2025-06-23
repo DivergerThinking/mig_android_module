@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk
 
 import CompetitionDetailScreen
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -101,6 +102,8 @@ fun MainScreen(user: User) {
     val scope = rememberCoroutineScope()
     var currentScreen by remember { mutableStateOf("dashboard") }
 
+    val activity = LocalActivity.current
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -119,6 +122,19 @@ fun MainScreen(user: User) {
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
+                        }
+                    },
+                    actions = {
+                        MIGAndroidSDKTheme {
+                            TextButton(
+                                onClick = { activity?.finish() }
+                            ) {
+                                Text(
+                                    text = "Salir",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 )

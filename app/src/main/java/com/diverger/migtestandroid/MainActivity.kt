@@ -27,13 +27,13 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
             //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
         }*/
 
-        /*MadridInGameAndroidModuleEntryPoint.launch(
+        MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
             email = "adriortega19@gmail.com",
             userName = "Adri",
             dni = "03427404J",
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
-        )*/
+        )
 
 //        MadridInGameAndroidModuleEntryPoint.launch(
 //            context = this,
@@ -43,13 +43,13 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
 //            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
 //        )
 
-        MadridInGameAndroidModuleEntryPoint.launch(
-            context = this,
-            email = "hamza.elhamdaoui124@diverger.com",
-            userName = "hamzaelhamdaoui124",
-            //dni = "",
-            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
-        )
+//        MadridInGameAndroidModuleEntryPoint.launch(
+//            context = this,
+//            email = "hamza.elhamdaoui124@diverger.com",
+//            userName = "hamzaelhamdaoui124",
+//            //dni = "",
+//            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+//        )
 
         finish()
     }

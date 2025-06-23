@@ -1,0 +1,1 @@
+-keepclasseswithmembers class com.diverger.mig_android_sdk.** { *; }
