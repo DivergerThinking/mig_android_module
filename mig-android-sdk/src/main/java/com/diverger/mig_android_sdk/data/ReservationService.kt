@@ -5,6 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import com.google.gson.annotations.SerializedName
+import okhttp3.logging.HttpLoggingInterceptor
 import java.util.Date
 
 interface ReservationService {
@@ -12,7 +13,7 @@ interface ReservationService {
     suspend fun getReservationsByUser(
         @Query("filter[user][_eq]") userId: String,
         @Query("filter[status][_neq]") status: String = "cancelled",
-        ///@Query("filter[date][_gte]") date: String = "\$NOW",
+        @Query("filter[date][_gte]") date: String = "\$NOW",
         @Query("filter[team][_null]") team: String = "true",
         @Query("fields") fields: String = "id,date,slot.*,qrImage,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
@@ -54,9 +55,18 @@ object ReservationApi {
     private val BASE_URL = EnvironmentManager.getBaseUrl()
     private val TOKEN = "Bearer ${UserManager.getAccessToken()}"
 
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    private val httpClient = getUnsafeOkHttpClient()
+        .newBuilder()
+        .addInterceptor(loggingInterceptor)
+        .build()
+
     val service: ReservationService by lazy {
         Retrofit.Builder()
-            .client(getUnsafeOkHttpClient())
+            .client(httpClient)
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -133,18 +143,18 @@ data class Reservation(
 data class ReservationWrapper(
     val id: Int?,
     val status: String?,
-    val slot: Slot,
+    val slot: Int,
     val date: String,
     val user: String?,
     val team: String?,
     val training: String?,
     @SerializedName("qrImage") val qrImage: String?,
     @SerializedName("qrValue") val qrValue: String?,
-    @SerializedName("times") val timesContainer: List<Map<String, GamingSpaceTime>>,
+    @SerializedName("times") val timesContainer: List<Map<String, GamingSpaceTimeId>>,
     @SerializedName("peripheral_loans") val peripheralLoans: List<Int>?,
 ) {
     // Extraemos `gaming_space_times_id` correctamente
-    val times: List<GamingSpaceTime> get() = timesContainer.mapNotNull { it["gaming_space_times_id"] }
+    val times: List<GamingSpaceTimeId> get() = timesContainer.mapNotNull { it["gaming_space_times_id"] }
 }
 
 /*data class Slot(
@@ -156,4 +166,12 @@ data class GamingSpaceTime(
     val id: Int,
     val time: String,
     val value: Int
+)
+
+data class GamingSpaceTimeId(
+    val id: Int
+)
+
+data class SlotId(
+    val id:Int
 )

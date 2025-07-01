@@ -260,12 +260,16 @@ class ReservationFlowViewModel : ViewModel() {
             return false
         }
 
-        val mappedTimes = slots.map { mapOf("gaming_space_times_id" to it) }
+        val mappedTimes = slots.map { slot ->
+            mapOf(
+                "gaming_space_times_id" to GamingSpaceTimeId(id = slot.id)
+            )
+        }
 
         val reservation = ReservationWrapper(
             id = null,
             status = "active",
-            slot = space.slots.first(),
+            slot = space.slots.first().id,
             date = try {
                 dateFormatter.format(dateFormatter.parse(date))
             } catch (e: Exception) {
