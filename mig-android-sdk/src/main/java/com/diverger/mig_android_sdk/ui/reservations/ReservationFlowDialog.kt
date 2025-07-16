@@ -24,17 +24,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -46,6 +52,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Space
+import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel
 import kotlinx.coroutines.launch
 
@@ -61,6 +68,9 @@ fun ReservationFlowDialog(
     val isProcessing by viewModel.isProcessing.collectAsState() // Nuevo estado para saber si está procesando
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    var showDniDialog by remember { mutableStateOf(false) }
+    var enteredDni by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -107,7 +117,11 @@ fun ReservationFlowDialog(
                     0 -> SelectDateView(viewModel, onNext = { viewModel.goToNextStep() })
                     1 -> SelectSlotView(viewModel, onNext = { viewModel.goToNextStep() })
                     2 -> SelectSpaceView(viewModel, onConfirm = {
-                        coroutineScope.launch {
+                        val user = UserManager.getUser()
+                        if (user?.dni.isNullOrBlank()) {
+                            // 1) Si no hay DNI, abrimos diálogo
+                            showDniDialog = true
+                        } else {coroutineScope.launch {
                             viewModel.createReservation(userId).let { result ->
                                 if (result) {
                                     Toast.makeText(context, "Reserva creada con éxito", Toast.LENGTH_SHORT).show()
@@ -117,7 +131,7 @@ fun ReservationFlowDialog(
                                 }
                                 onDismiss()
                             }
-                        }
+                        }}
                     })
                 }
 
@@ -137,6 +151,57 @@ fun ReservationFlowDialog(
                 ) {
                     Text("Cerrar", color = Color.White)
                 }
+            }
+
+            if (showDniDialog) {
+                AlertDialog(
+                    onDismissRequest = { if (!isProcessing) showDniDialog = false },
+                    title = { Text("Introduce tu DNI") },
+                    text = {
+                        OutlinedTextField(
+                            value = enteredDni,
+                            onValueChange = { enteredDni = it },
+                            label = { Text("DNI") },
+                            singleLine = true,
+                            enabled = !isProcessing,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                if (enteredDni.isNotBlank()) {
+                                    // Guardamos el DNI y cerramos diálogo
+                                    //UserManager.setDNI(enteredDni)
+                                    showDniDialog = false
+                                    // Una vez guardado, reintentamos la reserva:
+                                    coroutineScope.launch {
+                                        viewModel.createReservation(userId).let { success ->
+                                            if (success) {
+                                                Toast.makeText(context, "¡Reserva creada!", Toast.LENGTH_SHORT).show()
+                                                onReservationSuccess()
+                                            } else {
+                                                Toast.makeText(context, "Error al crear reserva", Toast.LENGTH_SHORT).show()
+                                            }
+                                            onDismiss()
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = enteredDni.isNotBlank() && !isProcessing
+                        ) {
+                            Text("Aceptar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showDniDialog = false },
+                            enabled = !isProcessing
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
             }
         }
     }
