@@ -86,5 +86,6 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.gson)
+    implementation ("com.google.zxing:core:3.5.1")
 }
 

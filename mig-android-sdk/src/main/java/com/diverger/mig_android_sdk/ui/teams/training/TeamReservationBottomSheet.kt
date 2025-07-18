@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk.ui.teams.training
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
@@ -157,6 +159,8 @@ private fun ReservationQrCard(training: EventModel) {
                     .crossfade(true)
                     .build(),
                 contentDescription = "Código QR",
+                placeholder = rememberVectorPainter(Icons.Default.QrCode),
+                error       = rememberVectorPainter(Icons.Default.BrokenImage),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(200.dp)

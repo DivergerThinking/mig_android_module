@@ -1,4 +1,6 @@
+import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -11,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +28,8 @@ import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.XCircle
 
@@ -121,10 +126,26 @@ fun ReservationDetailScreen(
         }
     }
 
-// 📌 **Tarjeta del Código QR**
 @Composable
 fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
     val reservation by viewModel.reservation.collectAsState()
+    val qrText = reservation.qrValue.orEmpty()
+
+    // Genera el Bitmap del QR solo cuando cambia qrText:
+    val qrBitmap: Bitmap? = remember(qrText) {
+        runCatching {
+            val size = 300
+            val bitMatrix = QRCodeWriter().encode(qrText, BarcodeFormat.QR_CODE, size, size)
+            Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).also { bmp ->
+                for (x in 0 until size) {
+                    for (y in 0 until size) {
+                        bmp.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                    }
+                }
+            }
+        }.getOrNull()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -137,26 +158,52 @@ fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
             .padding(horizontal = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("RESERVA CONFIRMADA", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
-        Text("LOCALIZACIÓN: ${viewModel.getReservationLocation().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
-        Text("PLATAFORMA: ${viewModel.getReservationConsole().uppercase()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
-        Text("FECHA: ${viewModel.getFormattedDate()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
-        Text("HORAS: ${viewModel.getFormattedTimes()}", color = Color.White.copy(0.7f) ,fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 5.dp))
+        Text(
+            "RESERVA CONFIRMADA",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(bottom = 5.dp)
+        )
+        Text(
+            "LOCALIZACIÓN: ${viewModel.getReservationLocation().uppercase()}",
+            color = Color.White.copy(0.7f),
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 5.dp)
+        )
+        Text(
+            "PLATAFORMA: ${viewModel.getReservationConsole().uppercase()}",
+            color = Color.White.copy(0.7f),
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(bottom = 5.dp)
+        )
+        Text(
+            "FECHA: ${viewModel.getFormattedDate()}",
+            color = Color.White.copy(0.7f),
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(bottom = 5.dp)
+        )
+        Text(
+            "HORAS: ${viewModel.getFormattedTimes()}",
+            color = Color.White.copy(0.7f),
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(bottom = 5.dp)
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data("${EnvironmentManager.getBaseUrl()}${reservation.qrImage ?: "1ff27f6e-a8ef-44f4-b21c-323e87c543bd"}")
-                .crossfade(true)
-                .build(),
-            contentDescription = "Código QR",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .size(200.dp)
-                .background(Color.White, shape = RoundedCornerShape(10.dp))
-                .padding(16.dp)
-        )
+        // Mostramos el QR generado
+        qrBitmap?.let { bmp ->
+            Image(
+                bitmap = bmp.asImageBitmap(),
+                contentDescription = "Código QR de la reserva",
+                modifier = Modifier
+                    .size(250.dp)
+                    .background(Color.White, shape = RoundedCornerShape(10.dp))
+                    .padding(16.dp)
+            )
+        }
     }
 }
 
@@ -191,8 +238,8 @@ fun ReservationRulesCard() {
             contentDescription = "Normas de Uso",
             contentScale = ContentScale.Fit,
             modifier = Modifier
-                //.size(200.dp)
-                .fillMaxSize()
+                .size(200.dp)
+                //.fillMaxSize()
                 .background(Color.Transparent, shape = RoundedCornerShape(10.dp))
                 .padding(16.dp)
         )
