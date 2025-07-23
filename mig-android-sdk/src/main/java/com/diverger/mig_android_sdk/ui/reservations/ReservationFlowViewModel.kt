@@ -307,4 +307,24 @@ class ReservationFlowViewModel : ViewModel() {
             _isProcessing.value = false
         }
     }
+
+    fun updateUserDNI(dni: String) {
+        viewModelScope.launch {
+            viewModelScope.launch {
+                _isLoading.value = true
+                val result = runCatching { UserManager.updateUserDNI(dni = dni) }
+
+                result.onSuccess {
+                    _isLoading.value = false
+                    /*_toastMessage.value = "Reserva cancelada con éxito"
+                    UserManager.getUser()?.id.let {
+                        fetchReservations(UserManager.getUser()!!.id)
+                    }*/
+                }.onFailure {
+                    _isLoading.value = false
+                    //_toastMessage.value = "Error al cancelar la reserva"
+                }
+            }
+        }
+    }
 }

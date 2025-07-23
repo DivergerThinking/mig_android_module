@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.Body
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -69,6 +70,40 @@ object UserManager {
         }
     }
 
+    suspend fun updateUserDNI(dni: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val userDNIRequest = UserDNIRequest(dni = dni)
+            val response = apiService.updateUserDNI(userDNIRequest, token = "Bearer $accessToken")
+            /*if (response.data.isNotEmpty()) {
+                val fetchedUser = response.data.first()
+                val teams = apiService.getTeamsByUser(fetchedUser.id, token = "Bearer $accessToken").data
+                user = fetchedUser.copy(teams = teams)
+                if (teams.isNotEmpty()) {
+                    _selectedTeam.value = teams.first()
+                }
+                Result.success(Unit)
+            } else {
+                val dniValue = dni.takeIf { it.isNotBlank() }
+                val newUserResponse = apiService.createUser(
+                    userRequest = UserRequest(email, userName, dniValue),
+                    token = "Bearer $accessToken"
+                )
+
+                if (newUserResponse.data == null) {
+                    return@withContext Result.failure(Exception("Error: No se pudo crear el usuario. Respuesta vacía."))
+                }
+
+                val newUser = newUserResponse.data
+                user = newUser
+
+                Result.success(Unit)
+            }*/
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun getUser(): User? = user
 
     fun getSelectedTeam(): Team? = _selectedTeam.value
@@ -103,6 +138,12 @@ object UserManager {
             @Body userRequest: UserRequest,
             @Header("Authorization") token: String
         ): UserCreatedResponse
+
+        @PATCH("users")
+        suspend fun updateUserDNI(
+            @Body userRequest: UserDNIRequest,
+            @Header("Authorization") token: String
+        ): UserCreatedResponse
     }
 }
 
@@ -110,6 +151,10 @@ data class UserRequest(
     val email: String,
     val username: String,
     val dni: String?
+)
+
+data class UserDNIRequest(
+    val dni: String,
 )
 
 data class UserResponse(val data: List<User>)

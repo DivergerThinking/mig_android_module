@@ -171,19 +171,19 @@ fun ReservationFlowDialog(
                         TextButton(
                             onClick = {
                                 if (enteredDni.isNotBlank()) {
-                                    // Guardamos el DNI y cerramos diálogo
-                                    //UserManager.setDNI(enteredDni)
                                     showDniDialog = false
-                                    // Una vez guardado, reintentamos la reserva:
                                     coroutineScope.launch {
-                                        viewModel.createReservation(userId).let { success ->
-                                            if (success) {
-                                                Toast.makeText(context, "¡Reserva creada!", Toast.LENGTH_SHORT).show()
-                                                onReservationSuccess()
-                                            } else {
-                                                Toast.makeText(context, "Error al crear reserva", Toast.LENGTH_SHORT).show()
+                                        viewModel.updateUserDNI(dni = enteredDni).let {
+                                            viewModel.createReservation(userId).let { success ->
+                                                if (success) {
+                                                    Toast.makeText(context, "¡Reserva creada!", Toast.LENGTH_SHORT).show()
+                                                    onReservationSuccess()
+                                                } else {
+                                                    Toast.makeText(context, "Error al crear reserva", Toast.LENGTH_SHORT).show()
+                                                }
+                                                onDismiss()
                                             }
-                                            onDismiss()
+
                                         }
                                     }
                                 }

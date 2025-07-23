@@ -31,7 +31,7 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
             context = this,
             email = "adriortega19@gmail.com",
             userName = "Adri",
-            dni = "03427404J",
+            //dni = "03427404J",
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
         )
 
