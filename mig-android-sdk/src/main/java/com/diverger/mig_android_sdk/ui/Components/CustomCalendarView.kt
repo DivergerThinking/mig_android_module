@@ -3,7 +3,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -11,20 +18,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.time.DayOfWeek
+import java.text.DateFormatSymbols
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -52,8 +66,15 @@ fun CustomCalendarView(
             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Mes Anterior", tint = Color.White)
             }
+            val pattern = if (currentMonth.year == YearMonth.now().year) {
+                "MMMM"
+            } else {
+                "MMMM yyyy"
+            }
+
             Text(
-                text = currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")).uppercase(),
+                text = currentMonth.format(DateTimeFormatter.ofPattern(pattern))
+                    .uppercase(),
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
@@ -67,7 +88,7 @@ fun CustomCalendarView(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM").forEach { day ->
+            getLocalizedDayInitials().forEach { day ->
                 Text(
                     text = day,
                     color = Color.White,
@@ -131,17 +152,17 @@ fun CustomCalendarView(
                         }
                     }
 
-                    // 🔹 **Seleccionado (Cyan)**
-                    if (isSelected) {
-                        circles.add {
-                            CircleBorder(color = Color.Cyan, strokeWidth = 3.dp, size = 32.dp)
-                        }
-                    }
-
                     // ⚪ **Hoy (Blanco)**
                     if (isToday) {
                         circles.add {
                             CircleBorder(color = Color.White, strokeWidth = 2.dp, size = 48.dp)
+                        }
+                    }
+
+                    // 🔹 **Seleccionado (Cyan)**
+                    if (isSelected && canUserInteract) {
+                        circles.add {
+                            CircleBorder(color = Color.Cyan, strokeWidth = 2.dp, size = 48.dp)
                         }
                     }
 
@@ -158,6 +179,8 @@ fun CustomCalendarView(
             }
         }
     }
+
+
 }
 
 @Composable
@@ -173,15 +196,29 @@ fun CircleBorder(color: Color, strokeWidth: Dp, size: Dp) {
 // ✅ **Genera los días del mes correctamente**
 @RequiresApi(Build.VERSION_CODES.O)
 fun generateDaysInMonth(month: YearMonth): List<LocalDate> {
+    val locale = Locale.getDefault()
+    val firstDayOfWeek = WeekFields.of(locale).firstDayOfWeek.value  // Locale-aware (Sunday=7, Monday=1)
     val firstDayOfMonth = month.atDay(1)
-    val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Lunes es 0
     val days = mutableListOf<LocalDate>()
 
-    // Ajustar para que la primera semana siempre empiece en lunes
-    val startDay = firstDayOfMonth.minusDays(firstDayOfWeek.toLong())
-    repeat(42) { // 6 filas x 7 días = 42 espacios
+    // Adjust offset based on locale's first day of week
+    val dayOffset = (firstDayOfMonth.dayOfWeek.value - firstDayOfWeek + 7) % 7
+
+    // Compute first visible day in calendar grid
+    val startDay = firstDayOfMonth.minusDays(dayOffset.toLong())
+
+    // 6 rows × 7 columns = 42 days
+    repeat(42) {
         days.add(startDay.plusDays(it.toLong()))
     }
 
     return days
+}
+
+fun getLocalizedDayInitials(): List<String> {
+    val locale = Locale.getDefault()
+    val shortWeekdays = DateFormatSymbols(locale).shortWeekdays
+    return shortWeekdays
+        .filter { it.isNotEmpty() }
+        .map { it.first().toString() }
 }

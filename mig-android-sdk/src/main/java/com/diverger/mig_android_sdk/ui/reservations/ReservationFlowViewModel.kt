@@ -192,7 +192,7 @@ class ReservationFlowViewModel : ViewModel() {
         val isBlocked: Boolean = false
     )
 
-    fun fetchAvailableSlots(dayValue: Int) {
+    private fun fetchAvailableSlots(dayValue: Int) {
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
@@ -204,7 +204,7 @@ class ReservationFlowViewModel : ViewModel() {
         }
     }
 
-    fun updateEnabledSlots() {
+    private fun updateEnabledSlots() {
         val selected = _selectedSlots.value
 
         if (selected.isEmpty()) {
@@ -220,6 +220,11 @@ class ReservationFlowViewModel : ViewModel() {
             (slot.value in minValue..(maxValue + 1) && slot.value <= minValue + 2)
                     || selected.any { selectedSlot -> selectedSlot.id == slot.id }
         }
+    }
+
+    fun cleanSlots() {
+        _selectedSlots.value = emptyList()
+        updateEnabledSlots()
     }
 
     fun toggleSlotSelection(slot: GamingSpaceTime) {

@@ -4,33 +4,57 @@ import CustomCalendarView
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.PlayerModel
-import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.ui.UnifiedReservationScreen
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import com.diverger.mig_android_sdk.ui.teams.training.TeamReservationBottomSheet
 import compose.icons.FeatherIcons
@@ -44,7 +68,7 @@ import compose.icons.fontawesomeicons.solid.UserCircle
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
-    var isCalendarVisible by remember { mutableStateOf(false) }
+    var isCalendarVisible by remember { mutableStateOf(true) }
     var isTrainingsVisible by remember { mutableStateOf(true) }
     var calendarArrowRotation by remember { mutableStateOf(0f) }
     var trainingArrowRotation by remember { mutableStateOf(0f) }
@@ -60,7 +84,8 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 
     Box(modifier = Modifier
         .fillMaxSize()
-        .background(Color.Black)) {
+        .background(Color.Black)
+        .padding(bottom = 64.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             // 📅 **Calendario de Entrenamientos**
             CalendarComponent(
@@ -102,7 +127,13 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
             }
 
             if (showReservationDetail.value && selectedTraining != null) {
-                TeamReservationBottomSheet(
+//                TeamReservationBottomSheet(
+//                    training = selectedTraining!!,
+//                    onDismiss =
+//                )
+
+                UnifiedReservationScreen(
+                    isTeamReservation = true,
                     training = selectedTraining!!,
                     onDismiss = { showReservationDetail.value = false }
                 )
@@ -125,18 +156,18 @@ fun CalendarComponent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Calendario de Entrenamientos",
+                text = stringResource(R.string.trainings_calendar),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onToggle)
             )
-            IconButton(onClick = onToggle) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = "Toggle Calendar",
-                    tint = Color.Cyan
-                )
-            }
+            Icon(
+                imageVector = if (isCalendarVisible) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                contentDescription = "Toggle Calendar",
+                tint = Color.Cyan
+            )
         }
 
         if (isCalendarVisible) {
@@ -158,18 +189,18 @@ fun NextTrainingsBanner(isTrainingsVisible: Boolean, onToggle: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Próximos Entrenamientos",
+            text = stringResource(R.string.future_trainings),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onToggle)
         )
-        IconButton(onClick = onToggle) {
-            Icon(
-                imageVector = Icons.Filled.ArrowDropDown,
-                contentDescription = "Toggle Trainings",
-                tint = Color.Cyan
-            )
-        }
+        Icon(
+            imageVector = if (isTrainingsVisible) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+            contentDescription = "Toggle Trainings",
+            tint = Color.Cyan
+        )
     }
 }
 
@@ -177,7 +208,7 @@ fun NextTrainingsBanner(isTrainingsVisible: Boolean, onToggle: () -> Unit) {
 @Composable
 fun TrainingsList(trainings: List<EventModel>, onAction: (EventModel, TrainingCellOption) -> Unit) {
     if (trainings.isEmpty()) {
-        Text("No hay entrenamientos programados.", color = Color.Gray)
+        Text(stringResource(R.string.no_scheduled_trainings), color = Color.Gray)
     } else {
         LazyColumn {
             items(trainings) { training ->
@@ -233,7 +264,7 @@ private fun IconDateAndRemoveBannerComponent(training: EventModel, onAction: (Tr
                 "centre" -> FontAwesomeIcons.Solid.Building
                 else -> FeatherIcons.Monitor
             },
-            contentDescription = "Tipo de reserva",
+            contentDescription = stringResource(R.string.booking_type),
             tint = Color.Gray,
             modifier = Modifier.size(24.dp)
         )
@@ -255,7 +286,7 @@ private fun IconDateAndRemoveBannerComponent(training: EventModel, onAction: (Tr
 @Composable
 private fun ShowReservationLocation(training: EventModel) {
     Text(
-        text = "${UserManager.selectedTeam.value?.name ?: "Sin equipo"} - ${training.type}",
+        text = "${UserManager.selectedTeam.value?.name ?: stringResource(R.string.no_team)} - ${training.type}",
         color = Color.White.copy(0.8f),
         style = MaterialTheme.typography.bodySmall
     )
@@ -312,7 +343,7 @@ private fun PlayerAvatar(player: PlayerModel) {
 private fun PlaceholderIcon() {
     Icon(
         imageVector = FontAwesomeIcons.Solid.UserCircle,
-        contentDescription = "Usuario sin avatar",
+        contentDescription = stringResource(R.string.no_avatar_user),
         tint = Color.Gray,
         modifier = Modifier.size(35.dp)
     )
@@ -334,7 +365,7 @@ private fun ButtonsComponent(onAction: (TrainingCellOption) -> Unit) {
         TextButton(onClick = { onAction(TrainingCellOption.SeeDetails) }) {
             Icon(FeatherIcons.Eye, contentDescription = "Ver reserva", tint = Color.Cyan, modifier = Modifier.size(15.dp))
             Spacer(Modifier.width(5.dp))
-            Text("Ver reserva", color = Color.Cyan, style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.see_booking), color = Color.Cyan, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

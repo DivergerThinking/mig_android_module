@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,7 +37,9 @@ import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.XCircle
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.PeopleCarry
 import compose.icons.fontawesomeicons.solid.Trophy
@@ -83,7 +86,7 @@ fun MIGAndroidSDKScreen(email: String,
             }
             errorMessage != null -> {
                 Column(modifier = Modifier.align(Alignment.Center)) {
-                    Text("Error al cargar el módulo", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.module_load_error), color = MaterialTheme.colorScheme.error)
                     Text(errorMessage.orEmpty(), color = MaterialTheme.colorScheme.onBackground)
                 }
             }
@@ -130,7 +133,7 @@ fun MainScreen(user: User) {
                                 onClick = { activity?.finish() }
                             ) {
                                 Text(
-                                    text = "Salir",
+                                    text = stringResource(R.string.exit),
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -158,12 +161,14 @@ fun DrawerContent(
     onScreenSelected: (String) -> Unit
 ) {
     val items = mutableListOf(
-        DrawerItem("dashboard", "Dashboard", Icons.Filled.Home),
-        DrawerItem("competitions", "Competiciones", FontAwesomeIcons.Solid.Trophy)
+        DrawerItem("dashboard", stringResource(R.string.dashboard), Icons.Filled.Home),
+        DrawerItem("competitions",
+            stringResource(R.string.competitions), FontAwesomeIcons.Solid.Trophy)
     )
 
     if (UserManager.getUser()?.teams?.isNotEmpty() == true) {
-        items.add(1, DrawerItem("teams", "Equipos", FontAwesomeIcons.Solid.Users))
+        items.add(1, DrawerItem("teams",
+            stringResource(R.string.teams), FontAwesomeIcons.Solid.Users))
     }
 
     MIGAndroidSDKTheme {
@@ -184,15 +189,24 @@ fun DrawerContent(
                 modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
             )*/
 
-            Text(
-                text = "x",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
-                    .clickable {
-                        scope.launch { drawerState.close() }
-                    }
-            )
+//            Text(
+//                text = "x",
+//                color = Color.White,
+//                style = MaterialTheme.typography.headlineMedium,
+//                modifier = Modifier
+//                    .padding(start = 16.dp, bottom = 16.dp)
+//                    .clickable {
+//                        scope.launch { drawerState.close() }
+//                    }
+//            )
+
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
+                IconButton(onClick = {
+                    scope.launch { drawerState.close() }
+                }) {
+                    Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
+                }
+            }
 
             LazyColumn {
                 items(items) { item ->
@@ -287,8 +301,9 @@ fun NavigationGraph(
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         //BottomNavItem("dashboard", "Dashboard", Icons.Default.Home),
-        BottomNavItem("individualReservations", "Reservas", Icons.Default.DateRange),
-        BottomNavItem("profile", "Perfil", FontAwesomeIcons.Solid.UserCircle)
+        BottomNavItem("individualReservations",
+            stringResource(R.string.bookings), Icons.Default.DateRange),
+        BottomNavItem("profile", stringResource(R.string.profile), FontAwesomeIcons.Solid.UserCircle)
     )
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -299,7 +314,10 @@ fun BottomNavigationBar(navController: NavHostController) {
             .height(90.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.93f),
+                        Color.Black.copy(alpha = 0.82f)
+                    )
                 )
             )
     ) {

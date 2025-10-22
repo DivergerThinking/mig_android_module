@@ -1,13 +1,15 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
 import ReservationBottomSheet
-import ReservationDetailScreen
 import ReservationFlowDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IndividualReservationsScreen(userId: String) {
-    MIGAndroidSDKTheme {     val viewModel: ReservationViewModel = viewModel()
+    MIGAndroidSDKTheme {
+        val viewModel: ReservationViewModel = viewModel()
         val reservations by viewModel.reservations.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         var showCancelPopup by remember { mutableStateOf(false) }
@@ -46,13 +50,20 @@ fun IndividualReservationsScreen(userId: String) {
                 .padding(top = 80.dp)
         ) {
             // 📌 Título "Reservas Individuales"
-            Text(
-                text = "Reservas Individuales",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Reservas Individuales",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { viewModel.fetchReservations(userId) }) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Recargar", tint = Color.White)
+                }
+            }
 
             // 📌 Contenedor de la lista de reservas
             Box(

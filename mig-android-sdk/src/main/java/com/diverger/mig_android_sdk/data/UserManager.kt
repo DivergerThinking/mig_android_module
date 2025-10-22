@@ -1,5 +1,25 @@
 package com.diverger.mig_android_sdk.data
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.unit.dp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,6 +37,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.Body
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import java.lang.Error
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
@@ -235,4 +256,31 @@ fun getUnsafeOkHttpClient(): OkHttpClient {
     } catch (e: Exception) {
         throw RuntimeException(e)
     }
+}
+
+@Composable
+fun UnsafeAsyncImage(
+    model: Any?,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    placeholder: Painter? = null,
+    error: Painter? = null
+) {
+    val context = LocalContext.current
+
+    val unsafeImageLoader = ImageLoader.Builder(context)
+        .okHttpClient(getUnsafeOkHttpClient())
+        .build()
+
+    AsyncImage(
+        model = model,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        imageLoader = unsafeImageLoader,
+        contentScale = contentScale,
+        placeholder = placeholder,
+        error = error,
+        onError = { throwable -> Log.e("ImageLoad", "Error loading image", throwable.result.throwable) }
+    )
 }

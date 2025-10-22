@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,7 @@ import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import androidx.core.net.toUri
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
@@ -97,7 +99,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "SOBRE MÍ",
+                    stringResource(R.string.profile).uppercase(),
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White,
@@ -118,6 +120,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                                         == PackageManager.PERMISSION_GRANTED -> {
                                     pickImageLauncher.launch("image/*")
                                 }
+
                                 else -> {
                                     permissionLauncher.launch(permission)
                                 }
@@ -157,9 +160,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         }
                     }
 
+//                    ProfileAvatar(user?.avatar)
+
                     // 2. Texto “Pulsar para cambiar” justo debajo del círculo
                     Text(
-                        text = "Pulsar para cambiar",
+                        text = stringResource(R.string.profile_chante_avatar_label),
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
@@ -200,7 +205,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://personal-area.azurewebsites.net")
+                                "https://personal-area.azurewebsites.net".toUri()
                             )
                             context.startActivity(intent)
                         },
