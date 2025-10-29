@@ -1,12 +1,10 @@
 package com.diverger.mig_android_sdk.support
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 fun isToday(dateString: String?, dateFormat: String = "yyyy-MM-dd"): Boolean {
     if (dateString.isNullOrBlank()) return false
@@ -23,4 +21,15 @@ fun isToday(dateString: String?, dateFormat: String = "yyyy-MM-dd"): Boolean {
     } catch (e: Exception) {
         false
     }
+}
+
+fun Date.toUIDateString(): String {
+    val formatter = SimpleDateFormat.getDateInstance(SimpleDateFormat.FULL, Locale.getDefault())
+    formatter.timeZone = TimeZone.getTimeZone("GMT")
+    return formatter.format(this)
+}
+
+fun dateFromString(date: String, format: String = "yyyy-MM-dd"): Date? {
+    val formatter = SimpleDateFormat(format, Locale.getDefault())
+    return formatter.parse(date)
 }

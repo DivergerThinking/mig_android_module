@@ -49,4 +49,12 @@
     <string name="esports_madrid_center">Centro Esports Madrid</string>
     <string name="esports_virtual_center">Virtual</string>
     <string name="previous">Anterior</string>
+    <string name="cancel_booking">CANCELAR RESERVA</string>
+    <string name="no_label">No</string>
+    <string name="yes_label">Sí</string>
+    <string name="confirm_booking_cancellation">¿Quieres cancelar la reserva?</string>
+    <string name="confirm_booking_cancellation_date">¿Quieres cancelar la reserva del %1$s - %2$s?</string>
+    <string name="booking_limit_reached">Se alcanzó el límite de reservas.</string>
+    <string name="booking_limit_reached_and_dni_required">El límite de reservas fue alcanzado para usuarios sin validar, valide su DNI y vuelva a intentarlo.</string>
+    <string name="booking_info_slot">RESERVA - %1$s</string>
 </resources>

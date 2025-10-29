@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -61,11 +62,13 @@ fun CustomCalendarView(
         // Selector de mes
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Mes Anterior", tint = Color.White)
             }
+
             val pattern = if (currentMonth.year == YearMonth.now().year) {
                 "MMMM"
             } else {
@@ -82,6 +85,8 @@ fun CustomCalendarView(
                 Icon(Icons.Default.ArrowForward, contentDescription = "Mes Siguiente", tint = Color.White)
             }
         }
+
+        Spacer(modifier = Modifier.size(16.dp))
 
         // Días de la semana (Cabecera)
         Row(

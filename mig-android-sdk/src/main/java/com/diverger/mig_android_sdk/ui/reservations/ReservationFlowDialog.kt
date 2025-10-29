@@ -20,15 +20,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,8 +45,9 @@ import androidx.compose.ui.window.Dialog
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Space
-import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.dateFromString
 import com.diverger.mig_android_sdk.support.isToday
+import com.diverger.mig_android_sdk.support.toUIDateString
 import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.XCircle
@@ -127,11 +125,7 @@ fun ReservationFlowDialog(
                         }
                     )
                     2 -> SelectSpaceView(viewModel, onConfirm = {
-                        val user = UserManager.getUser()
-                        if (user?.dni.isNullOrBlank()) {
-                            // 1) Si no hay DNI, abrimos diálogo
-                            showDniDialog = true
-                        } else {coroutineScope.launch {
+                        coroutineScope.launch {
                             viewModel.createReservation(userId).let { result ->
                                 if (result) {
                                     Toast.makeText(context,
@@ -143,7 +137,7 @@ fun ReservationFlowDialog(
                                 }
                                 onDismiss()
                             }
-                        }}
+                        }
                     })
                 }
 
@@ -163,57 +157,6 @@ fun ReservationFlowDialog(
                 ) {
                     Text(stringResource(R.string.close_label), color = Color.White)
                 }
-            }
-
-            if (showDniDialog) {
-                AlertDialog(
-                    onDismissRequest = { if (!isProcessing) showDniDialog = false },
-                    title = { Text(stringResource(R.string.insert_id)) },
-                    text = {
-                        OutlinedTextField(
-                            value = enteredDni,
-                            onValueChange = { enteredDni = it },
-                            label = { Text(stringResource(R.string.id_label)) },
-                            singleLine = true,
-                            enabled = !isProcessing,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                if (enteredDni.isNotBlank()) {
-                                    showDniDialog = false
-                                    coroutineScope.launch {
-                                        viewModel.updateUserDNI(dni = enteredDni).let {
-                                            viewModel.createReservation(userId).let { success ->
-                                                if (success) {
-                                                    Toast.makeText(context, context.getString(R.string.booking_creation_success), Toast.LENGTH_SHORT).show()
-                                                    onReservationSuccess()
-                                                } else {
-                                                    Toast.makeText(context, context.getString(R.string.booking_creation_failure), Toast.LENGTH_SHORT).show()
-                                                }
-                                                onDismiss()
-                                            }
-
-                                        }
-                                    }
-                                }
-                            },
-                            enabled = enteredDni.isNotBlank() && !isProcessing
-                        ) {
-                            Text(stringResource(R.string.accept_label))
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { showDniDialog = false },
-                            enabled = !isProcessing
-                        ) {
-                            Text(stringResource(R.string.cancel_label))
-                        }
-                    }
-                )
             }
         }
     }
@@ -248,8 +191,8 @@ fun SelectDateView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
             CustomCalendarView(
                 canUserInteract = true,
                 blockedDates = viewModel.blockedDates.collectAsState().value,
-                onDateSelected = { selectedDate ->
-                    viewModel.setSelectedDate(selectedDate)
+                onDateSelected = {
+                    viewModel.setSelectedDate(it)
                 },
                 reservations = reservations
             )
@@ -279,6 +222,12 @@ fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit, onPr
         Text(stringResource(R.string.select_schedule), color = Color.White, fontSize = 18.sp)
         Spacer(Modifier.height(20.dp))
 
+        selectedDate?.let { date ->
+            dateFromString(date)?.toUIDateString()?.let { formattedDate ->
+                Text(formattedDate, color = Color.White, fontSize = 14.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+        }
+        Spacer(Modifier.height(20.dp))
         if (availableSlots.isEmpty()) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
@@ -420,9 +369,14 @@ fun SpaceItem(space: Space, isSelected: Boolean, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) Color.White else Color.Transparent),
         modifier = Modifier
             .padding(4.dp)
-            .border(2.dp, Color.White, RoundedCornerShape(40.dp)),
-
-    ) {
+            .fillMaxWidth()
+            .height(50.dp)
+            .border(
+                2.dp,
+                if (!isSelected) Color.White else Color.Transparent,
+                RoundedCornerShape(40.dp)
+            )
+        ) {
         Text(space.device, color = if (isSelected) Color.Black else Color.White)
     }
 }

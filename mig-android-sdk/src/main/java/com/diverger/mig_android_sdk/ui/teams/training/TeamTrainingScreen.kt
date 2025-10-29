@@ -152,7 +152,8 @@ fun CalendarComponent(
 ) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .clickable(onClick = onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -161,7 +162,7 @@ fun CalendarComponent(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable(onClick = onToggle)
+
             )
             Icon(
                 imageVector = if (isCalendarVisible) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
@@ -185,7 +186,8 @@ fun CalendarComponent(
 @Composable
 fun NextTrainingsBanner(isTrainingsVisible: Boolean, onToggle: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .clickable(onClick = onToggle),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -194,7 +196,6 @@ fun NextTrainingsBanner(isTrainingsVisible: Boolean, onToggle: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .weight(1f)
-                .clickable(onClick = onToggle)
         )
         Icon(
             imageVector = if (isTrainingsVisible) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,

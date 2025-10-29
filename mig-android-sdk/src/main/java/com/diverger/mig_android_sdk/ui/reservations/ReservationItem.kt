@@ -1,38 +1,40 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Gamepad
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VideogameAsset
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.ui.competitions.formatDate
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
-import compose.icons.AllIcons
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.Eye
 import compose.icons.feathericons.MinusCircle
-import compose.icons.fontawesomeicons.Brands
-import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.StopCircle
 import compose.icons.fontawesomeicons.solid.Desktop
 import compose.icons.fontawesomeicons.solid.Gamepad
 import compose.icons.fontawesomeicons.solid.Keyboard
 import compose.icons.fontawesomeicons.solid.Laptop
-import compose.icons.fontawesomeicons.solid.MinusCircle
 import compose.icons.fontawesomeicons.solid.MobileAlt
 
 enum class IndividualReservationsCellOptions {
@@ -82,21 +84,24 @@ fun ReservationItem(reservation: Reservation, onReservationPressed: (IndividualR
                 // Información de la reserva
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "RESERVA - ${reservation.slot.space.translations.first().device.uppercase()}",
+                        text = stringResource(
+                            R.string.booking_info_slot,
+                            reservation.slot.space.translations.first().device.uppercase()
+                        ),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        text = "${formatDateFromShort(reservation.date)}",
+                        text = formatDateFromShort(reservation.date),
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        text = "${reservation.times.joinToString { it.time }}",
+                        text = reservation.times.joinToString { it.time },
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 12.sp,
                     )

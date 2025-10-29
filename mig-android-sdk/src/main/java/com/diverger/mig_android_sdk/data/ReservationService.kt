@@ -1,12 +1,17 @@
 package com.diverger.mig_android_sdk.data
 
 import com.diverger.mig_android_sdk.support.EnvironmentManager
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.*
 import com.google.gson.annotations.SerializedName
 import okhttp3.logging.HttpLoggingInterceptor
-import java.util.Date
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ReservationService {
     @GET("gaming_space_reserves")
