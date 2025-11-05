@@ -146,7 +146,7 @@ fun CustomCalendarView(
                     // 🔵 **Reservas individuales (Azul)**
                     if (isMarked) {
                         circles.add {
-                            CircleBorder(color = Color.Blue, strokeWidth = 3.dp, size = 38.dp)
+                            CircleBorder(color = Color.Blue, strokeWidth = 3.dp, size = if (isToday) 38.dp else 44.dp)
                         }
                     }
 

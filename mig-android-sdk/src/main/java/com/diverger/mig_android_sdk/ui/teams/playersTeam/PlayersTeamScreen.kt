@@ -90,7 +90,7 @@ fun PlayerItem(player: TeamUser) {
             if (!player.userId.avatar.isNullOrEmpty()) {
                 UnsafeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data("${EnvironmentManager.getBaseUrl()}${player.userId.avatar}")
+                        .data("${EnvironmentManager.getAssetsBaseUrl()}${player.userId.avatar}")
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar de ${player.userId.username}",

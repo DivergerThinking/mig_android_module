@@ -1,19 +1,19 @@
 package com.diverger.mig_android_sdk.data
 
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.google.gson.annotations.SerializedName
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
-import com.google.gson.annotations.SerializedName
 
 interface TrainingService {
     @GET("trainings")
     suspend fun getAllTrainings(
         @Query("filter[team][_eq]") teamId: String,
         @Query("fields") fields: String = "id,start_date,time,players.users_id.id,players.users_id.avatar,players.users_id.email,players.users_id.first_name,type,reserves.*,reserves.team.name,reserves.team.picture,reserves.times.gaming_space_times_id.time,notes",
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String,
     ): TrainingResponse
 }
 
@@ -50,7 +50,7 @@ data class EventModel(
     @SerializedName("start_date") val startDate: String,
     val status: String,
     val time: String,
-    val type: String
+    val type: String,
 )
 
 data class Reserve(
@@ -63,19 +63,19 @@ data class Reserve(
     val team: Team?,
     val times: List<Time>?,
     val training: String?,
-    val user: String?
+    val user: String?,
 )
 
 data class Time(
-    @SerializedName("gaming_space_times_id") val gamingSpaceTimesID: GamingSpaceTimesID?
+    @SerializedName("gaming_space_times_id") val gamingSpaceTimesID: GamingSpaceTimesID?,
 )
 
 data class GamingSpaceTimesID(
-    val time: String?
+    val time: String?,
 )
 
 data class PlayerUsersModel(
-    @SerializedName("users_id") val userId: PlayerModel?
+    @SerializedName("users_id") val userId: PlayerModel?,
 )
 
 data class PlayerModel(
@@ -85,5 +85,5 @@ data class PlayerModel(
     @SerializedName("first_name")
     val name: String?,
 
-    val avatar: String?
+    val avatar: String?,
 )

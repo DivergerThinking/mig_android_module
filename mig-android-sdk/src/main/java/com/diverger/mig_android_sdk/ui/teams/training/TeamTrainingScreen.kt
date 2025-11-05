@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -47,16 +48,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.PlayerModel
+import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.UnifiedReservationScreen
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
-import com.diverger.mig_android_sdk.ui.teams.training.TeamReservationBottomSheet
+import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingViewModel
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.Eye
@@ -81,20 +82,24 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
     val markedDates by viewModel.markedDates.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val teamLogo by viewModel.teamLogo.collectAsState()
 
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color.Black)
         .padding(bottom = 64.dp)) {
+
         Column(modifier = Modifier.padding(16.dp)) {
             // 📅 **Calendario de Entrenamientos**
+
             CalendarComponent(
                 isCalendarVisible = isCalendarVisible,
                 onToggle = {
                     isCalendarVisible = !isCalendarVisible
                     calendarArrowRotation += 180f
                 },
-                markedDates = markedDates
+                reservations = trainings.map { it.startDate },
+                teamLogo = teamLogo
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -148,7 +153,9 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 fun CalendarComponent(
     isCalendarVisible: Boolean,
     onToggle: () -> Unit,
-    markedDates: List<String>
+    reservations: List<String> = emptyList(),
+    markedDates: List<String> = emptyList(),
+    teamLogo: String? = null
 ) {
     Column {
         Row(
@@ -156,6 +163,20 @@ fun CalendarComponent(
                 .clickable(onClick = onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            teamLogo?.let { imageName ->
+                UnsafeAsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("${EnvironmentManager.getAssetsBaseUrl()}${imageName}")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Team Image",
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                )
+                Spacer(Modifier.width(10.dp))
+            }
+
             Text(
                 text = stringResource(R.string.trainings_calendar),
                 color = Color.White,
@@ -175,8 +196,8 @@ fun CalendarComponent(
             CustomCalendarView(
                 canUserInteract = false,
                 onDateSelected = {},
-                blockedDates = emptyList(),
-                reservations = emptyList()
+                blockedDates = markedDates,
+                reservations = reservations
             )
         }
     }
@@ -240,8 +261,11 @@ fun TrainingItem(training: EventModel, onAction: (TrainingCellOption) -> Unit) {
 
             Spacer(Modifier.height(10.dp))
 
-            // 🔹 Lista de jugadores
-            PlayersCarouselComponent(training)
+            // Lista de jugadores solo para entrenamiento tipo equipo
+            if (!training.players.isNullOrEmpty()) {
+                PlayersCarouselComponent(training)
+                Spacer(Modifier.height(16.dp))
+            }
 
             // 🔹 Notas (si existen)
             if (!training.notes.isNullOrEmpty()) {
@@ -322,7 +346,7 @@ private fun PlayerAvatar(player: PlayerModel) {
             ?.let { "${EnvironmentManager.getAssetsBaseUrl()}$it" }
 
         if (imageUrl != null) {
-            AsyncImage(
+            UnsafeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUrl)
                     .crossfade(true)

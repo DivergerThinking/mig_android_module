@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="trainings_calendar">Calendario de Entrenamientos</string>
+    <string name="trainings_calendar">Calendario</string>
     <string name="future_trainings">Próximos Entrenamientos</string>
     <string name="no_scheduled_trainings">No hay entrenamientos programados.</string>
     <string name="booking_type">Tipo de reserva</string>
@@ -57,4 +57,8 @@
     <string name="booking_limit_reached">Se alcanzó el límite de reservas.</string>
     <string name="booking_limit_reached_and_dni_required">El límite de reservas fue alcanzado para usuarios sin validar, valide su DNI y vuelva a intentarlo.</string>
     <string name="booking_info_slot">RESERVA - %1$s</string>
+    <string name="team_selection_title">¿Qué equipo quieres gestionar?</string>
+    <string name="no_name_team">Equipo sin nombre</string>
+    <string name="selected">Seleccionado</string>
+    <string name="error_getting_trainings">Error al obtener entrenamientos.</string>
 </resources>

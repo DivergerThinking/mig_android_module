@@ -289,7 +289,7 @@ fun SlotItem(slot: GamingSpaceTime, date: String?, isSelected: Boolean, isEnable
     val isSlotDateToday = isToday(date)
     val isSlotTimeValid = slot.value > currentHourPlus2
 
-    val computedEnabled = if (isSlotDateToday) isSlotTimeValid else isEnabled
+    val computedEnabled = if (isSlotDateToday) (isSlotTimeValid && isEnabled) else isEnabled
 
     Button(
         onClick = { if (isEnabled) onClick() },

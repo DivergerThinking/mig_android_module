@@ -36,17 +36,22 @@ import com.diverger.mig_android_sdk.data.Tournament
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.ArrowRight
+import compose.icons.feathericons.ArrowRightCircle
+import compose.icons.feathericons.ChevronRight
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Trophy
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.core.net.toUri
 
 @Composable
 fun CompetitionDetailScreen(
     navController: NavController,
     competitionId: String,
-    viewModel: CompetitionDetailViewModel = viewModel()
+    viewModel: CompetitionDetailViewModel = viewModel(),
 ) {
     val competition by viewModel.competition.collectAsState()
     val selectedSplit by viewModel.selectedSplit.collectAsState()
@@ -349,11 +354,21 @@ fun TournamentCard(tournament: Tournament) {
                 .fillMaxWidth()
                 .clickable {
                     tournament.link?.let { link ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                        context.startActivity(intent)
+                        if (link.startsWith("http")) {
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = link.toUri()
+                            }
+                            context.startActivity(intent)
+                        } else { // To be aligned with iOS
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = "https://webesports.madridingame.es/esports-center/".toUri()
+                            }
+                            context.startActivity(intent)
+                        }
                     } ?: Toast.makeText(context, "Enlace no disponible", Toast.LENGTH_SHORT).show()
                 },
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "INSCRÍBETE",
@@ -362,7 +377,7 @@ fun TournamentCard(tournament: Tournament) {
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color.White)
+            Icon(FeatherIcons.ArrowRightCircle, contentDescription = null, tint = Color.White)
         }
     }
 }

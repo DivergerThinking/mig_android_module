@@ -44,4 +44,11 @@ class NewsViewModel : ViewModel() {
             }
         }
     }
+
+    fun forceFetchNews() {
+        val selectedTeam = UserManager.selectedTeam.value
+        if (selectedTeam != null) {
+            fetchNews(selectedTeam.id)
+        }
+    }
 }

@@ -90,7 +90,7 @@ object ReservationApi {
     // ✅ Obtener reservas de equipo
     suspend fun getReservationsByTeam(teamId: String): Result<List<Reservation>> {
         return try {
-            val response = service.getReservationsByTeam("6d8fd820-5aa4-479a-89e9-1f85c906f189", token = TOKEN)
+            val response = service.getReservationsByTeam(teamId, token = TOKEN)
             Result.success(response.data)
         } catch (e: Exception) {
             Result.failure(e)

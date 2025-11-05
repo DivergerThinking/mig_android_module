@@ -155,7 +155,7 @@ fun UnifiedReservationScreen(
             Spacer(Modifier.height(16.dp))
 
             // Lista de jugadores solo para entrenamiento tipo equipo
-            if (isTeamReservation && training != null) {
+            if (isTeamReservation && training != null && (training.players?.size ?: 0) > 0) {
                 PlayersCarousel(training)
                 Spacer(Modifier.height(16.dp))
             }
@@ -228,7 +228,7 @@ private fun UnifiedQrCard(
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
 //            Text(
 //                stringResource(
@@ -243,36 +243,36 @@ private fun UnifiedQrCard(
 //                modifier = Modifier.padding(bottom = 5.dp)
 //            )
 
-            Text(
-                stringResource(
-                    R.string.booking_details_location,
-                    viewModel.getReservationLocation().uppercase()
-                ),
-                color = Color.White.copy(0.7f),
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 5.dp)
-            )
-            Text(
-                stringResource(
-                    R.string.booking_details_date,
-                    viewModel.getFormattedDate().uppercase()
-                ),
-                color = Color.White.copy(0.7f),
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 5.dp)
-            )
-            Text(
-                stringResource(
-                    R.string.booking_details_time,
-                    viewModel.getFormattedTimes().uppercase()
-                ),
-                color = Color.White.copy(0.7f),
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 5.dp)
-            )
+                    Text(
+                        stringResource(
+                            R.string.booking_details_location,
+                            viewModel.getReservationLocation().uppercase()
+                        ),
+                        color = Color.White.copy(0.7f),
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 5.dp)
+                    )
+                    Text(
+                        stringResource(
+                            R.string.booking_details_date,
+                            viewModel.getFormattedDate().uppercase()
+                        ),
+                        color = Color.White.copy(0.7f),
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(bottom = 5.dp)
+                    )
+                    Text(
+                        stringResource(
+                            R.string.booking_details_time,
+                            viewModel.getFormattedTimes().uppercase()
+                        ),
+                        color = Color.White.copy(0.7f),
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(bottom = 5.dp)
+                    )
 
-            Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
             if (training.type == "virtual") {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

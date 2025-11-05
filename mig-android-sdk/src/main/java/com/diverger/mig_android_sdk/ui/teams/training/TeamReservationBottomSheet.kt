@@ -49,6 +49,7 @@ import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.PlayerModel
+import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import compose.icons.FeatherIcons
@@ -122,10 +123,11 @@ fun TeamReservationBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 📌 **Lista de jugadores**
-            PlayersCarousel(training)
-
-            Spacer(modifier = Modifier.height(16.dp))
+            if ((training.players?.size ?: 0) > 0) {
+                // 📌 **Lista de jugadores**
+                PlayersCarousel(training)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // 📌 **Botón de Normas SOLO en Presencial**
             if (training.type == "centre") {
@@ -199,8 +201,10 @@ private fun ReservationQrCard(training: EventModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 📌 **Lista de jugadores**
-        PlayersCarousel(training)
+        if ((training.players?.size ?: 0) > 0) {
+            // 📌 **Lista de jugadores**
+            PlayersCarousel(training)
+        }
     }
 }
 
@@ -263,7 +267,7 @@ private fun PlayersCarousel(training: EventModel) {
 private fun PlayerAvatar(player: PlayerModel) {
     Box(modifier = Modifier.size(50.dp)) {
         if (player.avatar != null) {
-        AsyncImage(
+        UnsafeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data("${EnvironmentManager.getAssetsBaseUrl()}${player.avatar}")
                 .crossfade(true)

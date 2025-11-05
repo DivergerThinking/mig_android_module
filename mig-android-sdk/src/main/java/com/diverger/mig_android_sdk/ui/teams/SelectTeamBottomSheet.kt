@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Team
+import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
@@ -61,7 +61,7 @@ fun SelectTeamBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "¿Qué equipo quieres gestionar?",
+                text = stringResource(R.string.team_selection_title),
                 color = Color.White,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
@@ -92,9 +92,9 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
+        UnsafeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data("${EnvironmentManager.getBaseUrl()}${team.picture}")
+                .data("${EnvironmentManager.getAssetsBaseUrl()}${team.picture}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Team Image",
@@ -104,9 +104,9 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = team.name ?: "Equipo sin nombre", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(text = team.name ?: stringResource(R.string.no_name_team), color = Color.White, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = team.description ?: "Equipo sin nombre", color = Color.White.copy(0.5f), fontWeight = FontWeight.Thin, style = MaterialTheme.typography.titleSmall)
+            Text(text = team.description ?: stringResource(R.string.no_name_team), color = Color.White.copy(0.5f), fontWeight = FontWeight.Thin, style = MaterialTheme.typography.titleSmall)
         }
         if (team.id == (UserManager.getSelectedTeam()?.id ?: "")) {
             Box(
@@ -115,7 +115,7 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
             ) {
                 Icon(
                     imageVector = FeatherIcons.CheckCircle,
-                    contentDescription = "Seleccionado",
+                    contentDescription = stringResource(R.string.selected),
                     tint = Color.White
                 )
             }

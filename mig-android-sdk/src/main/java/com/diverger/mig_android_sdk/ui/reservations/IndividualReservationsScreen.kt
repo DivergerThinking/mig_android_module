@@ -63,12 +63,20 @@ fun IndividualReservationsScreen(userId: String) {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
         val showDetailBottomSheet = remember { mutableStateOf(false) }
+        val message by viewModel.toastMessage.collectAsState()
 
         var showDniDialog by remember { mutableStateOf(false) }
         var enteredDni by remember { mutableStateOf("") }
 
         LaunchedEffect(userId) {
             viewModel.fetchReservations(userId)
+        }
+
+        LaunchedEffect(message) {
+            message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearToastMessage()
+            }
         }
 
         Column(
@@ -232,6 +240,10 @@ fun IndividualReservationsScreen(userId: String) {
                 reservation = selectedReservation!!,
                 onDismiss = { showDetailBottomSheet.value = false }
             )
+        }
+
+        if (viewModel.toastMessage.value != null) {
+            Toast.makeText(context, viewModel.toastMessage.value, Toast.LENGTH_LONG)
         }
 
         // 📌 Popup de cancelación
