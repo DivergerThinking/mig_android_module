@@ -5,28 +5,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.ui.StringResourcesProvider
+import com.diverger.mig_android_sdk.ui.UnifiedReservationScreen
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
@@ -40,18 +42,26 @@ fun ReservationDetailScreen(
     onDismiss: () -> Unit
 ) {
     MIGAndroidSDKTheme {
-            val viewModel: ReservationDetailViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+
+        val context = LocalContext.current
+
+        val viewModel: ReservationDetailViewModel = viewModel(
+            factory = object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return ReservationDetailViewModel(reservation) as T
+                    return ReservationDetailViewModel(
+                        stringResourcesProvider = StringResourcesProvider(context),
+                        reservation = reservation
+                    ) as T
                 }
-            })
+            }
+        )
+
 
             val isFlipped by viewModel.isFlipped.collectAsState()
             val rotationY by viewModel.rotationY.collectAsState()
 
             val animatedRotation by animateFloatAsState(targetValue = rotationY)
 
-            val context = LocalContext.current
             val scope = rememberCoroutineScope()
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -72,7 +82,7 @@ fun ReservationDetailScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         IconButton(onClick = onDismiss) {
-                            Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
+                            Icon(FeatherIcons.XCircle, contentDescription = stringResource(R.string.close_label), tint = Color.White)
                         }
                     }
 
@@ -113,11 +123,13 @@ fun ReservationDetailScreen(
                     Button(
                         onClick = { viewModel.flipCard() },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
-                        modifier = Modifier.align(Alignment.CenterHorizontally).height(60.dp)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .height(60.dp)
                     ) {
                         val title = when {
-                            isFlipped -> "DETALLES"
-                            else -> "NORMAS DE USO"
+                            isFlipped -> stringResource(R.string.details_label).uppercase()
+                            else -> stringResource(R.string.terms_of_use_label).uppercase()
                         }
                         Text(title, color = Color.Black, fontWeight = FontWeight.ExtraBold)
                     }
@@ -128,8 +140,7 @@ fun ReservationDetailScreen(
 
 @Composable
 fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
-    val reservation by viewModel.reservation.collectAsState()
-    val qrText = reservation.qrValue.orEmpty()
+    val qrText = viewModel.getQRValue().orEmpty()
 
     // Genera el Bitmap del QR solo cuando cambia qrText:
     val qrBitmap: Bitmap? = remember(qrText) {
@@ -159,33 +170,33 @@ fun ReservationQrCard(viewModel: ReservationDetailViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "RESERVA CONFIRMADA",
+            stringResource(R.string.booking_confirmed).uppercase(),
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 5.dp)
         )
         Text(
-            "LOCALIZACIÓN: ${viewModel.getReservationLocation().uppercase()}",
+            stringResource(R.string.booking_details_location, viewModel.getReservationLocation().uppercase()),
             color = Color.White.copy(0.7f),
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = 5.dp)
         )
         Text(
-            "PLATAFORMA: ${viewModel.getReservationConsole().uppercase()}",
+            stringResource(R.string.booking_details_platform, viewModel.getReservationConsole().uppercase()),
             color = Color.White.copy(0.7f),
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 5.dp)
         )
         Text(
-            "FECHA: ${viewModel.getFormattedDate()}",
+            stringResource(R.string.booking_details_date, viewModel.getFormattedDate().uppercase()),
             color = Color.White.copy(0.7f),
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 5.dp)
         )
         Text(
-            "HORAS: ${viewModel.getFormattedTimes()}",
+            stringResource(R.string.booking_details_time, viewModel.getFormattedTimes().uppercase()),
             color = Color.White.copy(0.7f),
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 5.dp)
@@ -222,7 +233,7 @@ fun ReservationRulesCard() {
             .padding(horizontal = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "NORMAS DE USO",
+        Text(text = stringResource(R.string.terms_of_use_label).uppercase(),
             color = Color.White,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold,
@@ -235,13 +246,13 @@ fun ReservationRulesCard() {
                 .data("https://premig.randomkesports.com/_next/static/media/reserve-rules.e49650ad.png")
                 .crossfade(true)
                 .build(),
-            contentDescription = "Normas de Uso",
+            contentDescription = stringResource(R.string.terms_of_use_label),
             contentScale = ContentScale.Fit,
             modifier = Modifier
-                .size(200.dp)
-                //.fillMaxSize()
-                .background(Color.Transparent, shape = RoundedCornerShape(10.dp))
+                .fillMaxSize()
                 .padding(16.dp)
+                .clip(RoundedCornerShape(0.dp))
+                .background(Color.Transparent)
         )
     }
 }
@@ -260,9 +271,16 @@ fun ReservationBottomSheet(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Black
     ) {
-        ReservationDetailScreen(
+//        ReservationDetailScreen(
+//            reservation = reservation,
+//            onDismiss = onDismiss
+//        )
+
+        UnifiedReservationScreen(
+            isTeamReservation = false,
             reservation = reservation,
             onDismiss = onDismiss
         )
+
     }
 }

@@ -1,12 +1,13 @@
-package com.diverger.mig_android_sdk.ui.teams
+package com.diverger.mig_android_sdk.ui.teams.training
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.data.ReservationApi
 import com.diverger.mig_android_sdk.data.TrainingApi
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.dateFromString
+import com.diverger.mig_android_sdk.support.isDateOlderThanToday
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -30,10 +31,12 @@ class TeamTrainingViewModel : ViewModel() {
     private val user = UserManager.getUser()
     private val teamId = UserManager.selectedTeam.value?.id
 
+    private val _teamLogo = MutableStateFlow<String?>(null)
+    val teamLogo: StateFlow<String?> = _teamLogo
+
+
     init {
         if (teamId != null) {
-            //fetchTeamReservations()
-            //fetchTeamTrainings()
             observeSelectedTeam()
         } else {
             _errorMessage.value = "El usuario no pertenece a ningún equipo."
@@ -48,9 +51,10 @@ class TeamTrainingViewModel : ViewModel() {
                     _errorMessage.value = null
 
                     if (team?.id != null) {
+                        UserManager.selectedTeam.value?.picture.also { _teamLogo.value = it }
                         val result = TrainingApi.getTrainings(team.id)
                         result.onSuccess { trainings ->
-                            _trainings.value = trainings
+                            _trainings.value = trainings.filter { dateFromString(it.startDate)?.isDateOlderThanToday() == true }
                             _isLoading.value = false
                         }.onFailure {
                             _isLoading.value = false
@@ -58,39 +62,6 @@ class TeamTrainingViewModel : ViewModel() {
                         }
                     }
                 }
-        }
-    }
-
-    fun fetchTeamReservations() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            val result = ReservationApi.getReservationsByTeam(teamId!!)
-
-            result.onSuccess { reservations ->
-                _teamReservations.value = reservations
-                _markedDates.value = reservations.map { it.date }
-                _isLoading.value = false
-            }.onFailure {
-                _isLoading.value = false
-                _teamReservations.value = emptyList()
-            }
-        }
-    }
-
-    fun fetchTeamTrainings() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-
-            val result = TrainingApi.getTrainings(teamId!!)
-            result.onSuccess { trainings ->
-                _trainings.value = trainings
-                _isLoading.value = false
-            }.onFailure {
-                _isLoading.value = false
-                _errorMessage.value = "Error al obtener entrenamientos."
-            }
         }
     }
 }

@@ -10,6 +10,9 @@ object EnvironmentManager {
     private const val BASE_URL_PRE = "https://premig.randomkesports.com/cms/items/"
     private const val BASE_URL_PRO = "https://webesports.madridingame.es/cms/items/"
 
+    private const val BASE_URL_SERVER_PRE = "https://premig.randomkesports.com"
+    private const val BASE_URL_SERVER_PRO = "https://webesports.madridingame.es"
+
     private var isProduction: Boolean = true
 
     fun getAssetsBaseUrl(): String {
@@ -22,6 +25,10 @@ object EnvironmentManager {
 
     fun getBaseUrl(): String {
         return if (isProduction) BASE_URL_PRO else BASE_URL_PRE
+    }
+
+    fun getBaseServerUrl(): String {
+        return if (isProduction) BASE_URL_SERVER_PRO else BASE_URL_SERVER_PRE
     }
 
     fun setEnvironment(isProd: Boolean) {

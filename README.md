@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DivergerThinking:mig_android_module:2.0.1")
+    implementation("com.github.DivergerThinking:mig_android_module:2.0.0")
 }
 ```
 
@@ -26,6 +26,7 @@ El módulo se integra llamando a la función `MadridInGameAndroidModuleEntryPoin
 import android.content.Context
 import com.diverger.mig_android_sdk.MadridInGameAndroidModuleEntryPoint
 
+//Opción 1: datos mínimos
 fun iniciarMadridInGameSDK(context: Context) {
     MadridInGameAndroidModuleEntryPoint.launch(
         context = context,
@@ -36,6 +37,27 @@ fun iniciarMadridInGameSDK(context: Context) {
         logoMIG = null,
         qrMiddleLogo = null
     )
+}
+
+//Opción 2: Más datos y flexibilidad
+fun iniciarMadridInGameSDKAlternativa(context: Context) {
+
+        val userData = MadridInGameUserData(
+            name  ="Nombre",
+            lastName = "Apellido",
+            email = "usuario@example.com",
+            userName = "Nombre Usuario",
+            phone = "telefono",
+            dni = "12345678A",
+            logoMIG = null,
+            qrMiddleLogo = null
+        )
+
+        MadridInGameAndroidModuleEntryPoint.launch(
+            context = context,
+            userData = userData,
+            accessToken = "TOKEN_DE_ACCESO"
+        )
 }
 ```
 

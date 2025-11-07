@@ -29,6 +29,7 @@ import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.random.RandomGenerator.LeapableGenerator
 
 @Composable
 fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsViewModel = viewModel()) {
@@ -219,32 +220,50 @@ data class LeagueModel(
 fun CompetitionsViewModel.getLeaguesWithCompetitions(): List<LeagueModel> {
     val allCompetitions = competitions.value
 
-    return listOf(
-        LeagueModel(
-            title = "Liga Municipal",
-            description = "Esports Series Madrid",
-            overView = "Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.",
-            competitions = allCompetitions.filter { it.game?.type == "esm" }
-        ),
-        LeagueModel(
+    val list: MutableList<LeagueModel> = mutableListOf()
+
+    val esm = allCompetitions.filter { it.game?.type == "esm" }
+    val junior = allCompetitions.filter { it.game?.type == "junior" }
+    val stormCircuit = allCompetitions.filter { it.game?.type == "stormCircuit" }
+    val other = allCompetitions.filter { it.game?.type == "other" }
+
+   if (esm.isNotEmpty()) {
+       list.add(LeagueModel(
+           title = "Liga Municipal",
+           description = "Esports Series Madrid",
+           overView = "Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.",
+           competitions = allCompetitions.filter { it.game?.type == "esm" }
+       ))
+   }
+
+    if (junior.isNotEmpty()) {
+        list.add(LeagueModel(
             title = "Liga Municipal Junior",
             description = "Esports Series Madrid",
             overView = "El equivalente de la Esports Series Madrid para colegios e institutos de la ciudad. La ESM Junior Esports es tu puerta de entrada para que puedas participar con tu centro educativo en la liga municipal junior de League of Legends y Rocket League.",
             competitions = allCompetitions.filter { it.game?.type == "junior" }
-        ),
-        LeagueModel(
+        ))
+    }
+
+    if (stormCircuit.isNotEmpty()) {
+        list.add(LeagueModel(
             title = "Circuito Tormenta",
             description = "Esports Series Madrid",
             overView = "Las Esports Series Madrid de Madrid in Game serán parada oficial del Circuito de Tormenta. Contarán con las competiciones de League of Legends y Valorant, además de disputarse una gran Final presencial. Los torneos otorgarán puntos para el ranking general del Circuito de Tormenta del Split correspondiente.",
             competitions = allCompetitions.filter { it.game?.type == "stormCircuit" }
-        ),
-        LeagueModel(
+        ))
+    }
+
+    if (other.isNotEmpty()) {
+        list.add(LeagueModel(
             title = "Otras competiciones",
             description = "Esports Series Madrid",
-            overView = "siisisi",
+            overView = "",
             competitions = allCompetitions.filter { it.game?.type == "other" }
-        )
-    )
+        ))
+    }
+
+    return list
 }
 
 // 📅 **Función para formatear la fecha a dd/MM/yyyy**

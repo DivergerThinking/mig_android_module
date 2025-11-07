@@ -4,41 +4,78 @@ import CompetitionDetailScreen
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.*
-import androidx.navigation.navArgument
-import com.diverger.mig_android_sdk.data.Competition
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.diverger.mig_android_sdk.data.User
+import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
-import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
+import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.XCircle
 import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.solid.PeopleCarry
 import compose.icons.fontawesomeicons.solid.Trophy
 import compose.icons.fontawesomeicons.solid.UserCircle
 import compose.icons.fontawesomeicons.solid.Users
@@ -50,28 +87,29 @@ fun MadridInGameAndroidModule(email: String,
                               userName: String? = null,
                               dni: String? = null,
                               accessToken: String,
-                              logoMIG: ImageVector? = null,
-                              qrMiddleLogo: ImageVector? = null) {
-    MIGAndroidSDKScreen(email = email, accessToken = accessToken)
+                              logoMIG: Int? = null,
+                              qrMiddleLogo: Int? = null) {
+    val madridInGameUserData = MadridInGameUserData(
+        email = email,
+        userName = userName ?: "",
+        dni = dni,
+        logoMIG = logoMIG,
+        qrMiddleLogo = qrMiddleLogo
+    )
+    MIGAndroidSDKScreen(madridInGameUserData, accessToken = accessToken)
 }
 
 @Composable
-fun MIGAndroidSDKScreen(email: String,
-                        userName: String? = null,
-                        dni: String? = null,
-                        accessToken: String,
-                        logoMIG: ImageVector? = null,
-                        qrMiddleLogo: ImageVector? = null) {
+fun MIGAndroidSDKScreen(madridInGameUserData: MadridInGameUserData,
+                        accessToken: String) {
     val viewModel: MIGSDKViewModel = viewModel()
     val user by viewModel.user.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    LaunchedEffect(email, accessToken) {
+    LaunchedEffect(madridInGameUserData.email, accessToken) {
         viewModel.initializeUser(
-            email = email,
-            userName = userName.toString(),
-            dni = dni.toString(),
+            madridInGameUserData,
             accessToken = accessToken
         )
     }
@@ -83,7 +121,7 @@ fun MIGAndroidSDKScreen(email: String,
             }
             errorMessage != null -> {
                 Column(modifier = Modifier.align(Alignment.Center)) {
-                    Text("Error al cargar el módulo", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.module_load_error), color = MaterialTheme.colorScheme.error)
                     Text(errorMessage.orEmpty(), color = MaterialTheme.colorScheme.onBackground)
                 }
             }
@@ -130,7 +168,7 @@ fun MainScreen(user: User) {
                                 onClick = { activity?.finish() }
                             ) {
                                 Text(
-                                    text = "Salir",
+                                    text = stringResource(R.string.exit),
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -158,12 +196,14 @@ fun DrawerContent(
     onScreenSelected: (String) -> Unit
 ) {
     val items = mutableListOf(
-        DrawerItem("dashboard", "Dashboard", Icons.Filled.Home),
-        DrawerItem("competitions", "Competiciones", FontAwesomeIcons.Solid.Trophy)
+        DrawerItem("dashboard", stringResource(R.string.dashboard), Icons.Filled.Home),
+        DrawerItem("competitions",
+            stringResource(R.string.competitions), FontAwesomeIcons.Solid.Trophy)
     )
 
     if (UserManager.getUser()?.teams?.isNotEmpty() == true) {
-        items.add(1, DrawerItem("teams", "Equipos", FontAwesomeIcons.Solid.Users))
+        items.add(1, DrawerItem("teams",
+            stringResource(R.string.teams), FontAwesomeIcons.Solid.Users))
     }
 
     MIGAndroidSDKTheme {
@@ -184,15 +224,24 @@ fun DrawerContent(
                 modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
             )*/
 
-            Text(
-                text = "x",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
-                    .clickable {
-                        scope.launch { drawerState.close() }
-                    }
-            )
+//            Text(
+//                text = "x",
+//                color = Color.White,
+//                style = MaterialTheme.typography.headlineMedium,
+//                modifier = Modifier
+//                    .padding(start = 16.dp, bottom = 16.dp)
+//                    .clickable {
+//                        scope.launch { drawerState.close() }
+//                    }
+//            )
+
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
+                IconButton(onClick = {
+                    scope.launch { drawerState.close() }
+                }) {
+                    Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
+                }
+            }
 
             LazyColumn {
                 items(items) { item ->
@@ -287,8 +336,9 @@ fun NavigationGraph(
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         //BottomNavItem("dashboard", "Dashboard", Icons.Default.Home),
-        BottomNavItem("individualReservations", "Reservas", Icons.Default.DateRange),
-        BottomNavItem("profile", "Perfil", FontAwesomeIcons.Solid.UserCircle)
+        BottomNavItem("individualReservations",
+            stringResource(R.string.bookings), Icons.Default.DateRange),
+        BottomNavItem("profile", stringResource(R.string.profile), FontAwesomeIcons.Solid.UserCircle)
     )
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -299,7 +349,10 @@ fun BottomNavigationBar(navController: NavHostController) {
             .height(90.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.93f),
+                        Color.Black.copy(alpha = 0.82f)
+                    )
                 )
             )
     ) {

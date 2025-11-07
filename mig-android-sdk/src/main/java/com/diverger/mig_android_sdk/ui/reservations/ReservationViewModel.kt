@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.ReservationApi
 import com.diverger.mig_android_sdk.data.UserManager
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ReservationViewModel : ViewModel() {
@@ -56,4 +58,49 @@ class ReservationViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateUserDNI(userId: String, dni: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            val result = runCatching {
+                UserManager.updateUser(userId, dni = dni)
+            }
+
+            result.onSuccess {
+                onResult(true)
+            }.onFailure {
+                onResult(false)
+            }
+
+            _isLoading.value = false
+        }
+    }
+
+    fun userCanBook() : Boolean {
+        val reservationCount = reservations.value.count()
+        return reservationCount < userReservationLimit()
+    }
+
+    fun userHasDNI(): Boolean {
+        val user = UserManager.getUser()
+        return user?.dni?.isNotBlank() ?: false
+    }
+
+    fun userIsValidated(): Boolean {
+        val user = UserManager.getUser()
+        return (userHasDNI() && user?.status?.lowercase() == "published")
+    }
+
+    private fun userReservationLimit(): Int {
+        val user = UserManager.getUser()
+        return if (userIsValidated()) {
+            (user?.reservesAllowed ?: 1)
+        } else {
+            1
+        }
+    }
+
+
+
 }

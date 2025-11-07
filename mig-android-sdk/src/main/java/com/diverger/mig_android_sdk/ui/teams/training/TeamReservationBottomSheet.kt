@@ -1,10 +1,16 @@
 package com.diverger.mig_android_sdk.ui.teams.training
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -12,29 +18,42 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.PlayerModel
+import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
-import compose.icons.feathericons.User
 import compose.icons.feathericons.XCircle
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.UserCircle
@@ -102,21 +121,26 @@ fun TeamReservationBottomSheet(
                 ReservationQrCard(training)
             }
 
-            /*Spacer(modifier = Modifier.height(16.dp))
-
-            // 📌 **Lista de jugadores**
-            PlayersCarousel(training)*/
-
             Spacer(modifier = Modifier.height(16.dp))
+
+            if ((training.players?.size ?: 0) > 0) {
+                // 📌 **Lista de jugadores**
+                PlayersCarousel(training)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // 📌 **Botón de Normas SOLO en Presencial**
             if (training.type == "centre") {
                 Button(
                     onClick = { isFlipped.value = !isFlipped.value },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
-                    modifier = Modifier.align(Alignment.CenterHorizontally).height(60.dp)
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .height(60.dp)
                 ) {
-                    val title = if (isFlipped.value) "DETALLES" else "NORMAS DE USO"
+                    val title = if (isFlipped.value) stringResource(R.string.details_label) else stringResource(
+                        R.string.terms_of_use_label
+                    ).uppercase()
                     Text(title, color = Color.Black)
                 }
             }
@@ -137,20 +161,26 @@ private fun ReservationQrCard(training: EventModel) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("RESERVA CONFIRMADA", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.booking_confirmed), color = Color.White, style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text("Localización: ${if (training.type == "virtual") "Virtual" else "Centro"}", color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
-        Text("Fecha: ${formatDateFromShort(training.startDate)}", color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
-        Text("Hora: ${training.time.slice(0..4)}", color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
+        Text(
+            stringResource(
+                R.string.booking_details_location,
+                if (training.type == "virtual") stringResource(R.string.virtual_label) else stringResource(
+                    R.string.center_label
+                )
+            ), color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
+        Text(stringResource(R.string.booking_details_date, formatDateFromShort(training.startDate)), color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
+        Text(stringResource(R.string.booking_details_time, training.time.slice(0..4)), color = Color.White.copy(0.8f) ,fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 5.dp))
 
         Spacer(modifier = Modifier.height(14.dp))
 
         if (training.type == "virtual") {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.QrCode, contentDescription = "QR", tint = Color.White, modifier = Modifier.size(100.dp))
-                Text("No se requiere QR", color = Color.White)
+                Text(stringResource(R.string.no_qr_code_required), color = Color.White)
             }
         } else {
             AsyncImage(
@@ -158,7 +188,7 @@ private fun ReservationQrCard(training: EventModel) {
                     .data("${EnvironmentManager.getAssetsBaseUrl()}${training.reserves?.firstOrNull()?.qrImage ?: ""}")
                     .crossfade(true)
                     .build(),
-                contentDescription = "Código QR",
+                contentDescription = stringResource(R.string.qr_code),
                 placeholder = rememberVectorPainter(Icons.Default.QrCode),
                 error       = rememberVectorPainter(Icons.Default.BrokenImage),
                 contentScale = ContentScale.Fit,
@@ -171,8 +201,10 @@ private fun ReservationQrCard(training: EventModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 📌 **Lista de jugadores**
-        PlayersCarousel(training)
+        if ((training.players?.size ?: 0) > 0) {
+            // 📌 **Lista de jugadores**
+            PlayersCarousel(training)
+        }
     }
 }
 
@@ -189,7 +221,9 @@ private fun ReservationRulesCard() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("NORMAS DE USO", color = Color.White, style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(
+            R.string.terms_of_use_label
+        ).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -198,9 +232,13 @@ private fun ReservationRulesCard() {
                 .data("https://premig.randomkesports.com/_next/static/media/reserve-rules.e49650ad.png")
                 .crossfade(true)
                 .build(),
-            contentDescription = "Normas de Uso",
+            contentDescription = stringResource(R.string.terms_of_use_label),
             contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize().padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .clip(RoundedCornerShape(0.dp))
+                .background(Color.Transparent)
         )
     }
 }
@@ -212,7 +250,7 @@ private fun PlayersCarousel(training: EventModel) {
         modifier = Modifier.
         fillMaxWidth()
     ) {
-        Text("Players", color = Color.White, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.players_label), color = Color.White, style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(10.dp))
 
         LazyRow {
@@ -229,13 +267,15 @@ private fun PlayersCarousel(training: EventModel) {
 private fun PlayerAvatar(player: PlayerModel) {
     Box(modifier = Modifier.size(50.dp)) {
         if (player.avatar != null) {
-        AsyncImage(
+        UnsafeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data("${EnvironmentManager.getAssetsBaseUrl()}${player.avatar}")
                 .crossfade(true)
                 .build(),
             contentDescription = "Avatar",
-            modifier = Modifier.size(50.dp).clip(CircleShape),
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape),
             contentScale = ContentScale.Crop,
             /*error = {
                 Icon(FeatherIcons.User, contentDescription = "Avatar", tint = Color.White, modifier = Modifier.size(35.dp))
@@ -251,7 +291,9 @@ private fun PlayerAvatar(player: PlayerModel) {
 private fun PlaceholderIcon() {
     Icon(
         imageVector = FontAwesomeIcons.Solid.UserCircle,
-        contentDescription = "Usuario sin avatar",
+        contentDescription = stringResource(
+            R.string.no_avatar_user
+        ),
         tint = Color.White,
         modifier = Modifier.size(35.dp)
     )

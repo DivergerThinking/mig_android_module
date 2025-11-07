@@ -70,18 +70,6 @@ class ReservationFlowViewModel : ViewModel() {
         if (_currentStep.value > 0) _currentStep.value--
     }
 
-    fun fetchBlockedDates() {
-        viewModelScope.launch {
-            val result = BlockedDaysService.fetchBlockedDates()
-            result.onSuccess { dates ->
-                _blockedDates.value = dates
-                calculateAvailableDates()
-            }.onFailure { error ->
-                Log.e("BlockedDaysService", "Error al obtener fechas bloqueadas: ${error.message}")
-            }
-        }
-    }
-
     private fun loadCalendarData() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -192,7 +180,7 @@ class ReservationFlowViewModel : ViewModel() {
         val isBlocked: Boolean = false
     )
 
-    fun fetchAvailableSlots(dayValue: Int) {
+    private fun fetchAvailableSlots(dayValue: Int) {
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
@@ -204,7 +192,7 @@ class ReservationFlowViewModel : ViewModel() {
         }
     }
 
-    fun updateEnabledSlots() {
+    private fun updateEnabledSlots() {
         val selected = _selectedSlots.value
 
         if (selected.isEmpty()) {
@@ -220,6 +208,11 @@ class ReservationFlowViewModel : ViewModel() {
             (slot.value in minValue..(maxValue + 1) && slot.value <= minValue + 2)
                     || selected.any { selectedSlot -> selectedSlot.id == slot.id }
         }
+    }
+
+    fun cleanSlots() {
+        _selectedSlots.value = emptyList()
+        updateEnabledSlots()
     }
 
     fun toggleSlotSelection(slot: GamingSpaceTime) {
@@ -305,26 +298,6 @@ class ReservationFlowViewModel : ViewModel() {
             false
         } finally {
             _isProcessing.value = false
-        }
-    }
-
-    fun updateUserDNI(dni: String) {
-        viewModelScope.launch {
-            viewModelScope.launch {
-                _isLoading.value = true
-                val result = runCatching { UserManager.updateUserDNI(dni = dni) }
-
-                result.onSuccess {
-                    _isLoading.value = false
-                    /*_toastMessage.value = "Reserva cancelada con éxito"
-                    UserManager.getUser()?.id.let {
-                        fetchReservations(UserManager.getUser()!!.id)
-                    }*/
-                }.onFailure {
-                    _isLoading.value = false
-                    //_toastMessage.value = "Error al cancelar la reserva"
-                }
-            }
         }
     }
 }

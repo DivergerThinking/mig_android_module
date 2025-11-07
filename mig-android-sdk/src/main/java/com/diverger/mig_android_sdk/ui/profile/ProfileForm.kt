@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -26,12 +27,12 @@ fun ProfileForm(
     onValueChange: (String, String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ProfileTextField(label = "Nombre", value = firstName, onValueChange = { onValueChange("firstName", it) })
-        ProfileTextField(label = "Apellidos", value = lastName, onValueChange = { onValueChange("lastName", it) })
-        ProfileTextField(label = "DNI", value = dni, onValueChange = { onValueChange("dni", it) })
-        ProfileTextField(label = "Email", value = email, onValueChange = { onValueChange("email", it) })
-        ProfileTextField(label = "Nick", value = username, onValueChange = { onValueChange("username", it) })
-        ProfileTextField(label = "Teléfono (Opcional)", value = phone, keyboardType = KeyboardType.Phone, onValueChange = { onValueChange("phone", it) })
+        ProfileTextField(label = stringResource(R.string.profile_name_label), value = firstName, onValueChange = { onValueChange("firstName", it) })
+        ProfileTextField(label = stringResource(R.string.profile_lastname_label), value = lastName, onValueChange = { onValueChange("lastName", it) })
+        ProfileTextField(label = stringResource(R.string.profile_id_label), value = dni, onValueChange = { onValueChange("dni", it) })
+        ProfileTextField(label = stringResource(R.string.profile_email_label), value = email, onValueChange = { onValueChange("email", it) })
+        ProfileTextField(label = stringResource(R.string.profile_nickname_label), value = username, onValueChange = { onValueChange("username", it) })
+        ProfileTextField(label = stringResource(R.string.profile_phone_label), value = phone, keyboardType = KeyboardType.Phone, onValueChange = { onValueChange("phone", it) })
     }
 }
 
@@ -56,8 +57,8 @@ fun ProfileTextField(
                 .fillMaxWidth()
                 .padding(8.dp)
                 .background(Color.Gray.copy(alpha = 0.2f), shape = MaterialTheme.shapes.medium)
-                .padding(12.dp)
-
+                .padding(12.dp),
+            enabled = false
         )
     }
 }

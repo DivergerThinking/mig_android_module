@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,14 +19,18 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.data.NewsModel
+import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.XCircle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +48,7 @@ fun NewsDetailScreen(news: NewsModel, onDismiss: () -> Unit) {
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
+                    Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
                 }
             }
 
@@ -61,9 +66,9 @@ fun NewsDetailScreen(news: NewsModel, onDismiss: () -> Unit) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            AsyncImage(
+            UnsafeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("${EnvironmentManager.getBaseUrl()}${news.image ?: ""}")
+                    .data("${EnvironmentManager.getAssetsBaseUrl()}${news.image ?: ""}")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de noticia",
