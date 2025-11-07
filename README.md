@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DivergerThinking:mig_android_module:2.0.0")
+    implementation("com.github.DivergerThinking:mig_android_module:2.0.2")
 }
 ```
 
