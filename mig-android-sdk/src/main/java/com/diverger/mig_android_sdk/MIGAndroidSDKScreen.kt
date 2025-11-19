@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -68,6 +69,7 @@ import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
+import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
@@ -307,8 +309,8 @@ fun DashboardNavigation(user: User, modifier: Modifier) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
-        NavHost(navController, startDestination = "individualReservations", modifier = Modifier.padding(innerPadding)) {
-            //composable("dashboard") { DashboardScreen() }
+        NavHost(navController, startDestination = "dashboard", modifier = Modifier.padding(innerPadding)) {
+            composable("dashboard") { MIGAndroidSDKTheme { DashboardScreen() }}
             composable("individualReservations") { IndividualReservationsScreen(userId = user.id) }
             composable("profile") { ProfileScreen() }
         }
@@ -335,7 +337,7 @@ fun NavigationGraph(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
-        //BottomNavItem("dashboard", "Dashboard", Icons.Default.Home),
+        BottomNavItem("dashboard", "Calendario", Icons.Default.CalendarMonth),
         BottomNavItem("individualReservations",
             stringResource(R.string.bookings), Icons.Default.DateRange),
         BottomNavItem("profile", stringResource(R.string.profile), FontAwesomeIcons.Solid.UserCircle)

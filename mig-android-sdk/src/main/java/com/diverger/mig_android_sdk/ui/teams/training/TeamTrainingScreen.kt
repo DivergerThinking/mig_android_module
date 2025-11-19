@@ -1,4 +1,4 @@
-package com.diverger.mig_android_sdk.ui.teams
+package com.diverger.mig_android_sdk.ui.teams.training
 
 import CustomCalendarView
 import android.os.Build
@@ -57,7 +57,6 @@ import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.UnifiedReservationScreen
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
-import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingViewModel
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.Eye
@@ -66,7 +65,6 @@ import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Building
 import compose.icons.fontawesomeicons.solid.UserCircle
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
     var isCalendarVisible by remember { mutableStateOf(true) }
@@ -148,7 +146,6 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 }
 
 // 📅 **Componente de Calendario**
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarComponent(
     isCalendarVisible: Boolean,

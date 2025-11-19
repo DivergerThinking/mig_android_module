@@ -197,10 +197,10 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
 @Composable
 fun SelectedTabContent(competition: Competition, selectedTab: Int) {
     when (selectedTab) {
-        0 -> ScrollableTextContent(competition.overview ?: "Sin información")
-        1 -> ScrollableTextContent(competition.details ?: "Sin información")
-        2 -> ScrollableTextContent(competition.rules ?: "Sin reglas definidas")
-        3 -> ScrollableTextContent(competition.contact ?: "Sin contacto disponible")
+        0 -> ScrollableTextContent(if(competition.overview.isNullOrEmpty()) "Sin información" else competition.overview)
+        1 -> ScrollableTextContent(if(competition.details.isNullOrEmpty()) "Sin información" else competition.details)
+        2 -> ScrollableTextContent(if(competition.rules.isNullOrEmpty()) "Sin reglas definidas" else competition.rules)
+        3 -> ScrollableTextContent(if(competition.contact.isNullOrEmpty()) "Sin contacto disponible" else competition.contact)
         4 -> TournamentTab(competition) // ✅ Torneos se mantiene igual
     }
 }

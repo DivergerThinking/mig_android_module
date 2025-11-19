@@ -4,7 +4,6 @@ import SelectTeamBottomSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -20,6 +19,7 @@ import androidx.navigation.compose.*
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.teams.news.NewsScreen
 import com.diverger.mig_android_sdk.ui.teams.playersTeam.PlayersTeamScreen
+import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingScreen
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
