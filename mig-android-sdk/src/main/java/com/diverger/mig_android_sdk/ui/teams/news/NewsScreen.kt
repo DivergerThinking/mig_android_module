@@ -18,11 +18,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.NewsModel
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
@@ -42,7 +44,7 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
                 modifier = Modifier.padding(bottom = 10.dp, start = 16.dp),
             ) {
                 Text(
-                    "NOTICIAS",
+                    stringResource(R.string.news_label).uppercase(),
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                 )
@@ -63,7 +65,7 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
                     )
 
                     allNews.isEmpty() -> Text(
-                        "No hay noticias disponibles",
+                        stringResource(R.string.no_news_available),
                         color = Color.White,
                         modifier = Modifier.align(Alignment.Center)
                     )
@@ -115,16 +117,16 @@ fun NewsItem(news: NewsModel, onNewsSelected: (NewsModel) -> Unit) {
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    news.title ?: "Sin título",
+                    news.title ?: stringResource(R.string.no_title_news),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    news.body ?: "Sin descripción",
+                    news.body ?: stringResource(R.string.no_description_news),
                     color = Color.Gray,
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 3
+                    maxLines = 6
                 )
                 Spacer(Modifier.height(20.dp))
                 AsyncImage(

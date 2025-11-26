@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -91,20 +92,23 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 5.dp)
+                        style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        text = formatDateFromShort(reservation.date),
+                        text = formatDateFromShort(reservation.date, LocalContext.current),
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
                         text = reservation.times.joinToString { it.time },
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 12.sp,
-                    )
+                        style = MaterialTheme.typography.labelMedium
+                        )
                 }
 
                 if (!compact) {

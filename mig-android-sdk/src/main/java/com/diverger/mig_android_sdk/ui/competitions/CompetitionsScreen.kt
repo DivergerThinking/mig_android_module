@@ -1,5 +1,6 @@
 package com.diverger.mig_android_sdk.ui.competitions
 
+import android.content.Context
 import android.text.Html
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,18 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Competition
-import com.diverger.mig_android_sdk.data.Game
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.random.RandomGenerator.LeapableGenerator
 
 @Composable
 fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsViewModel = viewModel()) {
@@ -48,7 +50,7 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
         ) {
             // 📌 Título
             Text(
-                "COMPETICIONES",
+                stringResource(R.string.competitions_label),
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 10.dp)
@@ -70,7 +72,7 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
             } else if (!errorMessage.isNullOrEmpty()) {
                 Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
             } else {
-                val leagues = viewModel.getLeaguesWithCompetitions()
+                val leagues = viewModel.getLeaguesWithCompetitions(context = LocalContext.current)
 
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(leagues) { league ->
@@ -100,7 +102,7 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedYear.ifEmpty { "Selecciona una temporada" },
+                    text = selectedYear.ifEmpty { stringResource(R.string.select_season) },
                     color = Color.White,
                     modifier = Modifier.weight(1f)
                 )
@@ -217,7 +219,7 @@ data class LeagueModel(
 )
 
 // 📌 **Función para organizar las competiciones en ligas**
-fun CompetitionsViewModel.getLeaguesWithCompetitions(): List<LeagueModel> {
+fun CompetitionsViewModel.getLeaguesWithCompetitions(context: Context): List<LeagueModel> {
     val allCompetitions = competitions.value
 
     val list: MutableList<LeagueModel> = mutableListOf()
@@ -229,35 +231,35 @@ fun CompetitionsViewModel.getLeaguesWithCompetitions(): List<LeagueModel> {
 
    if (esm.isNotEmpty()) {
        list.add(LeagueModel(
-           title = "Liga Municipal",
-           description = "Esports Series Madrid",
-           overView = "Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.",
+           title = context.getString(R.string.local_league_title),
+           description = context.getString(R.string.local_league_description),
+           overView = context.getString(R.string.local_league_overview),
            competitions = allCompetitions.filter { it.game?.type == "esm" }
        ))
    }
 
     if (junior.isNotEmpty()) {
         list.add(LeagueModel(
-            title = "Liga Municipal Junior",
-            description = "Esports Series Madrid",
-            overView = "El equivalente de la Esports Series Madrid para colegios e institutos de la ciudad. La ESM Junior Esports es tu puerta de entrada para que puedas participar con tu centro educativo en la liga municipal junior de League of Legends y Rocket League.",
+            title = context.getString(R.string.junior_league_title),
+            description = context.getString(R.string.junior_league_description),
+            overView = context.getString(R.string.junior_league_overview),
             competitions = allCompetitions.filter { it.game?.type == "junior" }
         ))
     }
 
     if (stormCircuit.isNotEmpty()) {
         list.add(LeagueModel(
-            title = "Circuito Tormenta",
-            description = "Esports Series Madrid",
-            overView = "Las Esports Series Madrid de Madrid in Game serán parada oficial del Circuito de Tormenta. Contarán con las competiciones de League of Legends y Valorant, además de disputarse una gran Final presencial. Los torneos otorgarán puntos para el ranking general del Circuito de Tormenta del Split correspondiente.",
+            title = context.getString(R.string.storm_circuit_title),
+            description = context.getString(R.string.storm_circuit_description),
+            overView = context.getString(R.string.storm_circuit_overview),
             competitions = allCompetitions.filter { it.game?.type == "stormCircuit" }
         ))
     }
 
     if (other.isNotEmpty()) {
         list.add(LeagueModel(
-            title = "Otras competiciones",
-            description = "Esports Series Madrid",
+            title = context.getString(R.string.other_competition_title),
+            description = context.getString(R.string.other_competition_description),
             overView = "",
             competitions = allCompetitions.filter { it.game?.type == "other" }
         ))
@@ -267,30 +269,30 @@ fun CompetitionsViewModel.getLeaguesWithCompetitions(): List<LeagueModel> {
 }
 
 // 📅 **Función para formatear la fecha a dd/MM/yyyy**
-fun formatDate(dateString: String?): String {
-    if (dateString.isNullOrEmpty()) return "Fecha desconocida"
+fun formatDate(dateString: String?, context: Context): String {
+    if (dateString.isNullOrEmpty()) return context.getString(R.string.unknown_date)
 
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val date = inputFormat.parse(dateString)
-        outputFormat.format(date ?: return "Fecha inválida")
+        outputFormat.format(date ?: return context.getString(R.string.invalid_date))
     } catch (e: Exception) {
-        "Fecha inválida"
+        context.getString(R.string.invalid_date)
     }
 }
 
 // 📅 **Función para formatear la fecha a dd/MM/yyyy desde yyy-MM-dd**
-fun formatDateFromShort(dateString: String?): String {
-    if (dateString.isNullOrEmpty()) return "Fecha desconocida"
+fun formatDateFromShort(dateString: String?, context: Context): String {
+    if (dateString.isNullOrEmpty()) return context.getString(R.string.unknown_date)
 
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val date = inputFormat.parse(dateString)
-        outputFormat.format(date ?: return "Fecha inválida")
+        outputFormat.format(date ?: return context.getString(R.string.invalid_date))
     } catch (e: Exception) {
-        "Fecha inválida"
+        context.getString(R.string.invalid_date)
     }
 }
 

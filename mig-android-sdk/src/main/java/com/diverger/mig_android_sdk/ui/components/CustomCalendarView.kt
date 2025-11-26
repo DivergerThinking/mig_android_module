@@ -1,3 +1,4 @@
+import android.R.style
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,6 +43,7 @@ import java.text.SimpleDateFormat
 fun CustomCalendarView(
     canUserInteract: Boolean,
     reservations: List<String>,  // 📌 Fechas con reservas individuales (azul)
+    trainings: List<String>, // 📌 Fechas con reservas de equipo (azul oscuro)
     blockedDates: List<String>,  // 📌 Fechas bloqueadas (rojo)
     onDateSelected: (String) -> Unit
 ) {
@@ -86,8 +89,9 @@ fun CustomCalendarView(
                 text = SimpleDateFormat(pattern, Locale.getDefault()).format(currentMonthCalendar.time)
                     .uppercase(),
                 color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                )
             IconButton(onClick = {
                 val newCalendar = currentMonthCalendar.clone() as Calendar
                 newCalendar.add(Calendar.MONTH, 1)
@@ -109,8 +113,9 @@ fun CustomCalendarView(
                     text = day,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
             }
         }
@@ -131,7 +136,8 @@ fun CustomCalendarView(
                 val isToday = day == today // Assuming normalized midnights
                 val isBlocked = blockedDates.contains(formattedDate)
                 val reservationCountForDay = reservationCount[formattedDate] ?: 0
-                val isMarked = reservations.contains(formattedDate)
+                val isMarkedReservation = reservations.contains(formattedDate)
+                val isMarkedTraining = trainings.contains(formattedDate)
                 val isMaxReservations = reservationCountForDay >= 3 // ❌ Si hay 3 reservas, no se puede seleccionar
                 val isSelected = day == selectedDate
                 val isPastDay = day < today
@@ -158,9 +164,16 @@ fun CustomCalendarView(
                     }
 
                     // 🔵 **Reservas individuales (Azul)**
-                    if (isMarked) {
+                    if (isMarkedReservation) {
                         circles.add {
                             CircleBorder(color = Color.Blue, strokeWidth = 3.dp, size = if (isToday) 38.dp else 44.dp)
+                        }
+                    }
+
+                    // 🔵 **Reservas de equipo (azul oscuro)**
+                    if (isMarkedTraining) {
+                        circles.add {
+                            CircleBorder(color = Color(0xFF2C5A90), strokeWidth = 3.dp, size = if (isToday) 38.dp else 44.dp)
                         }
                     }
 
@@ -215,7 +228,8 @@ fun CircleBorder(color: Color, strokeWidth: Dp, size: Dp) {
 // ✅ **Genera los días del mes correctamente**
 fun generateDaysInMonth(currentMonth: Calendar): List<Long> {
     val days = mutableListOf<Long>()
-
+    val locale = Locale.getDefault()
+    val firstDayOfWeek = Calendar.getInstance(locale).firstDayOfWeek
     val calendar = currentMonth.clone() as Calendar
     calendar.set(Calendar.DAY_OF_MONTH, 1)
     calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -223,7 +237,6 @@ fun generateDaysInMonth(currentMonth: Calendar): List<Long> {
     calendar.set(Calendar.SECOND, 0)
     calendar.set(Calendar.MILLISECOND, 0)
 
-    val firstDayOfWeek = calendar.firstDayOfWeek
     val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
 
     val dayOffset = (dayOfWeek - firstDayOfWeek + 7) % 7
@@ -240,8 +253,9 @@ fun generateDaysInMonth(currentMonth: Calendar): List<Long> {
 
 fun getLocalizedDayInitials(): List<String> {
     val locale = Locale.getDefault()
-    val shortWeekdays = DateFormatSymbols(locale).shortWeekdays
-    return shortWeekdays
-        .filter { it.isNotEmpty() }
-        .map { it.first().toString() }
+    val symbols = DateFormatSymbols(locale).shortWeekdays // index 1=SUNDAY
+    val firstDayOfWeek = Calendar.getInstance(locale).firstDayOfWeek
+
+    val days = (0..6).map { ((firstDayOfWeek + it - 1) % 7) + 1 }
+    return days.map { symbols[it].take(1) }
 }

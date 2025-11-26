@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -48,13 +47,16 @@ fun CancelReservationPopup(
                     Text(
                         stringResource(R.string.confirm_booking_cancellation_date, date, reservation.times.first().time),
                         fontSize = 16.sp,
-                        color = Color.DarkGray.copy(alpha = 0.8f)
+                        color = Color.DarkGray.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelSmall
+
                     )
                 } else {
                     Text(
                         stringResource(R.string.confirm_booking_cancellation),
                         fontSize = 16.sp,
-                        color = Color.DarkGray.copy(alpha = 0.8f)
+                        color = Color.DarkGray.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             },

@@ -33,12 +33,15 @@ class MainActivity : ComponentActivity() {
             email = "adriortega19@gmail.com",
             userName = "Adri",
 //            //dni = "03427404J",
+            logoMIG = R.drawable.logo_mig,
+            qrMiddleLogo = R.drawable.qr_middle_logo
         )
 
         MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
             madridInGameUserData = madridInGameUserData,
-            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY",
+            isPreRelease = true
         )
 
 //        MadridInGameAndroidModuleEntryPoint.launch(

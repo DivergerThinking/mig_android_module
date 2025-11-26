@@ -1,6 +1,4 @@
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -45,21 +43,22 @@ import androidx.compose.ui.window.Dialog
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Space
+import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.dateFromString
 import com.diverger.mig_android_sdk.support.isToday
 import com.diverger.mig_android_sdk.support.toUIDateString
 import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel
+import com.diverger.mig_android_sdk.ui.reservations.loadBitmapFromResource
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.XCircle
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReservationFlowDialog(
     onDismiss: () -> Unit,
     userId: String,
-    onReservationSuccess: () -> Unit
+    onReservationSuccess: () -> Unit,
 ) {
     val viewModel = ReservationFlowViewModel()
     val currentStep by viewModel.currentStep.collectAsState()
@@ -94,7 +93,11 @@ fun ReservationFlowDialog(
                             .size(32.dp)
                             .background(Color.Transparent, shape = CircleShape)
                     ) {
-                        Icon(FeatherIcons.XCircle, contentDescription = "Cerrar", tint = Color.White)
+                        Icon(
+                            FeatherIcons.XCircle,
+                            contentDescription = "Cerrar",
+                            tint = Color.White
+                        )
                     }
                 }
 
@@ -103,7 +106,8 @@ fun ReservationFlowDialog(
                 // Indicador de progreso
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center) {
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     repeat(3) { index ->
                         CircleIndicator(isActive = index == currentStep)
                         if (index < 2) {
@@ -111,9 +115,18 @@ fun ReservationFlowDialog(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(stringResource(R.string.book_space), color = Color.White, fontSize = 18.sp)
+                }
+                Spacer(Modifier.height(20.dp))
+                val logoBitmap = UserManager.qr_logo?.let { logoResId ->
+                    loadBitmapFromResource(logoResId)
+                }
                 when (currentStep) {
                     0 -> SelectDateView(viewModel, onNext = { viewModel.goToNextStep() })
                     1 -> SelectSlotView(
@@ -126,18 +139,27 @@ fun ReservationFlowDialog(
                     )
                     2 -> SelectSpaceView(viewModel, onConfirm = {
                         coroutineScope.launch {
-                            viewModel.createReservation(userId).let { result ->
+                            viewModel.createReservation(userId, logoBitmap).let { result ->
                                 if (result) {
-                                    Toast.makeText(context,
-                                        context.getString(R.string.booking_creation_success), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.booking_creation_success),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     onReservationSuccess() // Actualizar lista
                                 } else {
-                                    Toast.makeText(context,
-                                        context.getString(R.string.booking_creation_failure), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.booking_creation_failure),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                                 onDismiss()
                             }
                         }
+                    }, onPrevious = {
+                        viewModel.cleanSpace()
+                        viewModel.goToPreviousStep()
                     })
                 }
 
@@ -173,107 +195,56 @@ fun CircleIndicator(isActive: Boolean) {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SelectDateView(viewModel: ReservationFlowViewModel, onNext: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(stringResource(R.string.select_date), color = Color.White, fontSize = 18.sp)
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(stringResource(R.string.select_date), color = Color.White, fontSize = 16.sp)
         Spacer(Modifier.height(20.dp))
 
         val availableDates by viewModel.availableDates.collectAsState()
         val blockedDates by viewModel.blockedDates.collectAsState()
         val selectedDate by viewModel.selectedDate.collectAsState()
-        val reservations = viewModel.markedDates.collectAsState().value.filter { it.isReservation }.map { it.date } // 🔹 Filtramos solo reservas individuales
-
-        if (availableDates.isEmpty() && blockedDates.isEmpty()) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            CustomCalendarView(
-                canUserInteract = true,
-                blockedDates = viewModel.blockedDates.collectAsState().value,
-                onDateSelected = {
-                    viewModel.setSelectedDate(it)
-                },
-                reservations = reservations
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = onNext,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, disabledContainerColor = Color.White.copy(0.35f)),
-            enabled = selectedDate != null,
-            modifier = Modifier.align(Alignment.End)
+        val reservations =
+            viewModel.markedDates.collectAsState().value.filter { it.isReservation }
+                .map { it.date } // 🔹 Filtramos solo reservas individuales
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
         ) {
-            Text(stringResource(R.string.next), color = Color.Black)
-        }
-    }
-}
-
-@Composable
-fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit, onPrevious: () -> Unit) {
-    val availableSlots by viewModel.availableSlots.collectAsState()
-    val selectedSlots by viewModel.selectedSlots.collectAsState()
-    val enabledSlots by viewModel.enabledSlots.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(stringResource(R.string.select_schedule), color = Color.White, fontSize = 18.sp)
-        Spacer(Modifier.height(20.dp))
-
-        selectedDate?.let { date ->
-            dateFromString(date)?.toUIDateString()?.let { formattedDate ->
-                Text(formattedDate, color = Color.White, fontSize = 14.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            if (availableDates.isEmpty() && blockedDates.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                CustomCalendarView(
+                    canUserInteract = true,
+                    blockedDates = viewModel.blockedDates.collectAsState().value,
+                    onDateSelected = {
+                        viewModel.setSelectedDate(it)
+                    },
+                    reservations = reservations,
+                    trainings = arrayListOf()
+                )
             }
         }
-        Spacer(Modifier.height(20.dp))
-        if (availableSlots.isEmpty()) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            // Mostrar los slots en un Grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),  // 3 columnas por fila
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(availableSlots) { slot ->
-                    SlotItem(
-                        slot = slot,
-                        date = selectedDate,
-                        isSelected = selectedSlots.contains(slot),
-                        isEnabled = enabledSlots.contains(slot),
-                        onClick = { viewModel.toggleSlotSelection(slot) }
-                    )
-                }
-            }
-        }
+
         Spacer(Modifier.height(20.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.Center,
         ) {
-            Button(
-                onClick = onPrevious,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Cyan,
-                    disabledContainerColor = Color.White.copy(0.35f)
-                ),
-                enabled = true,
-                modifier = Modifier.align(Alignment.CenterVertically)
-
-            ) {
-                Text(stringResource(R.string.previous), color = Color.Black)
-            }
-            Spacer(Modifier.width(20.dp))
             Button(
                 onClick = onNext,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Cyan,
                     disabledContainerColor = Color.White.copy(0.35f)
                 ),
-                enabled = selectedSlots.isNotEmpty(),
-                modifier = Modifier.align(Alignment.CenterVertically)
+                enabled = selectedDate != null,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             ) {
                 Text(stringResource(R.string.next), color = Color.Black)
             }
@@ -282,7 +253,122 @@ fun SelectSlotView(viewModel: ReservationFlowViewModel, onNext: () -> Unit, onPr
 }
 
 @Composable
-fun SlotItem(slot: GamingSpaceTime, date: String?, isSelected: Boolean, isEnabled: Boolean, onClick: () -> Unit) {
+fun SelectSlotView(
+    viewModel: ReservationFlowViewModel,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+) {
+    val availableSlots by viewModel.availableSlots.collectAsState()
+    val selectedSlots by viewModel.selectedSlots.collectAsState()
+    val enabledSlots by viewModel.enabledSlots.collectAsState()
+    val selectedDate by viewModel.selectedDate.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Header
+        Text(
+            stringResource(R.string.select_schedule),
+            color = Color.White,
+            fontSize = 16.sp
+        )
+        Spacer(Modifier.height(20.dp))
+
+        selectedDate?.let { date ->
+            dateFromString(date)?.toUIDateString()?.let { formattedDate ->
+                Text(
+                    formattedDate,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            if (availableSlots.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(availableSlots) { slot ->
+                        SlotItem(
+                            slot = slot,
+                            date = selectedDate,
+                            isSelected = selectedSlots.contains(slot),
+                            isEnabled = enabledSlots.contains(slot),
+                            onClick = { viewModel.toggleSlotSelection(slot) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Info text above buttons
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                stringResource(R.string.maximum_3_consecutive_slots),
+                color = Color.White
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onPrevious,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Cyan,
+                    disabledContainerColor = Color.White.copy(0.35f)
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.previous), color = Color.Black)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(
+                onClick = onNext,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Cyan,
+                    disabledContainerColor = Color.White.copy(0.35f)
+                ),
+                enabled = selectedSlots.isNotEmpty(),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.next), color = Color.Black)
+            }
+        }
+    }
+}
+
+@Composable
+fun SlotItem(
+    slot: GamingSpaceTime,
+    date: String?,
+    isSelected: Boolean,
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+) {
 
     val calendar = Calendar.getInstance()
     val currentHourPlus2 = calendar.get(Calendar.HOUR_OF_DAY) + 1
@@ -297,7 +383,7 @@ fun SlotItem(slot: GamingSpaceTime, date: String?, isSelected: Boolean, isEnable
             containerColor = when {
                 isSelected -> Color.White  // Seleccionado -> Blanco
                 computedEnabled -> Color.Transparent    // Disponible -> Gris
-                else -> Color.DarkGray     // Deshabilitado -> Oscuro
+                else -> Color.LightGray     // Deshabilitado -> Oscuro
             },
         ),
         modifier = Modifier
@@ -309,55 +395,89 @@ fun SlotItem(slot: GamingSpaceTime, date: String?, isSelected: Boolean, isEnable
                 if (computedEnabled && !isSelected) Color.White else Color.Transparent,
                 RoundedCornerShape(40.dp)
             ),
-    enabled = computedEnabled
+        enabled = computedEnabled
     ) {
         Text(
             text = slot.time,
-            color = if (isSelected) Color.Black else Color.White
+            color = when {
+                isSelected -> Color.Black  // Seleccionado -> Blanco
+                computedEnabled -> Color.White    // Disponible -> Gris
+                else -> Color.LightGray     // Deshabilitado -> Oscuro
+            }
         )
     }
 }
 
 @Composable
-fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit) {
+fun SelectSpaceView(viewModel: ReservationFlowViewModel, onConfirm: () -> Unit, onPrevious: () -> Unit) {
     LaunchedEffect(Unit) {
         viewModel.fetchAvailableSpaces()
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(stringResource(R.string.select_space), color = Color.White, fontSize = 18.sp)
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(stringResource(R.string.select_space), color = Color.White, fontSize = 16.sp)
 
         Spacer(Modifier.height(20.dp))
 
         val availableSpaces by viewModel.availableSpaces.collectAsState()
         val selectedSpace by viewModel.selectedSpace.collectAsState()
-
-        if (availableSpaces.isEmpty()) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),  // Grid con 3 columnas
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(availableSpaces) { space ->
-                    SpaceItem(
-                        space = space,
-                        isSelected = selectedSpace == space,
-                        onClick = { viewModel.selectSpace(space) }
-                    )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+        ) {
+            if (availableSpaces.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),  // Grid con 3 columnas
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(availableSpaces) { space ->
+                        SpaceItem(
+                            space = space,
+                            isSelected = selectedSpace == space,
+                            onClick = { viewModel.selectSpace(space) }
+                        )
+                    }
                 }
             }
         }
-
         Spacer(Modifier.height(20.dp))
 
-        Button(
-            onClick = onConfirm,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, disabledContainerColor = Color.White.copy(0.35f)),
-            enabled = selectedSpace != null,
-            modifier = Modifier.align(Alignment.End)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.book_training), color = Color.Black)
+            Button(
+                onClick = onPrevious,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Cyan,
+                    disabledContainerColor = Color.White.copy(0.35f)
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.previous), color = Color.Black)
+            }
+            Spacer(Modifier.width(16.dp))
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Cyan,
+                    disabledContainerColor = Color.White.copy(0.35f)
+                ),
+                enabled = selectedSpace != null,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.book_training), color = Color.Black)
+            }
         }
     }
 }
@@ -376,7 +496,7 @@ fun SpaceItem(space: Space, isSelected: Boolean, onClick: () -> Unit) {
                 if (!isSelected) Color.White else Color.Transparent,
                 RoundedCornerShape(40.dp)
             )
-        ) {
+    ) {
         Text(space.device, color = if (isSelected) Color.Black else Color.White)
     }
 }

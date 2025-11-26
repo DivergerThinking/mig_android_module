@@ -51,6 +51,7 @@ data class EventModel(
     val status: String,
     val time: String,
     val type: String,
+    var teamName: String?
 )
 
 data class Reserve(

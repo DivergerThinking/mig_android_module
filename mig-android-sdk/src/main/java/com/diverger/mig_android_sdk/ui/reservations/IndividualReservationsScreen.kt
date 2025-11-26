@@ -1,6 +1,5 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
-import ReservationBottomSheet
 import ReservationFlowDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -24,10 +23,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,12 +43,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.TextStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +94,7 @@ fun IndividualReservationsScreen(userId: String) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Reservas Individuales",
+                    text = stringResource(R.string.individual_bookings),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.headlineLarge,
@@ -117,7 +120,7 @@ fun IndividualReservationsScreen(userId: String) {
 
                     reservations.isEmpty() -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No hay reservas", color = Color.White)
+                            Text(stringResource(R.string.no_bookings), color = Color.White, style = MaterialTheme.typography.labelMedium)
                         }
                     }
 
@@ -170,7 +173,7 @@ fun IndividualReservationsScreen(userId: String) {
                     .padding(vertical = 16.dp)
                     .padding(horizontal = 50.dp)
             ) {
-                Text("RESERVAR", color = Color.Black, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.book_label), color = Color.Black, fontWeight = FontWeight.ExtraBold)
             }
 
             // 📌 Mostrar el flujo de reserva
@@ -186,21 +189,33 @@ fun IndividualReservationsScreen(userId: String) {
             }
 
             if (showDniDialog) {
+                val dniRegex = remember { Regex("^[0-9]{8}[A-Za-z]$") }
+
                 AlertDialog(
                     onDismissRequest = { if (!isLoading) showDniDialog = false },
-                    title = { Text(stringResource(R.string.insert_id)) },
-                    text = {
-                        OutlinedTextField(
-                            value = enteredDni,
-                            onValueChange = { enteredDni = it },
-                            label = { Text(stringResource(R.string.id_label)) },
-                            singleLine = true,
-                            enabled = !isLoading,
-                            modifier = Modifier.fillMaxWidth()
+                    title = {
+                        Column {
+                        Text(
+                            stringResource(R.string.insert_id),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center
                         )
+                        Text(
+                            stringResource(R.string.insert_confirm_dni),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    },
+                    text = {
+                        Column (horizontalAlignment = Alignment.CenterHorizontally) {
+                            DniTextField(enteredDni, onDniChange = { enteredDni = it }, isLoading = isLoading)
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Text(stringResource(R.string.confirm_dni_warning), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                        }
                     },
                     confirmButton = {
-                        TextButton(
+                        Button(
                             onClick = {
                                 if (enteredDni.isNotBlank()) {
                                     showDniDialog = false
@@ -214,22 +229,25 @@ fun IndividualReservationsScreen(userId: String) {
                                     }
                                 }
                             },
-                            enabled = enteredDni.isNotBlank() && !isLoading
+                            enabled = dniRegex.matches(enteredDni) && !isLoading,
                         ) {
-                            Text(stringResource(R.string.accept_label))
+                            Text(stringResource(R.string.accept_label), color = Color.Black)
                         }
                     },
                     dismissButton = {
-                        TextButton(
+                        Button(
                             onClick = {
                                 showDniDialog = false
                                 showReservationFlow.value = false
                             },
                             enabled = !isLoading
                         ) {
-                            Text(stringResource(R.string.cancel_label))
+                            Text(stringResource(R.string.cancel_label), color = Color.Black)
                         }
-                    }
+                    },
+                    containerColor = Color.DarkGray,
+                    titleContentColor = Color.White,
+                    textContentColor = Color.White
                 )
             }
         }
@@ -242,8 +260,8 @@ fun IndividualReservationsScreen(userId: String) {
             )
         }
 
-        if (viewModel.toastMessage.value != null) {
-            Toast.makeText(context, viewModel.toastMessage.value, Toast.LENGTH_LONG)
+        if (message != null) {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
 
         // 📌 Popup de cancelación
@@ -253,7 +271,42 @@ fun IndividualReservationsScreen(userId: String) {
             onDismiss = { showCancelPopup = false },
             onConfirmCancel = { reservationId ->
                 showCancelPopup = false
-                viewModel.deleteReservation(reservationId)
+                viewModel.deleteReservation(reservationId, context)
             }
         ) }
+}
+
+@Composable
+fun DniTextField(
+    enteredDni: String,
+    onDniChange: (String) -> Unit,
+    isLoading: Boolean
+) {
+    val dniRegex = remember { Regex("^[0-9]{8}[A-Za-z]\$") }
+    val isError = enteredDni.isNotEmpty() && !dniRegex.matches(enteredDni)
+
+    Column {
+            OutlinedTextField(
+                value = enteredDni,
+                onValueChange = { onDniChange(it) },
+                label = { Text(stringResource(R.string.id_label)) },
+                singleLine = true,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+                isError = isError,
+                supportingText = {
+                    if (isError) {
+                        Text(
+                            text = stringResource(R.string.invalid_dni),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                textStyle = TextStyle(color = Color.White),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+    }
 }

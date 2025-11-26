@@ -38,6 +38,9 @@ object UserManager {
     private val BASE_URL = EnvironmentManager.getBaseUrl()
     private var accessToken: String? = null
 
+    var logo: Int? = null
+    var qr_logo: Int? = null
+
     private val apiService: ApiService by lazy {
         Retrofit.Builder()
             .client(getUnsafeOkHttpClient())
@@ -51,6 +54,8 @@ object UserManager {
         madridInGameUserData: MadridInGameUserData,
         accessToken: String,
     ): Result<Unit> = withContext(Dispatchers.IO) {
+        logo = madridInGameUserData.logoMIG
+        qr_logo = madridInGameUserData.qrMiddleLogo
         return@withContext try {
             setAccessToken(accessToken)
             val response = apiService.getUserByEmail(madridInGameUserData.email, token = "Bearer $accessToken")

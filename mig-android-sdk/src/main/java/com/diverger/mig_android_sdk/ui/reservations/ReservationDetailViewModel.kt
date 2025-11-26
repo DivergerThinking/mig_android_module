@@ -1,12 +1,14 @@
 import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.ui.StringResourcesProvider
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.text.slice
 
 class ReservationDetailViewModel(
     private val stringResourcesProvider: StringResourcesProvider,
@@ -29,7 +31,7 @@ class ReservationDetailViewModel(
 
     fun getReservationLocation(): String {
         reservation?.let {
-            return if (it.slot.space.translations.first().description.contains("Virtual", true)) {
+            return if (it.slot.space.translations.first().description.lowercase().contains("virtual", true)) {
                 stringResourcesProvider.getString(R.string.esports_virtual_center)
             } else {
                 stringResourcesProvider.getString(R.string.esports_madrid_center)
@@ -51,6 +53,7 @@ class ReservationDetailViewModel(
                 it.slot.space.translations.first().device.contains("PlayStation", true) -> "PlayStation"
                 it.slot.space.translations.first().device.contains("Xbox", true) -> "Xbox"
                 it.slot.space.translations.first().device.contains("PC", true) -> "PC"
+                it.slot.space.translations.first().device.contains("Tablet", true) -> "Tablet"
                 else -> stringResourcesProvider.getString(R.string.unknown_label_female)
             }
         }
@@ -58,15 +61,15 @@ class ReservationDetailViewModel(
         return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
-    fun getFormattedDate(): String {
-        reservation?.let { return formatDateFromShort(it.date) }
-        training?.let { return formatDateFromShort(it.startDate) }
+    fun getFormattedDate(context: Context): String {
+        reservation?.let { return formatDateFromShort(it.date, context) }
+        training?.let { return formatDateFromShort(it.startDate, context) }
         return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
     fun getFormattedTimes(): String {
         reservation?.let { return it.times.joinToString(", ") { time -> time.time } }
-        training?.let { return it.time }
+        training?.let { return it.time.slice(0..4) }
         return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
