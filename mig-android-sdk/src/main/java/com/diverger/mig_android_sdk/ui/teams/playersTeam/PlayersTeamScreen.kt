@@ -32,9 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.TeamUser
 import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.support.EnvironmentManager
@@ -46,18 +48,24 @@ fun PlayersTeamScreen(viewModel: PlayersTeamViewModel = viewModel()) {
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black)) {
         when {
             isLoading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)
             }
             errorMessage != null -> {
-                Text(errorMessage ?: "Error desconocido", color = Color.Red, modifier = Modifier.align(Alignment.Center))
+                Text(errorMessage ?: stringResource(R.string.uknown_error), color = Color.Red, modifier = Modifier.align(Alignment.Center))
             }
             else -> {
-                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)) {
                     Text(
-                        text = if (teamName.isEmpty()) "Sin equipo" else "JUGADORES DE ${teamName.uppercase()}",
+                        text = if (teamName.isEmpty()) stringResource(R.string.no_team) else stringResource(
+                            R.string.players_of_team, teamName.uppercase()
+                        ),
                         style = MaterialTheme.typography.headlineMedium,
                         color = Color.White
                     )
@@ -115,7 +123,7 @@ fun PlayerItem(player: TeamUser) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(player.userId.username, color = Color.White, style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(6.dp))
-                Text("${player.role?.name ?: "Sin rol"}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                Text("${player.role?.name ?: stringResource(R.string.no_role_player)}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

@@ -1,10 +1,10 @@
 package com.diverger.mig_android_sdk.ui.teams
 
+import PlayersTeamViewModel
 import SelectTeamBottomSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -14,12 +14,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.ui.teams.news.NewsScreen
 import com.diverger.mig_android_sdk.ui.teams.playersTeam.PlayersTeamScreen
+import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingScreen
+import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingViewModel
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
@@ -67,13 +73,14 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 @Composable
 fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> Unit) {
     val items = mutableListOf(
-        TeamNavItem("training", "Entrenamiento", Icons.Default.DateRange),
-        TeamNavItem("news", "Noticias", Icons.Default.Newspaper),
-        TeamNavItem("players", "Jugadores", FontAwesomeIcons.Solid.PeopleCarry),
+        TeamNavItem("training", stringResource(R.string.trainings_label), Icons.Default.DateRange),
+        TeamNavItem("news", stringResource(R.string.news_label), Icons.Default.Newspaper),
+        TeamNavItem("players", stringResource(R.string.players_label), FontAwesomeIcons.Solid.PeopleCarry),
     )
 
     if ((UserManager.getUser()?.teams?.size ?: 0) > 1) {
-        items.add(3, TeamNavItem("change_team", "Cambiar equipo", Icons.Default.SwapHoriz)
+        items.add(3, TeamNavItem("change_team",
+            stringResource(R.string.change_teams), Icons.Default.SwapHoriz)
         )
     }
 
@@ -83,7 +90,10 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
             .height(90.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.98f), Color.Black.copy(alpha = 0.87f))
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.98f),
+                        Color.Black.copy(alpha = 0.87f)
+                    )
                 )
             )
     ) {
@@ -116,9 +126,15 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
 @Composable
 fun TeamNavigationGraph(navController: NavHostController, modifier: Modifier, user: com.diverger.mig_android_sdk.data.User) {
     NavHost(navController, startDestination = "training", modifier = modifier) {
-        composable("training") { TeamTrainingScreen() }
-        composable("players") { PlayersTeamScreen() }
-        composable("news") { NewsScreen() }
+        composable("training") {
+            val teamTrainingViewModel = TeamTrainingViewModel(StringResourcesProvider(LocalContext.current))
+            TeamTrainingScreen(teamTrainingViewModel)
+        }
+        composable("players") {
+            val playersViewModel = PlayersTeamViewModel(StringResourcesProvider(LocalContext.current))
+            PlayersTeamScreen(playersViewModel) }
+        composable("news") {
+            NewsScreen() }
     }
 }
 

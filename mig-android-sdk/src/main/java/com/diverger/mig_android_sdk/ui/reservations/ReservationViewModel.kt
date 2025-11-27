@@ -1,16 +1,19 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.ReservationApi
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ReservationViewModel : ViewModel() {
+class ReservationViewModel() : ViewModel() {
     private val _reservations = MutableStateFlow<List<Reservation>>(emptyList())
     val reservations: StateFlow<List<Reservation>> = _reservations.asStateFlow()
 
@@ -39,7 +42,7 @@ class ReservationViewModel : ViewModel() {
         }
     }
 
-    fun deleteReservation(id: Int) {
+    fun deleteReservation(id: Int, context: Context) {
         viewModelScope.launch {
             viewModelScope.launch {
                 _isLoading.value = true
@@ -47,13 +50,14 @@ class ReservationViewModel : ViewModel() {
 
                 result.onSuccess {
                     _isLoading.value = false
-                    _toastMessage.value = "Reserva cancelada con éxito"
+                    _toastMessage.value =
+                        context.getString(R.string.reservation_cancelled_sucessfully)
                     UserManager.getUser()?.id.let {
                         fetchReservations(UserManager.getUser()!!.id)
                     }
                 }.onFailure {
                     _isLoading.value = false
-                    _toastMessage.value = "Error al cancelar la reserva"
+                    _toastMessage.value = context.getString(R.string.error_cancelling_reservation)
                 }
             }
         }
@@ -100,7 +104,4 @@ class ReservationViewModel : ViewModel() {
             1
         }
     }
-
-
-
 }

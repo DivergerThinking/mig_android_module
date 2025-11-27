@@ -32,13 +32,13 @@ fun dateFromString(date: String, format: String = "yyyy-MM-dd"): Date? {
     return formatter.parse(date)
 }
 
-fun Date.isDateOlderThanToday(): Boolean {
+fun Date.isDateOlderThanToday(includingToday: Boolean = true): Boolean {
     val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     val normalizedDate1 = format.parse(format.format(this))
     val normalizedDate2 = format.parse(format.format(Date()))
 
-    return normalizedDate1?.after(normalizedDate2) == true
+    return normalizedDate1?.after(normalizedDate2) == true || (includingToday && normalizedDate1?.equals(normalizedDate2) == true)
 }
 
 fun getCurrentYear(): Int {

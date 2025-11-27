@@ -1,4 +1,4 @@
-package com.diverger.mig_android_sdk.ui
+package com.diverger.mig_android_sdk.support
 
 import android.content.Context
 import androidx.annotation.StringRes

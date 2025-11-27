@@ -1,9 +1,11 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.*
+import com.diverger.mig_android_sdk.support.generateQrBitmap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -112,7 +114,10 @@ class ReservationFlowViewModel : ViewModel() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("fetchIndividualReservations", "Error obteniendo reservas individuales: ${e.message}")
+            Log.e(
+                "fetchIndividualReservations",
+                "Error obteniendo reservas individuales: ${e.message}"
+            )
             emptyList()
         }
     }
@@ -177,7 +182,7 @@ class ReservationFlowViewModel : ViewModel() {
         val date: String,
         val isReservation: Boolean = false,
         val isTraining: Boolean = false,
-        val isBlocked: Boolean = false
+        val isBlocked: Boolean = false,
     )
 
     private fun fetchAvailableSlots(dayValue: Int) {
@@ -243,7 +248,11 @@ class ReservationFlowViewModel : ViewModel() {
         _selectedSpace.value = if (_selectedSpace.value?.id == space.id) null else space
     }
 
-    suspend fun createReservation(userId: String): Boolean {
+    fun cleanSpace() {
+        _selectedSpace.value = null
+    }
+
+    suspend fun createReservation(userId: String, withLogo: Bitmap?): Boolean {
         val date = _selectedDate.value
         val space = _selectedSpace.value
         val slots = _selectedSlots.value
@@ -259,16 +268,18 @@ class ReservationFlowViewModel : ViewModel() {
             )
         }
 
+        val formattedDate = try {
+            dateFormatter.format(dateFormatter.parse(date))
+        } catch (e: Exception) {
+            Log.e("ReservationFlow", "Error al formatear la fecha: ${e.message}")
+            return false
+        }
+
         val reservation = ReservationWrapper(
             id = null,
             status = "active",
             slot = space.slots.first().id,
-            date = try {
-                dateFormatter.format(dateFormatter.parse(date))
-            } catch (e: Exception) {
-                Log.e("ReservationFlow", "Error al formatear la fecha: ${e.message}")
-                return false
-            },
+            date = formattedDate,
             user = userId,
             team = null,
             training = null,
@@ -279,14 +290,54 @@ class ReservationFlowViewModel : ViewModel() {
         )
 
         _isProcessing.value = true
-        //_reservationSuccess.value = null
 
         return try {
             val result = ReservationApi.createReservation(reservation)
+
             if (result.isSuccess) {
-                _reservationSuccess.value = true
-                Log.i("ReservationFlow", "Reserva creada exitosamente")
-                true
+                val reservationResponse = result.getOrNull()
+
+                if (reservationResponse?.qrValue != null && reservationResponse.id != null) {
+                    // TODO: Generate QR and upload it.
+                    val generatedQR = generateQrBitmap(reservationResponse.qrValue, logoBitmap = withLogo)
+                    if (generatedQR != null){
+                        val qrImage = UploadImageService().uploadQrBitmap(generatedQR, "${reservationResponse.qrValue}.jpg")
+                        val reservation = ReservationWrapper(
+                            id = reservationResponse.id,
+                            status = "active",
+                            slot = space.slots.first().id,
+                            date = formattedDate,
+                            user = userId,
+                            team = null,
+                            training = null,
+                            qrImage = qrImage,
+                            qrValue = reservationResponse.qrValue,
+                            timesContainer = mappedTimes,
+                            peripheralLoans = emptyList()
+                        )
+                        val response = ReservationApi.updateReservation(reservation)
+
+                        if (response.isSuccess) {
+                            Log.i("ReservationFlow", "Reserva creada exitosamente")
+                            _reservationSuccess.value = true
+                            true
+                        } else {
+                            _reservationSuccess.value = false
+                            ReservationApi.deleteReservation(reservationResponse.id)
+                            false
+                        }
+                    } else {
+                        _reservationSuccess.value = false
+                        ReservationApi.deleteReservation(reservationResponse.id)
+                        false
+                    }
+                } else {
+                    _reservationSuccess.value = false
+                    reservationResponse?.id?.let {
+                        ReservationApi.deleteReservation(it)
+                    }
+                    false
+                }
             } else {
                 _reservationSuccess.value = false
                 Log.e("ReservationFlow", "Error al crear la reserva")

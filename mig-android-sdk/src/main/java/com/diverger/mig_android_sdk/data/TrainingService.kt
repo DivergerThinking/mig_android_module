@@ -11,7 +11,7 @@ import retrofit2.http.Query
 interface TrainingService {
     @GET("trainings")
     suspend fun getAllTrainings(
-        @Query("filter[team][_eq]") teamId: String,
+        @Query("filter[team][_eq]") teamId: String?,
         @Query("fields") fields: String = "id,start_date,time,players.users_id.id,players.users_id.avatar,players.users_id.email,players.users_id.first_name,type,reserves.*,reserves.team.name,reserves.team.picture,reserves.times.gaming_space_times_id.time,notes",
         @Header("Authorization") token: String,
     ): TrainingResponse
@@ -30,7 +30,7 @@ object TrainingApi {
             .create(TrainingService::class.java)
     }
 
-    suspend fun getTrainings(teamId: String): Result<List<EventModel>> {
+    suspend fun getTrainings(teamId: String? = null): Result<List<EventModel>> {
         return try {
             val response = service.getAllTrainings(teamId, token = TOKEN)
             Result.success(response.data)
@@ -51,6 +51,7 @@ data class EventModel(
     val status: String,
     val time: String,
     val type: String,
+    var teamName: String?
 )
 
 data class Reserve(

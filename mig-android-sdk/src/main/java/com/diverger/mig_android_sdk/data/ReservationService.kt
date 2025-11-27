@@ -9,6 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -28,7 +29,14 @@ interface ReservationService {
     suspend fun createReservation(
         @Body reservation: ReservationWrapper,
         @Header("Authorization") token: String
-    ): Unit
+    ): ReservationCreatedResponse
+
+    @PATCH("gaming_space_reserves/{id}")
+    suspend fun updateReservation(
+        @Path("id") id: Int,
+        @Body reservation: ReservationWrapper,
+        @Header("Authorization") token: String
+    ): ReservationCreatedResponse
 
     @DELETE("gaming_space_reserves/{id}")
     suspend fun deleteReservation(
@@ -107,10 +115,20 @@ object ReservationApi {
         }
     }
 
-    suspend fun createReservation(reservation: ReservationWrapper): Result<Unit> {
+    suspend fun createReservation(reservation: ReservationWrapper): Result<ReservationCreated> {
         return try {
-            service.createReservation(reservation, token = TOKEN)
-            Result.success(Unit) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
+            val response = service.createReservation(reservation, token = TOKEN).data
+            Result.success(response) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
+        } catch (e: Exception) {
+            Result.failure(e) // ✅ Si hay error, devolvemos `Result.failure`
+        }
+    }
+
+
+    suspend fun updateReservation(reservation: ReservationWrapper): Result<ReservationCreated> {
+        return try {
+            val response = service.updateReservation(reservation.id!!, reservation, token = TOKEN).data
+            Result.success(response) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
         } catch (e: Exception) {
             Result.failure(e) // ✅ Si hay error, devolvemos `Result.failure`
         }
@@ -144,6 +162,20 @@ data class Reservation(
     // Extraemos `gaming_space_times_id` correctamente
     val times: List<GamingSpaceTime> get() = timesContainer.mapNotNull { it["gaming_space_times_id"] }
 }
+
+data class ReservationCreated(
+    val id: Int?,
+    val status: String?,
+    val slot: Int,
+    val date: String,
+    val user: String?,
+    val team: String?,
+    val training: String?,
+    @SerializedName("qrImage") val qrImage: String?,
+    @SerializedName("qrValue") val qrValue: String?,
+)
+
+data class ReservationCreatedResponse(val data: ReservationCreated)
 
 data class ReservationWrapper(
     val id: Int?,

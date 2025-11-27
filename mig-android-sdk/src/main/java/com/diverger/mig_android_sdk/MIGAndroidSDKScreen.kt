@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -55,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,7 +69,10 @@ import androidx.navigation.compose.rememberNavController
 import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
+import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
+import com.diverger.mig_android_sdk.ui.dashboard.DashboardViewModel
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
@@ -170,7 +175,7 @@ fun MainScreen(user: User) {
                                 Text(
                                     text = stringResource(R.string.exit),
                                     color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.headlineSmall
                                 )
                             }
                         }
@@ -216,24 +221,6 @@ fun DrawerContent(
 
             ) {
             Spacer(modifier = Modifier.height(32.dp))
-
-            /*Text(
-                text = "Menú",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
-            )*/
-
-//            Text(
-//                text = "x",
-//                color = Color.White,
-//                style = MaterialTheme.typography.headlineMedium,
-//                modifier = Modifier
-//                    .padding(start = 16.dp, bottom = 16.dp)
-//                    .clickable {
-//                        scope.launch { drawerState.close() }
-//                    }
-//            )
 
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
                 IconButton(onClick = {
@@ -286,7 +273,7 @@ fun DrawerContent(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = item.label,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                    style = MaterialTheme.typography.displaySmall.copy(
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     ),
                                     color = Color.White // 🔹 Texto en blanco
@@ -307,8 +294,11 @@ fun DashboardNavigation(user: User, modifier: Modifier) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
-        NavHost(navController, startDestination = "individualReservations", modifier = Modifier.padding(innerPadding)) {
-            //composable("dashboard") { DashboardScreen() }
+        NavHost(navController, startDestination = "dashboard", modifier = Modifier.padding(innerPadding)) {
+            composable("dashboard") {
+                val dashboardViewModel = DashboardViewModel(StringResourcesProvider(LocalContext.current))
+                MIGAndroidSDKTheme { DashboardScreen(dashboardViewModel) }
+            }
             composable("individualReservations") { IndividualReservationsScreen(userId = user.id) }
             composable("profile") { ProfileScreen() }
         }
@@ -335,7 +325,8 @@ fun NavigationGraph(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
-        //BottomNavItem("dashboard", "Dashboard", Icons.Default.Home),
+        BottomNavItem("dashboard",
+            stringResource(R.string.calendar_label), Icons.Default.CalendarMonth),
         BottomNavItem("individualReservations",
             stringResource(R.string.bookings), Icons.Default.DateRange),
         BottomNavItem("profile", stringResource(R.string.profile), FontAwesomeIcons.Solid.UserCircle)
@@ -375,7 +366,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                     label = {
                         Text(
                             text = item.label,
-                            color = if (currentRoute == item.route) Color.Cyan else Color.White
+                            color = if (currentRoute == item.route) Color.Cyan else Color.White,
                         )
                     },
                     selected = currentRoute == item.route,

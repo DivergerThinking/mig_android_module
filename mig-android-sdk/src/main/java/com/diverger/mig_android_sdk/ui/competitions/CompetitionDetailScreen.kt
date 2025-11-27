@@ -1,12 +1,21 @@
-import CompetitionDetailViewModel
-import android.text.Html
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -14,9 +23,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Rule
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -24,12 +52,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
@@ -38,14 +69,11 @@ import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
-import compose.icons.feathericons.ArrowRight
 import compose.icons.feathericons.ArrowRightCircle
-import compose.icons.feathericons.ChevronRight
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Trophy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.core.net.toUri
 
 @Composable
 fun CompetitionDetailScreen(
@@ -118,11 +146,11 @@ fun CompetitionDetailScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     when (selectedTab) {
-                        0 -> Text(text = "SOBRE ESTA COMPETICIÓN...", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        1 -> Text(text = "DETALLES", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        2 -> Text(text = "REGLAS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        3 -> Text(text = "CONTACTO", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        4 -> Text(text = "TORNEOS", color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        0 -> Text(text = stringResource(R.string.tournament_about_this_competition), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        1 -> Text(text = stringResource(R.string.tournament_details), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        2 -> Text(text = stringResource(R.string.tournament_rules), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        3 -> Text(text = stringResource(R.string.tournament_contact), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                        4 -> Text(text = stringResource(R.string.tournaments_title), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
                     }
 
                     //Spacer(modifier = Modifier.height(16.dp))
@@ -169,7 +197,7 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedSplit?.name ?: "Selecciona un Split",
+                    text = selectedSplit?.name ?: stringResource(R.string.select_an_split),
                     color = Color.White,
                     modifier = Modifier.weight(1f)
                 )
@@ -178,7 +206,8 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
                 }
             }
 
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.Black)
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier
+                .background(Color.Black)
                 .border(1.dp, Color.White, RoundedCornerShape(12.dp))) {
                 splits.forEach { split ->
                     DropdownMenuItem(
@@ -197,10 +226,10 @@ fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSel
 @Composable
 fun SelectedTabContent(competition: Competition, selectedTab: Int) {
     when (selectedTab) {
-        0 -> ScrollableTextContent(competition.overview ?: "Sin información")
-        1 -> ScrollableTextContent(competition.details ?: "Sin información")
-        2 -> ScrollableTextContent(competition.rules ?: "Sin reglas definidas")
-        3 -> ScrollableTextContent(competition.contact ?: "Sin contacto disponible")
+        0 -> ScrollableTextContent(if(competition.overview.isNullOrEmpty()) stringResource(R.string.no_information_available) else competition.overview)
+        1 -> ScrollableTextContent(if(competition.details.isNullOrEmpty()) stringResource(R.string.no_information_details_available) else competition.details)
+        2 -> ScrollableTextContent(if(competition.rules.isNullOrEmpty()) stringResource(R.string.no_rules_defined) else competition.rules)
+        3 -> ScrollableTextContent(if(competition.contact.isNullOrEmpty()) stringResource(R.string.no_contact_information_available) else competition.contact)
         4 -> TournamentTab(competition) // ✅ Torneos se mantiene igual
     }
 }
@@ -232,7 +261,10 @@ fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
             .height(90.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.93f),
+                        Color.Black.copy(alpha = 0.82f)
+                    )
                 )
             )
     ) {
@@ -242,11 +274,11 @@ fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
         contentColor = Color.White
     ) {
         val tabs = listOf(
-            "Overview" to Icons.Default.Info,
-            "Detalles" to Icons.Default.List,
-            "Reglas" to Icons.Default.Rule,
-            "Contacto" to Icons.Default.Email,
-            "Torneos" to FontAwesomeIcons.Solid.Trophy
+            stringResource(R.string.overview_section_label) to Icons.Default.Info,
+            stringResource(R.string.details_section_label) to Icons.Default.List,
+            stringResource(R.string.rules_section_label) to Icons.Default.Rule,
+            stringResource(R.string.contact_section_label) to Icons.Default.Email,
+            stringResource(R.string.tournament_section_label) to FontAwesomeIcons.Solid.Trophy
         )
 
         tabs.forEachIndexed { index, (title, icon) ->
@@ -286,9 +318,11 @@ fun TournamentTab(competition: Competition) {
         if (selectedSplit?.tournaments.isNullOrEmpty()) {
             item {
                 Text(
-                    text = "No hay torneos disponibles",
+                    text = stringResource(R.string.no_tournaments_available),
                     color = Color.White,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -302,9 +336,9 @@ fun TournamentTab(competition: Competition) {
 
 @Composable
 fun TournamentCard(tournament: Tournament) {
-    val formattedDate = getFormattedDate(tournament.tournamentDate)
-    val (day, month) = getDayAndMonth(tournament.tournamentDate)
     val context = LocalContext.current
+    val formattedDate = getFormattedDate(tournament.tournamentDate, context = context)
+    val (day, month) = getDayAndMonth(tournament.tournamentDate)
 
     Column(
         modifier = Modifier
@@ -317,7 +351,10 @@ fun TournamentCard(tournament: Tournament) {
                 tournament.link?.let { link ->
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
                     context.startActivity(intent)
-                } ?: Toast.makeText(context, "Enlace no disponible", Toast.LENGTH_SHORT).show()
+                } ?: Toast.makeText(
+                    context,
+                    context.getString(R.string.unavailable_link), Toast.LENGTH_SHORT
+                ).show()
             }
     ) {
         Row(
@@ -365,13 +402,17 @@ fun TournamentCard(tournament: Tournament) {
                             }
                             context.startActivity(intent)
                         }
-                    } ?: Toast.makeText(context, "Enlace no disponible", Toast.LENGTH_SHORT).show()
+                    } ?: Toast.makeText(
+                        context,
+                        context.getString(R.string.unavailable_link),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "INSCRÍBETE",
+                text = stringResource(R.string.tournament_enroll),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyMedium
@@ -389,7 +430,12 @@ fun DateBox(day: String, month: String) {
         modifier = Modifier
             .size(70.dp)
             .background(
-                Brush.linearGradient(listOf(Color(0xFFFF007F), Color(0xFF8000FF))), // 🎨 Rosa a Morado
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFFFF007F),
+                        Color(0xFF8000FF)
+                    )
+                ), // 🎨 Rosa a Morado
                 shape = RoundedCornerShape(10.dp)
             ),
         contentAlignment = Alignment.Center
@@ -429,15 +475,15 @@ fun getDayAndMonth(dateString: String?): Pair<String, String> {
 }
 
 // 📌 **Función para formatear la fecha en "DD/MM/YYYY"**
-fun getFormattedDate(dateString: String?): String {
-    if (dateString.isNullOrEmpty()) return "Fecha desconocida"
+fun getFormattedDate(dateString: String?, context: Context): String {
+    if (dateString.isNullOrEmpty()) return context.getString(R.string.unknown_date)
 
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val date = inputFormat.parse(dateString)
-        outputFormat.format(date ?: return "Fecha inválida")
+        outputFormat.format(date ?: return context.getString(R.string.invalid_date))
     } catch (e: Exception) {
-        "Fecha inválida"
+        context.getString(R.string.invalid_date)
     }
 }

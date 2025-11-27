@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.ProfileRepository
 import com.diverger.mig_android_sdk.data.UploadImageService
 import com.diverger.mig_android_sdk.data.User
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel() : ViewModel() {
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
 
@@ -66,9 +67,10 @@ class ProfileViewModel : ViewModel() {
 
                 // 2.4 Actualizar localmente
                 _user.value = _user.value?.copy(avatar = avatarId)
-                _toastMsg.value = "¡Avatar actualizado!"
+                _toastMsg.value = context.getString(R.string.updated_avatar)
             } catch (e: Exception) {
-                _toastMsg.value = "Error al actualizar avatar: ${e.localizedMessage}"
+                _toastMsg.value =
+                    context.getString(R.string.error_updating_avatar, e.localizedMessage)
             } finally {
                 _isUploading.value = false
                 // Limpiar toast tras mostrarlo

@@ -104,9 +104,11 @@ fun TeamSelectionItem(team: Team, onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = team.name ?: stringResource(R.string.no_name_team), color = Color.White, fontWeight = FontWeight.Bold)
+            Text(text = team.name ?: stringResource(R.string.no_name_team), color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = team.description ?: stringResource(R.string.no_name_team), color = Color.White.copy(0.5f), fontWeight = FontWeight.Thin, style = MaterialTheme.typography.titleSmall)
+            Text(text = team.description ?: stringResource(R.string.no_name_team), color = Color.White.copy(0.6f), style = MaterialTheme.typography.bodyMedium)
         }
         if (team.id == (UserManager.getSelectedTeam()?.id ?: "")) {
             Box(
