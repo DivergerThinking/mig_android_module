@@ -31,7 +31,7 @@ import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.components.CalendarComponent
 import com.diverger.mig_android_sdk.ui.components.NextTrainingsBanner
 import com.diverger.mig_android_sdk.ui.components.TrainingCellOption
-import com.diverger.mig_android_sdk.ui.components.TrainingItem
+import com.diverger.mig_android_sdk.ui.components.TrainingCell
 import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsCellOptions
 import com.diverger.mig_android_sdk.ui.reservations.ReservationDetailScreen
 import com.diverger.mig_android_sdk.ui.reservations.ReservationItem
@@ -65,7 +65,6 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
     ) {
 
         Column(modifier = Modifier.padding(16.dp)) {
-            // 📅 **Calendario de Entrenamientos**
             Spacer(Modifier.height(64.dp))
             CalendarComponent(
                 isCalendarVisible = isCalendarVisible,
@@ -80,7 +79,6 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 📌 **Próximos Entrenamientos**
             NextTrainingsBanner(
                 isTrainingsVisible = isTrainingsVisible,
                 onToggle = {
@@ -91,7 +89,6 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 📌 **Lista de Entrenamientos**
             when {
                 isLoading -> CircularProgressIndicator(
                     color = Color.White,
@@ -182,7 +179,7 @@ fun UnifiedScheduleList(
                     )
                 }
                 items(trainings) { training ->
-                    TrainingItem(training) { action ->
+                    TrainingCell(training) { action ->
                         onTrainingAction(training, action)
                     }
                 }

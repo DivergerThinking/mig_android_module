@@ -6,16 +6,11 @@ import android.graphics.Bitmap
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -48,23 +43,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -73,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,21 +72,19 @@ import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.support.generateQrBitmap
+import com.diverger.mig_android_sdk.ui.components.GradientCard
+import com.diverger.mig_android_sdk.ui.components.HolographicFlippableCard
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.XCircle
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.UserCircle
-import kotlin.math.abs
-
-private val CardGradientStart = Color(0xFFEC407A)
-private val CardGradientEnd = Color(0xFF9C27B0)
 
 // ═══════════════════════════════════════════════════════════════
-// Main Screen
+// Standalone screen (creates its own ModalBottomSheet)
 // ═══════════════════════════════════════════════════════════════
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationDetailScreen(
     isTeamReservation: Boolean,
@@ -110,10 +93,39 @@ fun ReservationDetailScreen(
     onDismiss: () -> Unit,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = bottomSheetState,
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Black
+    ) {
+        ReservationDetailContent(
+            isTeamReservation = isTeamReservation,
+            reservation = reservation,
+            training = training,
+            onDismiss = onDismiss
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Pure content (no sheet — use when caller provides its own)
+// ═══════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun ReservationDetailContent(
+    isTeamReservation: Boolean,
+    reservation: Reservation? = null,
+    training: EventModel? = null,
+    onDismiss: () -> Unit,
+) {
     var targetAngle by remember { mutableFloatStateOf(0f) }
     val isFlipped = (((targetAngle / 180f).toInt()) % 2) != 0
     val context = LocalContext.current
 
+    // Brightness to max
     DisposableEffect(Unit) {
         val activity = context as? Activity
         val original = activity?.window?.attributes?.screenBrightness ?: -1f
@@ -127,275 +139,86 @@ fun ReservationDetailScreen(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = bottomSheetState,
-        modifier = Modifier.fillMaxSize(),
-        containerColor = Color.Black
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        FeatherIcons.XCircle,
-                        contentDescription = stringResource(R.string.close_label),
-                        tint = Color.Gray.copy(alpha = 0.4f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "MADRID IN GAME",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            val showFlipCard =
-                (isTeamReservation && training?.type == "centre") || !isTeamReservation
-
-            if (showFlipCard) {
-                val configuration = LocalConfiguration.current
-                val desiredHeight: Dp = configuration.screenHeightDp.dp * 2 / 3
-
-                HolographicFlippableCard(
-                    targetAngle = targetAngle,
-                    onAngleChange = { targetAngle = it },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(desiredHeight),
-                    front = {
-                        UnifiedQrCardContent(
-                            isTeamReservation = isTeamReservation,
-                            reservation = reservation,
-                            training = training
-                        )
-                    },
-                    back = { ReservationRulesCardContent() }
+        // Close button
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    FeatherIcons.XCircle,
+                    contentDescription = stringResource(R.string.close_label),
+                    tint = Color.Gray.copy(alpha = 0.4f)
                 )
-            } else {
-                GradientCard {
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "MADRID IN GAME",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val showFlipCard =
+            (isTeamReservation && training?.type == "centre") || !isTeamReservation
+
+        if (showFlipCard) {
+            val configuration = LocalConfiguration.current
+            val desiredHeight: Dp = configuration.screenHeightDp.dp * 2 / 3
+
+            HolographicFlippableCard(
+                targetAngle = targetAngle,
+                onAngleChange = { targetAngle = it },
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .height(desiredHeight),
+                front = {
                     UnifiedQrCardContent(
                         isTeamReservation = isTeamReservation,
                         reservation = reservation,
                         training = training
                     )
-                }
-            }
-
-            if (showFlipCard) {
-                Button(
-                    onClick = { targetAngle += 180f },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .height(60.dp)
-                ) {
-                    AnimatedContent(
-                        targetState = isFlipped,
-                        transitionSpec = { fadeIn() with fadeOut() }
-                    ) { flipped ->
-                        val title = if (flipped)
-                            stringResource(R.string.details_label).uppercase()
-                        else
-                            stringResource(R.string.terms_of_use_label).uppercase()
-
-                        Text(title, color = Color.Black, fontWeight = FontWeight.ExtraBold)
-                    }
-                }
+                },
+                back = { ReservationRulesCardContent() }
+            )
+        } else {
+            GradientCard {
+                UnifiedQrCardContent(
+                    isTeamReservation = isTeamReservation,
+                    reservation = reservation,
+                    training = training
+                )
             }
         }
-    }
-}
 
-// ═══════════════════════════════════════════════════════════════
-// Simple gradient card (no flip)
-// ═══════════════════════════════════════════════════════════════
-
-@Composable
-private fun GradientCard(
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(25.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(CardGradientStart, CardGradientEnd),
-                    start = Offset.Zero,
-                    end = Offset.Infinite
-                )
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        content = content
-    )
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Holographic Flippable Card
-// ═══════════════════════════════════════════════════════════════
-
-@Composable
-private fun HolographicFlippableCard(
-    targetAngle: Float,
-    onAngleChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    front: @Composable ColumnScope.() -> Unit,
-    back: @Composable ColumnScope.() -> Unit
-) {
-    var dragOffsetX by remember { mutableFloatStateOf(0f) }
-    var dragRotation by remember { mutableFloatStateOf(0f) }
-
-    val currentTargetAngle by rememberUpdatedState(targetAngle)
-    val currentOnAngleChange by rememberUpdatedState(onAngleChange)
-
-    val baseRotation by animateFloatAsState(
-        targetValue = targetAngle,
-        animationSpec = spring(
-            dampingRatio = 0.75f,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "flipRotation"
-    )
-
-    val shape = RoundedCornerShape(25.dp)
-
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                rotationY = baseRotation + dragRotation
-                cameraDistance = 12 * density
-            }
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        if (abs(dragRotation) > 25f) {
-                            if (dragRotation > 0f) {
-                                currentOnAngleChange(currentTargetAngle + 180f)
-                            } else {
-                                currentOnAngleChange(currentTargetAngle - 180f)
-                            }
-                        }
-                        dragRotation = 0f
-                        dragOffsetX = 0f
-                    },
-                    onDragCancel = {
-                        dragRotation = 0f
-                        dragOffsetX = 0f
-                    },
-                    onHorizontalDrag = { _, amount ->
-                        dragRotation = (dragRotation + amount / 5f).coerceIn(-45f, 45f)
-                        dragOffsetX += amount
-                    }
-                )
-            }
-    ) {
-        val totalRotation = baseRotation + dragRotation
-        val normalized = ((totalRotation % 360f) + 360f) % 360f
-        val showFront = normalized < 90f || normalized > 270f
-
-        if (showFront) {
-            Column(
+        if (showFlipCard) {
+            Button(
+                onClick = { targetAngle += 180f },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(shape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(CardGradientStart, CardGradientEnd),
-                            start = Offset.Zero,
-                            end = Offset.Infinite
-                        )
-                    )
-                    .drawWithContent {
-                        drawContent()
-
-                        val cx = size.width * (0.5f + dragOffsetX / 800f)
-                        val cy = size.height * 0.4f
-
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.2f),
-                                    Color.Transparent
-                                ),
-                                center = Offset(cx, cy),
-                                radius = 300.dp.toPx()
-                            ),
-                            radius = 300.dp.toPx(),
-                            center = Offset(cx, cy)
-                        )
-
-                        val borderShift = dragOffsetX / 600f
-                        drawRoundRect(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.35f),
-                                    Color.White.copy(alpha = 0.08f),
-                                    Color.White.copy(alpha = 0.25f)
-                                ),
-                                start = Offset(size.width * borderShift, 0f),
-                                end = Offset(size.width * (1f + borderShift), size.height)
-                            ),
-                            size = size,
-                            cornerRadius = CornerRadius(25.dp.toPx()),
-                            style = Stroke(width = 1.5.dp.toPx())
-                        )
-                    }
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(12.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .height(60.dp)
             ) {
-                front()
-            }
+                AnimatedContent(
+                    targetState = isFlipped,
+                    transitionSpec = { fadeIn() with fadeOut() }
+                ) { flipped ->
+                    val title = if (flipped)
+                        stringResource(R.string.details_label).uppercase()
+                    else
+                        stringResource(R.string.terms_of_use_label).uppercase()
 
-            if (dragOffsetX != 0f) {
-                val wmAlpha = (abs(dragOffsetX) / 400f).coerceIn(0f, 0.25f)
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 28.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    Text(
-                        text = "MADRID IN GAME",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 4.sp,
-                        color = Color.White.copy(alpha = wmAlpha)
-                    )
+                    Text(title, color = Color.Black, fontWeight = FontWeight.ExtraBold)
                 }
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { rotationY = 180f }
-                    .clip(shape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(CardGradientStart, CardGradientEnd),
-                            start = Offset.Zero,
-                            end = Offset.Infinite
-                        )
-                    )
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                back()
             }
         }
     }
@@ -707,7 +530,7 @@ fun PlaceholderIcon() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Bottom Sheet wrapper (individual)
+// Bottom Sheet wrapper (individual reservations)
 // ═══════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -724,7 +547,7 @@ fun ReservationBottomSheet(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Black
     ) {
-        ReservationDetailScreen(
+        ReservationDetailContent(
             isTeamReservation = false,
             reservation = reservation,
             onDismiss = onDismiss

@@ -50,7 +50,7 @@ import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.components.TrainingCellOption
-import com.diverger.mig_android_sdk.ui.components.TrainingItem
+import com.diverger.mig_android_sdk.ui.components.TrainingCell
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import kotlinx.coroutines.launch
 
@@ -196,7 +196,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             state = rememberLazyListState()
                         ) {
                             items(teamReservations) { training ->
-                                TrainingItem(training = training) { action ->
+                                TrainingCell(training = training) { action ->
                                     when (action) {
                                         TrainingCellOption.SeeDetails -> {
                                             selectedTeamReservation = training
