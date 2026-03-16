@@ -98,7 +98,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .padding(top = 80.dp)
+                .then(if (personalReservation) Modifier.padding(top = 50.dp) else Modifier)
         ) {
             // ── Título + Refresh ─────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -196,10 +196,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             state = rememberLazyListState()
                         ) {
                             items(teamReservations) { training ->
-                                TrainingCell(
-                                    training = training,
-                                    showDeleteAndEditOption = viewModel.isManagerOrTrainer()
-                                ) { action ->
+                                TrainingCell(training = training) { action ->
                                     when (action) {
                                         TrainingCellOption.SeeDetails -> {
                                             selectedTeamReservation = training
@@ -212,8 +209,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                         }
 
                                         TrainingCellOption.EditBooking -> {
-                                            selectedTeamReservation = training
-                                            showReservationFlow.value = true
+
                                         }
                                     }
                                 }
