@@ -107,9 +107,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
                                     selectedTraining = training
                                     showReservationDetail.value = true
                                 }
-                                TrainingCellOption.EditBooking -> {
-
-                                }
+                                TrainingCellOption.EditBooking -> {}
                             }
                         },
                         onReservationAction = { reservation, option ->
@@ -120,6 +118,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
                                 }
 
                                 IndividualReservationsCellOptions.CANCEL_RESERVATION -> {}
+
+                                IndividualReservationsCellOptions.EDIT_RESERVATION -> {}
                             }
                         }
                     )

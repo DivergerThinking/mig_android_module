@@ -30,6 +30,7 @@ import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Eye
 import compose.icons.feathericons.MinusCircle
 import compose.icons.fontawesomeicons.Solid
@@ -41,11 +42,16 @@ import compose.icons.fontawesomeicons.solid.MobileAlt
 
 enum class IndividualReservationsCellOptions {
     SEE_RESERVATION,
-    CANCEL_RESERVATION
+    CANCEL_RESERVATION,
+    EDIT_RESERVATION
 }
 
 @Composable
-fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReservationPressed: (IndividualReservationsCellOptions, Reservation) -> Unit) {
+fun ReservationItem(
+    reservation: Reservation,
+    compact: Boolean = false,
+    onReservationPressed: (IndividualReservationsCellOptions, Reservation) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -54,8 +60,7 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -73,7 +78,7 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
                         "laptop" -> FontAwesomeIcons.Solid.Laptop
                         "mobile", "tablet", "ipad", "smartphone" -> FontAwesomeIcons.Solid.MobileAlt
                         "keyboard" -> FontAwesomeIcons.Solid.Keyboard
-                        else -> FontAwesomeIcons.Solid.Gamepad // Default
+                        else -> FontAwesomeIcons.Solid.Gamepad
                     },
                     contentDescription = "Reserva en ${reservation.slot.space}",
                     tint = Color.Cyan,
@@ -82,7 +87,6 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Información de la reserva
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(
@@ -93,7 +97,7 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(bottom = 5.dp)
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
                         text = formatDateFromShort(reservation.date, LocalContext.current),
@@ -108,44 +112,70 @@ fun ReservationItem(reservation: Reservation, compact: Boolean = false, onReserv
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 12.sp,
                         style = MaterialTheme.typography.labelMedium
-                        )
+                    )
                 }
 
                 if (!compact) {
-                    // Botones de acción
-                    Column(horizontalAlignment = Alignment.End) {
-                        /*TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
-                        Text("Ver reserva", color = Color.Cyan, fontSize = 14.sp)
-                    }*/
-                        IconButton(
-                            onClick = {
-                                onReservationPressed(
-                                    IndividualReservationsCellOptions.CANCEL_RESERVATION,
-                                    reservation
-                                )
-                            }
-                        ) {
-                            Icon(
-                                imageVector = FeatherIcons.MinusCircle,
-                                contentDescription = "Cancelar reserva",
-                                tint = Color.Red
+                    IconButton(
+                        onClick = {
+                            onReservationPressed(
+                                IndividualReservationsCellOptions.CANCEL_RESERVATION,
+                                reservation
                             )
                         }
+                    ) {
+                        Icon(
+                            imageVector = FeatherIcons.MinusCircle,
+                            contentDescription = "Cancelar reserva",
+                            tint = Color.Red
+                        )
                     }
                 }
             }
+
+            // Action buttons row
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(imageVector = FeatherIcons.Eye,
-                    contentDescription = "Ver Reserva",
-                    tint = Color.Cyan,
-                    modifier = Modifier.size(18.dp))
-                TextButton(onClick = { onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation) }) {
-                    Text(stringResource(R.string.see_booking).uppercase(), color = Color.Cyan, style = MaterialTheme.typography.titleMedium)
+                // View booking
+                TextButton(onClick = {
+                    onReservationPressed(IndividualReservationsCellOptions.SEE_RESERVATION, reservation)
+                }) {
+                    Icon(
+                        imageVector = FeatherIcons.Eye,
+                        contentDescription = "Ver Reserva",
+                        tint = Color.Cyan,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(
+                        stringResource(R.string.see_booking).uppercase(),
+                        color = Color.Cyan,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                // Edit booking (only in full mode, not compact)
+                if (!compact) {
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = {
+                        onReservationPressed(IndividualReservationsCellOptions.EDIT_RESERVATION, reservation)
+                    }) {
+                        Icon(
+                            imageVector = FeatherIcons.Edit,
+                            contentDescription = "Editar Reserva",
+                            tint = Color.Cyan,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            stringResource(R.string.edit_booking).uppercase(),
+                            color = Color.Cyan,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }

@@ -98,7 +98,6 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .then(if (personalReservation) Modifier.padding(top = 80.dp) else Modifier)
         ) {
             // ── Título + Refresh ─────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -181,6 +180,12 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                             IndividualReservationsCellOptions.CANCEL_RESERVATION -> {
                                                 selectedReservation = res
                                                 showCancelPopup = true
+                                            }
+
+                                            IndividualReservationsCellOptions.EDIT_RESERVATION -> {
+                                                selectedReservation = res
+                                                selectedTeamReservation = null
+                                                showReservationFlow.value = true
                                             }
                                         }
                                     }
@@ -288,6 +293,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                     userId = userId,
                     personalReservation = personalReservation,
                     teamReservationInfo = selectedTeamReservation,
+                    individualReservationInfo = selectedReservation,
                     onReservationSuccess = {
                         viewModel.refreshData(personalReservation, userId)
                         showReservationFlow.value = false

@@ -259,9 +259,7 @@ class ReservationFlowViewModel(
             }
             val dayValue = calculateDayValue(reservation.date)
             fetchAvailableSlots(dayValue) {
-                val reserveTimes = reservation.timesContainer
-                    .mapNotNull { it["gaming_space_times_id"]?.time }
-                    .toSet()
+                val reserveTimes = reservation.times.map { it.time }.toSet()
                 _selectedSlots.value = _availableSlots.value.filter { it.time in reserveTimes }
                 updateEnabledSlots()
             }
