@@ -108,7 +108,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
                                     showReservationDetail.value = true
                                 }
                                 TrainingCellOption.EditBooking -> {
-                                    // TODO: open edit flow
+
                                 }
                             }
                         },
@@ -182,7 +182,7 @@ fun UnifiedScheduleList(
                     )
                 }
                 items(trainings) { training ->
-                    TrainingCell(training) { action ->
+                    TrainingCell(training, showDeleteAndEdit = false) { action ->
                         onTrainingAction(training, action)
                     }
                 }

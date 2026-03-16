@@ -31,7 +31,8 @@ class ReservationDetailViewModel(
 
     fun getReservationLocation(): String {
         reservation?.let {
-            return if (it.slot.space.translations.first().description.lowercase().contains("virtual", true)) {
+            return if (it.slot.space.translations.first().description?.lowercase()
+                    ?.contains("virtual", true) == true) {
                 stringResourcesProvider.getString(R.string.esports_virtual_center)
             } else {
                 stringResourcesProvider.getString(R.string.esports_madrid_center)

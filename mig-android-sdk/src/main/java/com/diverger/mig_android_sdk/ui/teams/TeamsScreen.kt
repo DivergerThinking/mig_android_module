@@ -37,9 +37,11 @@ import compose.icons.fontawesomeicons.solid.PeopleCarry
 @Composable
 fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
     val navController = rememberNavController()
-    var showTeamSelection by remember { mutableStateOf(
-        (UserManager.getUser()?.teams?.size ?: 0) > 1
-    ) }
+    var showTeamSelection by remember {
+        mutableStateOf(
+            (UserManager.getUser()?.teams?.size ?: 0) > 1
+        )
+    }
 
     LaunchedEffect(Unit) {
         if (UserManager.selectedTeam.value == null && UserManager.getUser()?.teams?.isNotEmpty() == true) {
@@ -49,14 +51,13 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 
     MIGAndroidSDKTheme {
         Scaffold(
-            /*topBar = {
-                TopAppBar(
-                    title = { Text("Equipo") }
-                )
-            },*/
-            bottomBar = { TeamBottomNavigation(navController) { showTeamSelection = true }}
+            bottomBar = { TeamBottomNavigation(navController) { showTeamSelection = true } }
         ) { innerPadding ->
-            TeamNavigationGraph(navController, Modifier.padding(0.dp), user)
+            TeamNavigationGraph(
+                navController,
+                Modifier.padding(innerPadding),  // ← ahora usa innerPadding
+                user
+            )
         }
 
         if (showTeamSelection) {
@@ -82,8 +83,11 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
     )
 
     if ((UserManager.getUser()?.teams?.size ?: 0) > 1) {
-        items.add(3, TeamNavItem("change_team",
-            stringResource(R.string.change_teams), Icons.Default.SwapHoriz)
+        items.add(
+            3, TeamNavItem(
+                "change_team",
+                stringResource(R.string.change_teams), Icons.Default.SwapHoriz
+            )
         )
     }
 
@@ -100,47 +104,69 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
                 )
             )
     ) {
-    NavigationBar (
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.Transparent,
-        contentColor = Color.White
-    ) {
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-        items.forEach { item ->
-            NavigationBarItem(
-                modifier = Modifier.size(22.dp),
-                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
-                icon = { Icon(imageVector = item.icon, contentDescription = item.label, tint = if (currentRoute == item.route) Color.Cyan else Color.White) },
-                label = { Text(item.label, color = if (currentRoute == item.route) Color.Cyan else Color.White, style = MaterialTheme.typography.labelSmall) },
-                selected = currentRoute == item.route,
-                onClick = {
-                    if (item.route == "change_team") {
-                        onChangeTeam()
-                    } else {
-                        navController.navigate(item.route)
+        NavigationBar(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = Color.Transparent,
+            contentColor = Color.White
+        ) {
+            val currentRoute =
+                navController.currentBackStackEntryAsState().value?.destination?.route
+            items.forEach { item ->
+                NavigationBarItem(
+                    modifier = Modifier.size(22.dp),
+                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
+                    icon = {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            tint = if (currentRoute == item.route) Color.Cyan else Color.White
+                        )
+                    },
+                    label = {
+                        Text(
+                            item.label,
+                            color = if (currentRoute == item.route) Color.Cyan else Color.White,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    selected = currentRoute == item.route,
+                    onClick = {
+                        if (item.route == "change_team") {
+                            onChangeTeam()
+                        } else {
+                            navController.navigate(item.route)
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
-}
 }
 
 @Composable
-fun TeamNavigationGraph(navController: NavHostController, modifier: Modifier, user: com.diverger.mig_android_sdk.data.User) {
+fun TeamNavigationGraph(
+    navController: NavHostController,
+    modifier: Modifier,
+    user: com.diverger.mig_android_sdk.data.User
+) {
     NavHost(navController, startDestination = "training", modifier = modifier) {
         composable("training") {
-            val teamTrainingViewModel = TeamTrainingViewModel(StringResourcesProvider(LocalContext.current))
+            val teamTrainingViewModel =
+                TeamTrainingViewModel(StringResourcesProvider(LocalContext.current))
             TeamTrainingScreen(teamTrainingViewModel)
         }
-        composable("individualReservations") { ReservationsScreen(userId = user.id, personalReservation = false) }
+        composable("individualReservations") {
+            ReservationsScreen(userId = user.id, personalReservation = false)
+        }
         composable("players") {
-            val playersViewModel = PlayersTeamViewModel(StringResourcesProvider(LocalContext.current))
-            PlayersTeamScreen(playersViewModel) }
+            val playersViewModel =
+                PlayersTeamViewModel(StringResourcesProvider(LocalContext.current))
+            PlayersTeamScreen(playersViewModel)
+        }
         composable("news") {
-            NewsScreen() }
+            NewsScreen()
+        }
     }
 }
 
-// Modelo para los ítems de la Bottom Bar
 data class TeamNavItem(val route: String, val label: String, val icon: ImageVector)

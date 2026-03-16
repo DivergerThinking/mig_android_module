@@ -4,9 +4,12 @@ import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.google.gson.annotations.SerializedName
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -25,6 +28,19 @@ interface TrainingService {
         @Path("id") trainingId: String,
         @Header("Authorization") token: String
     )
+
+    @PATCH("trainings/{id}")
+    suspend fun updateTraining(
+        @Path("id") trainingId: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>,
+        @Header("Authorization") token: String
+    ): TrainingResponseModel
+
+    @POST("trainings")
+    suspend fun createTraining(
+        @Body body: Map<String, @JvmSuppressWildcards Any>,
+        @Header("Authorization") token: String
+    ): TrainingResponseModel
 }
 
 object TrainingApi {
@@ -44,6 +60,59 @@ object TrainingApi {
         return try {
             val response = service.getAllTrainings(teamId, token = TOKEN)
             Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createTraining(request: TrainingRequest): Result<TrainingCreatedData> {
+        return try {
+            val body = mapOf<String, Any>(
+                "status" to request.status,
+                "type" to request.type,
+                "start_date" to request.startDate,
+                "time" to request.time,
+                "team" to request.team,
+                "notes" to request.notes,
+                "players" to request.players,
+                "reserves" to request.reserves
+            )
+            val response = service.createTraining(body, TOKEN)
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateTraining(
+        trainingId: String,
+        type: String,
+        startDate: String,
+        time: String,
+        notes: String,
+        playerIds: List<String>
+    ): Result<TrainingCreatedData> {
+        return try {
+            val playersMapped = playerIds.map { mapOf("users_id" to it) }
+            val body = mapOf<String, Any>(
+                "type" to type,
+                "start_date" to startDate,
+                "time" to time,
+                "notes" to notes,
+                "players" to playersMapped
+            )
+            val response = service.updateTraining(trainingId, body, TOKEN)
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun linkReservesToTraining(trainingId: String, reserveIds: List<Int>): Result<Unit> {
+        return try {
+            val body = mapOf<String, Any>("reserves" to reserveIds)
+            service.updateTraining(trainingId, body, TOKEN)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -122,4 +191,27 @@ data class PlayerModel(
     val name: String?,
 
     val avatar: String?,
+)
+
+// ═══════════════════════════════════════════════════════════════
+// Training request/response models
+// ═══════════════════════════════════════════════════════════════
+
+data class TrainingRequest(
+    val status: String,
+    val type: String,
+    @SerializedName("start_date") val startDate: String,
+    val time: String,
+    val team: String,
+    val notes: String,
+    val players: List<Map<String, String>>,
+    val reserves: List<Int>
+)
+
+data class TrainingResponseModel(
+    val data: TrainingCreatedData
+)
+
+data class TrainingCreatedData(
+    val id: String?
 )

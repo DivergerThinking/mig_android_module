@@ -98,7 +98,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .then(if (personalReservation) Modifier.padding(top = 50.dp) else Modifier)
+                .then(if (personalReservation) Modifier.padding(top = 80.dp) else Modifier)
         ) {
             // ── Título + Refresh ─────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -196,7 +196,10 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             state = rememberLazyListState()
                         ) {
                             items(teamReservations) { training ->
-                                TrainingCell(training = training) { action ->
+                                TrainingCell(
+                                    training = training,
+                                    showDeleteAndEdit = viewModel.isManagerOrTrainer()
+                                ) { action ->
                                     when (action) {
                                         TrainingCellOption.SeeDetails -> {
                                             selectedTeamReservation = training
@@ -209,7 +212,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                         }
 
                                         TrainingCellOption.EditBooking -> {
-
+                                            selectedTeamReservation = training
+                                            showReservationFlow.value = true
                                         }
                                     }
                                 }
@@ -246,12 +250,17 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                 ).show()
                             } else {
                                 if (viewModel.userHasDNI()) {
+                                    selectedTeamReservation = null
+                                    selectedReservation = null
                                     showReservationFlow.value = true
                                 } else {
                                     showDniDialog = true
                                 }
                             }
                         } else {
+                            // Team: nueva reserva — limpiar selección previa
+                            selectedTeamReservation = null
+                            selectedReservation = null
                             showReservationFlow.value = true
                         }
                     },
@@ -277,6 +286,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 ReservationFlowDialog(
                     onDismiss = { showReservationFlow.value = false },
                     userId = userId,
+                    personalReservation = personalReservation,
+                    teamReservationInfo = selectedTeamReservation,
                     onReservationSuccess = {
                         viewModel.refreshData(personalReservation, userId)
                         showReservationFlow.value = false
