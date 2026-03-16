@@ -21,6 +21,7 @@ interface ReservationService {
         @Query("filter[status][_neq]") status: String = "cancelled",
         @Query("filter[date][_gte]") date: String = "\$NOW",
         @Query("filter[team][_null]") team: String = "true",
+        @Query("filter[training][_null]") training: String = "true",  // ← AÑADIDO
         @Query("fields") fields: String = "id,date,slot.*,qrImage,qrValue,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
     ): ReservationResponse

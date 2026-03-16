@@ -106,6 +106,7 @@
     <string name="error_cancelling_reservation">Error cancelling booking</string>
     <string name="book_label">BOOK</string>
     <string name="individual_bookings">Individual Bookings</string>
+    <string name="team_bookings">Team Bookings</string>
     <string name="no_bookings">No bookings</string>
     <string name="no_title_news">No title</string>
     <string name="no_description_news">No description</string>

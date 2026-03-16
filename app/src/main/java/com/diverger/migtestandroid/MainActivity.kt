@@ -30,8 +30,9 @@ class MainActivity : ComponentActivity() {
 //        )
 
         val madridInGameUserData = MadridInGameUserData(
-            email = "adriortega19@gmail.com",
-            userName = "Adri",
+            email = "aquinopaganipeter@gmail.com",
+            userName = "mikee11",
+            dni = "38876522L",
 //            //dni = "03427404J",
             logoMIG = R.drawable.logo_mig,
             qrMiddleLogo = R.drawable.qr_middle_logo

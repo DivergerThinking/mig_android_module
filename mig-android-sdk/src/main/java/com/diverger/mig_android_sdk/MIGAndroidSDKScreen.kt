@@ -74,7 +74,7 @@ import com.diverger.mig_android_sdk.ui.competitions.CompetitionsScreen
 import com.diverger.mig_android_sdk.ui.dashboard.DashboardScreen
 import com.diverger.mig_android_sdk.ui.dashboard.DashboardViewModel
 import com.diverger.mig_android_sdk.ui.profile.ProfileScreen
-import com.diverger.mig_android_sdk.ui.reservations.IndividualReservationsScreen
+import com.diverger.mig_android_sdk.ui.reservations.ReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.TeamsScreen
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
@@ -299,7 +299,7 @@ fun DashboardNavigation(user: User, modifier: Modifier) {
                 val dashboardViewModel = DashboardViewModel(StringResourcesProvider(LocalContext.current))
                 MIGAndroidSDKTheme { DashboardScreen(dashboardViewModel) }
             }
-            composable("individualReservations") { IndividualReservationsScreen(userId = user.id) }
+            composable("individualReservations") { ReservationsScreen(userId = user.id, personalReservation = true) }
             composable("profile") { ProfileScreen() }
         }
     }

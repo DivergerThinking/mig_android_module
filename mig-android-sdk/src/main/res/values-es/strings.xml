@@ -100,6 +100,7 @@
     <string name="error_cancelling_reservation">Error al cancelar la reserva</string>
     <string name="book_label">RESERVAR</string>
     <string name="individual_bookings">Reservas Individuales</string>
+    <string name="team_bookings">Reservas Equipo</string>
     <string name="no_bookings">No hay reservas</string>
     <string name="no_title_news">Sin título</string>
     <string name="no_description_news">Sin descripción</string>

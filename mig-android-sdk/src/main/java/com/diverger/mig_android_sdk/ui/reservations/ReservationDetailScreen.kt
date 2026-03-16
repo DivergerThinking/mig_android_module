@@ -1,12 +1,14 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
 import ReservationDetailViewModel
+import android.app.Activity
 import android.graphics.Bitmap
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
@@ -43,15 +45,23 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
@@ -63,6 +73,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,13 +87,19 @@ import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.support.generateQrBitmap
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.XCircle
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.UserCircle
+import kotlin.math.abs
+
+private val CardGradientStart = Color(0xFFEC407A)
+private val CardGradientEnd = Color(0xFF9C27B0)
+
+// ═══════════════════════════════════════════════════════════════
+// Main Screen
+// ═══════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -93,7 +110,22 @@ fun ReservationDetailScreen(
     onDismiss: () -> Unit,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val isFlipped = remember { mutableStateOf(false) }
+    var targetAngle by remember { mutableFloatStateOf(0f) }
+    val isFlipped = (((targetAngle / 180f).toInt()) % 2) != 0
+    val context = LocalContext.current
+
+    DisposableEffect(Unit) {
+        val activity = context as? Activity
+        val original = activity?.window?.attributes?.screenBrightness ?: -1f
+        activity?.window?.attributes = activity?.window?.attributes?.apply {
+            screenBrightness = 1f
+        }
+        onDispose {
+            activity?.window?.attributes = activity?.window?.attributes?.apply {
+                screenBrightness = original
+            }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -107,13 +139,12 @@ fun ReservationDetailScreen(
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
                 IconButton(onClick = onDismiss) {
                     Icon(
                         FeatherIcons.XCircle,
                         contentDescription = stringResource(R.string.close_label),
-                        tint = Color.White
+                        tint = Color.Gray.copy(alpha = 0.4f)
                     )
                 }
             }
@@ -129,39 +160,41 @@ fun ReservationDetailScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            val showFlipCard = isTeamReservation && training?.type == "centre" || !isTeamReservation
+            val showFlipCard =
+                (isTeamReservation && training?.type == "centre") || !isTeamReservation
 
             if (showFlipCard) {
                 val configuration = LocalConfiguration.current
-                val screenHeightDp: Dp = configuration.screenHeightDp.dp
-                val desiredHeight = screenHeightDp * 2 / 3
+                val desiredHeight: Dp = configuration.screenHeightDp.dp * 2 / 3
 
-                FlippableCard(
-                    isFlipped = isFlipped.value,
-                    onFlip = { isFlipped.value = !isFlipped.value },
+                HolographicFlippableCard(
+                    targetAngle = targetAngle,
+                    onAngleChange = { targetAngle = it },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(0.9f)
                         .height(desiredHeight),
                     front = {
-                        UnifiedQrCard(
+                        UnifiedQrCardContent(
                             isTeamReservation = isTeamReservation,
                             reservation = reservation,
                             training = training
                         )
                     },
-                    back = { ReservationRulesCard() }
+                    back = { ReservationRulesCardContent() }
                 )
             } else {
-                UnifiedQrCard(
-                    isTeamReservation = isTeamReservation,
-                    reservation = reservation,
-                    training = training
-                )
+                GradientCard {
+                    UnifiedQrCardContent(
+                        isTeamReservation = isTeamReservation,
+                        reservation = reservation,
+                        training = training
+                    )
+                }
             }
 
             if (showFlipCard) {
                 Button(
-                    onClick = { isFlipped.value = !isFlipped.value },
+                    onClick = { targetAngle += 180f },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
                     modifier = Modifier
                         .padding(12.dp)
@@ -169,7 +202,7 @@ fun ReservationDetailScreen(
                         .height(60.dp)
                 ) {
                     AnimatedContent(
-                        targetState = isFlipped.value,
+                        targetState = isFlipped,
                         transitionSpec = { fadeIn() with fadeOut() }
                     ) { flipped ->
                         val title = if (flipped)
@@ -185,17 +218,24 @@ fun ReservationDetailScreen(
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Simple gradient card (no flip)
+// ═══════════════════════════════════════════════════════════════
+
 @Composable
-private fun GradientReservationCard(
-    modifier: Modifier = Modifier,
+private fun GradientCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(25.dp))
             .background(
-                Brush.linearGradient(colors = listOf(Color.Magenta, Color.Red)),
-                shape = RoundedCornerShape(20.dp)
+                Brush.linearGradient(
+                    colors = listOf(CardGradientStart, CardGradientEnd),
+                    start = Offset.Zero,
+                    end = Offset.Infinite
+                )
             )
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,6 +243,167 @@ private fun GradientReservationCard(
         content = content
     )
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Holographic Flippable Card
+// ═══════════════════════════════════════════════════════════════
+
+@Composable
+private fun HolographicFlippableCard(
+    targetAngle: Float,
+    onAngleChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    front: @Composable ColumnScope.() -> Unit,
+    back: @Composable ColumnScope.() -> Unit
+) {
+    var dragOffsetX by remember { mutableFloatStateOf(0f) }
+    var dragRotation by remember { mutableFloatStateOf(0f) }
+
+    val currentTargetAngle by rememberUpdatedState(targetAngle)
+    val currentOnAngleChange by rememberUpdatedState(onAngleChange)
+
+    val baseRotation by animateFloatAsState(
+        targetValue = targetAngle,
+        animationSpec = spring(
+            dampingRatio = 0.75f,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "flipRotation"
+    )
+
+    val shape = RoundedCornerShape(25.dp)
+
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                rotationY = baseRotation + dragRotation
+                cameraDistance = 12 * density
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (abs(dragRotation) > 25f) {
+                            if (dragRotation > 0f) {
+                                currentOnAngleChange(currentTargetAngle + 180f)
+                            } else {
+                                currentOnAngleChange(currentTargetAngle - 180f)
+                            }
+                        }
+                        dragRotation = 0f
+                        dragOffsetX = 0f
+                    },
+                    onDragCancel = {
+                        dragRotation = 0f
+                        dragOffsetX = 0f
+                    },
+                    onHorizontalDrag = { _, amount ->
+                        dragRotation = (dragRotation + amount / 5f).coerceIn(-45f, 45f)
+                        dragOffsetX += amount
+                    }
+                )
+            }
+    ) {
+        val totalRotation = baseRotation + dragRotation
+        val normalized = ((totalRotation % 360f) + 360f) % 360f
+        val showFront = normalized < 90f || normalized > 270f
+
+        if (showFront) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(shape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(CardGradientStart, CardGradientEnd),
+                            start = Offset.Zero,
+                            end = Offset.Infinite
+                        )
+                    )
+                    .drawWithContent {
+                        drawContent()
+
+                        val cx = size.width * (0.5f + dragOffsetX / 800f)
+                        val cy = size.height * 0.4f
+
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.2f),
+                                    Color.Transparent
+                                ),
+                                center = Offset(cx, cy),
+                                radius = 300.dp.toPx()
+                            ),
+                            radius = 300.dp.toPx(),
+                            center = Offset(cx, cy)
+                        )
+
+                        val borderShift = dragOffsetX / 600f
+                        drawRoundRect(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.35f),
+                                    Color.White.copy(alpha = 0.08f),
+                                    Color.White.copy(alpha = 0.25f)
+                                ),
+                                start = Offset(size.width * borderShift, 0f),
+                                end = Offset(size.width * (1f + borderShift), size.height)
+                            ),
+                            size = size,
+                            cornerRadius = CornerRadius(25.dp.toPx()),
+                            style = Stroke(width = 1.5.dp.toPx())
+                        )
+                    }
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                front()
+            }
+
+            if (dragOffsetX != 0f) {
+                val wmAlpha = (abs(dragOffsetX) / 400f).coerceIn(0f, 0.25f)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 28.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Text(
+                        text = "MADRID IN GAME",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 4.sp,
+                        color = Color.White.copy(alpha = wmAlpha)
+                    )
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationY = 180f }
+                    .clip(shape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(CardGradientStart, CardGradientEnd),
+                            start = Offset.Zero,
+                            end = Offset.Infinite
+                        )
+                    )
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                back()
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Card content helpers
+// ═══════════════════════════════════════════════════════════════
 
 @Composable
 private fun ReservationHeader(
@@ -221,7 +422,7 @@ private fun ReservationHeader(
 private fun ReservationDetailRow(text: String) {
     Text(
         text,
-        color = Color.White,
+        color = Color.White.copy(alpha = 0.8f),
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(bottom = 5.dp)
@@ -230,7 +431,6 @@ private fun ReservationDetailRow(text: String) {
 
 @Composable
 private fun RemoteQrImage(url: String, contentDescription: String) {
-
     Box(
         modifier = Modifier
             .aspectRatio(1f)
@@ -272,21 +472,16 @@ fun loadBitmapFromResource(@DrawableRes resId: Int): Bitmap? {
 @Composable
 fun LocalQrImageWithLogo(reservation: Reservation, @DrawableRes logoResId: Int) {
     val logoBitmap = loadBitmapFromResource(logoResId)
-
-    LocalQrImage(
-        reservation = reservation,
-        logoBitmap = logoBitmap
-    )
+    LocalQrImage(reservation = reservation, logoBitmap = logoBitmap)
 }
 
 @Composable
 private fun LocalQrImage(
     reservation: Reservation,
     qrSize: Int = 500,
-    logoBitmap: Bitmap? = null // pass user logo bitmap here if available
+    logoBitmap: Bitmap? = null,
 ) {
     val qrText = reservation.qrValue.orEmpty()
-
     val qrBitmap: Bitmap? = generateQrBitmap(qrText, qrSize, logoBitmap)
 
     qrBitmap?.let { bmp ->
@@ -294,7 +489,7 @@ private fun LocalQrImage(
             bitmap = bmp,
             qrSize = qrSize,
             contentDescription = "Código QR de la reserva"
-            )
+        )
     }
 }
 
@@ -315,20 +510,24 @@ private fun BitmapQrImage(bitmap: Bitmap, qrSize: Int, contentDescription: Strin
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Front face content
+// ═══════════════════════════════════════════════════════════════
+
 @Composable
-private fun UnifiedQrCard(
+private fun ColumnScope.UnifiedQrCardContent(
     isTeamReservation: Boolean,
     reservation: Reservation? = null,
     training: EventModel? = null,
 ) {
     val context = LocalContext.current.applicationContext
-
     val key = reservation?.id?.toString() ?: training?.id?.toString() ?: ""
 
     val viewModel: ReservationDetailViewModel = viewModel(
         key = key,
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
                 return ReservationDetailViewModel(
                     stringResourcesProvider = StringResourcesProvider(context),
                     training = if (isTeamReservation) training else null,
@@ -338,125 +537,120 @@ private fun UnifiedQrCard(
         }
     )
 
-    GradientReservationCard {
-        ReservationHeader()
+    ReservationHeader()
+    Spacer(Modifier.height(10.dp))
 
-        Spacer(Modifier.height(10.dp))
+    ReservationDetailRow(
+        stringResource(
+            R.string.booking_details_location,
+            viewModel.getReservationLocation().uppercase()
+        )
+    )
 
+    if (!isTeamReservation) {
         ReservationDetailRow(
             stringResource(
-                R.string.booking_details_location,
-                viewModel.getReservationLocation().uppercase()
+                R.string.booking_details_platform,
+                viewModel.getReservationConsole().uppercase()
             )
         )
+    }
 
-        if (!isTeamReservation) {
-            ReservationDetailRow(
-                stringResource(
-                    R.string.booking_details_platform,
-                    viewModel.getReservationConsole().uppercase()
+    ReservationDetailRow(
+        stringResource(
+            R.string.booking_details_date,
+            viewModel.getFormattedDate(LocalContext.current).uppercase()
+        )
+    )
+
+    val time = viewModel.getFormattedTimes().uppercase()
+    val timeStringRes =
+        if (time.contains(",")) R.string.booking_details_time
+        else R.string.booking_details_time_singular
+    ReservationDetailRow(stringResource(timeStringRes, time))
+
+    Spacer(modifier = Modifier.height(14.dp))
+
+    if (isTeamReservation) {
+        if (training?.type == "virtual") {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.QrCode,
+                    contentDescription = "QR",
+                    tint = Color.White,
+                    modifier = Modifier.size(180.dp)
                 )
-            )
-        }
-        ReservationDetailRow(
-            stringResource(
-                R.string.booking_details_date,
-                viewModel.getFormattedDate(LocalContext.current).uppercase()
-            )
-        )
-
-        val time = viewModel.getFormattedTimes().uppercase()
-        val stringResource =
-            if (time.contains(",")) R.string.booking_details_time else R.string.booking_details_time_singular
-        ReservationDetailRow(
-            stringResource(
-                stringResource,
-                time
-            )
-        )
-
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        if (isTeamReservation) {
-            if (training?.type == "virtual") {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.QrCode,
-                        contentDescription = "QR",
-                        tint = Color.White,
-                        modifier = Modifier.size(180.dp)
-                    )
-                    Text(stringResource(R.string.no_qr_code_required), color = Color.White, style = MaterialTheme.typography.labelMedium)
-                }
-            } else {
-                RemoteQrImage(
-                    url = "${EnvironmentManager.getAssetsBaseUrl()}${training?.reserves?.firstOrNull()?.qrImage.orEmpty()}",
-                    contentDescription = stringResource(R.string.qr_code)
+                Text(
+                    stringResource(R.string.no_qr_code_required),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         } else {
-            reservation?.let { reservation ->
-                if (reservation.qrImage != null) {
-                    RemoteQrImage(
-                        url = "${EnvironmentManager.getAssetsBaseUrl()}${reservation.qrImage}",
-                        contentDescription = stringResource(R.string.qr_code)
-                    )
-                } else {
-                    UserManager.qr_logo?.let { logo ->
-                        LocalQrImageWithLogo(reservation, logo)
-                    } ?: LocalQrImage(reservation)
-                }
+            RemoteQrImage(
+                url = "${EnvironmentManager.getAssetsBaseUrl()}${training?.reserves?.firstOrNull()?.qrImage.orEmpty()}",
+                contentDescription = stringResource(R.string.qr_code)
+            )
+        }
+    } else {
+        reservation?.let { res ->
+            if (res.qrImage != null) {
+                RemoteQrImage(
+                    url = "${EnvironmentManager.getAssetsBaseUrl()}${res.qrImage}",
+                    contentDescription = stringResource(R.string.qr_code)
+                )
+            } else {
+                UserManager.qr_logo?.let { logo ->
+                    LocalQrImageWithLogo(res, logo)
+                } ?: LocalQrImage(res)
             }
         }
-
-        training?.let { training ->
-            if ((training.players?.size ?: 0) > 0) {
-                Spacer(Modifier.height(16.dp))
-                PlayersCarousel(training)
-                Spacer(Modifier.height(16.dp))
-            }
-        }
-        Spacer(Modifier.height(32.dp))
     }
+
+    training?.let { t ->
+        if ((t.players?.size ?: 0) > 0) {
+            Spacer(Modifier.height(16.dp))
+            PlayersCarousel(t)
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+
+    Spacer(Modifier.height(32.dp))
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Back face content
+// ═══════════════════════════════════════════════════════════════
 
 @Composable
-fun ReservationRulesCard() {
-    Column(
+private fun ColumnScope.ReservationRulesCardContent() {
+    Text(
+        stringResource(R.string.terms_of_use_label).uppercase(),
+        color = Color.White,
+        style = MaterialTheme.typography.headlineMedium
+    )
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    UnsafeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data("${EnvironmentManager.getBaseServerUrl()}/_next/static/media/reserve-rules.e49650ad.png")
+            .crossfade(true)
+            .build(),
+        contentDescription = stringResource(R.string.terms_of_use_label),
+        contentScale = ContentScale.Fit,
         modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                Brush.linearGradient(colors = listOf(Color.Magenta, Color.Red)),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            stringResource(R.string.terms_of_use_label).uppercase(),
-            color = Color.White,
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        UnsafeAsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data("${EnvironmentManager.getBaseServerUrl()}/_next/static/media/reserve-rules.e49650ad.png")
-                .crossfade(true)
-                .build(),
-            contentDescription = stringResource(R.string.terms_of_use_label),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .clip(RoundedCornerShape(0.dp))
-                .background(Color.Transparent),
-            error = rememberVectorPainter(Icons.Default.BrokenImage)
-        )
-    }
+            .fillMaxSize()
+            .padding(16.dp)
+            .clip(RoundedCornerShape(0.dp))
+            .background(Color.Transparent),
+        error = rememberVectorPainter(Icons.Default.BrokenImage)
+    )
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Players
+// ═══════════════════════════════════════════════════════════════
 
 @Composable
 fun PlayersCarousel(training: EventModel) {
@@ -512,44 +706,9 @@ fun PlaceholderIcon() {
     )
 }
 
-@Composable
-fun FlippableCard(
-    isFlipped: Boolean,
-    onFlip: () -> Unit,
-    modifier: Modifier = Modifier,
-    front: @Composable () -> Unit,
-    back: @Composable () -> Unit,
-) {
-    val rotationYValue by animateFloatAsState(
-        targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 600)
-    )
-
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                rotationY = rotationYValue
-                cameraDistance = 8 * density
-            }
-            .background(
-                Brush.linearGradient(colors = listOf(Color.Magenta, Color.Red)),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { _, dragAmount ->
-                    if (dragAmount > 50) {
-                        onFlip()
-                    }
-                }
-            }
-    ) {
-        if (rotationYValue <= 90f) {
-            Box { front() }
-        } else {
-            Box(modifier = Modifier.graphicsLayer { rotationY = 180f }) { back() }
-        }
-    }
-}
+// ═══════════════════════════════════════════════════════════════
+// Bottom Sheet wrapper (individual)
+// ═══════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -5,6 +5,7 @@ import SelectTeamBottomSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -22,6 +23,7 @@ import androidx.navigation.compose.*
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.StringResourcesProvider
+import com.diverger.mig_android_sdk.ui.reservations.ReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.news.NewsScreen
 import com.diverger.mig_android_sdk.ui.teams.playersTeam.PlayersTeamScreen
 import com.diverger.mig_android_sdk.ui.teams.training.TeamTrainingScreen
@@ -73,7 +75,8 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 @Composable
 fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> Unit) {
     val items = mutableListOf(
-        TeamNavItem("training", stringResource(R.string.trainings_label), Icons.Default.DateRange),
+        TeamNavItem("training", stringResource(R.string.trainings_label), Icons.Default.CalendarMonth),
+        TeamNavItem("individualReservations", stringResource(R.string.bookings), Icons.Default.DateRange),
         TeamNavItem("news", stringResource(R.string.news_label), Icons.Default.Newspaper),
         TeamNavItem("players", stringResource(R.string.players_label), FontAwesomeIcons.Solid.PeopleCarry),
     )
@@ -130,6 +133,7 @@ fun TeamNavigationGraph(navController: NavHostController, modifier: Modifier, us
             val teamTrainingViewModel = TeamTrainingViewModel(StringResourcesProvider(LocalContext.current))
             TeamTrainingScreen(teamTrainingViewModel)
         }
+        composable("individualReservations") { ReservationsScreen(userId = user.id, personalReservation = false) }
         composable("players") {
             val playersViewModel = PlayersTeamViewModel(StringResourcesProvider(LocalContext.current))
             PlayersTeamScreen(playersViewModel) }

@@ -4,22 +4,32 @@ import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.google.gson.annotations.SerializedName
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TrainingService {
     @GET("trainings")
     suspend fun getAllTrainings(
         @Query("filter[team][_eq]") teamId: String?,
+        @Query("filter[start_date][_gte]") startDateFrom: String = "\$NOW",
+        @Query("sort[]") sort: String = "start_date",
         @Query("fields") fields: String = "id,start_date,time,players.users_id.id,players.users_id.avatar,players.users_id.email,players.users_id.first_name,type,reserves.*,reserves.team.name,reserves.team.picture,reserves.times.gaming_space_times_id.time,notes",
         @Header("Authorization") token: String,
     ): TrainingResponse
+
+    @DELETE("trainings/{id}")
+    suspend fun deleteTraining(
+        @Path("id") trainingId: String,
+        @Header("Authorization") token: String
+    )
 }
 
 object TrainingApi {
     private val BASE_URL = EnvironmentManager.getBaseUrl()
-    private val TOKEN = "Bearer ${UserManager.getAccessToken()}"
+    private val TOKEN get() = "Bearer ${UserManager.getAccessToken()}"
 
     val service: TrainingService by lazy {
         Retrofit.Builder()
@@ -34,6 +44,31 @@ object TrainingApi {
         return try {
             val response = service.getAllTrainings(teamId, token = TOKEN)
             Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Elimina un training y sus reserves asociadas (si es presencial).
+     * Replica la lógica de iOS: primero borra el training, luego las reserves.
+     */
+    suspend fun deleteTraining(trainingId: String, reserveIds: List<Int>): Result<Unit> {
+        return try {
+            // 1. Borrar el training
+            service.deleteTraining(trainingId, token = TOKEN)
+
+            // 2. Borrar las reserves asociadas (si las hay)
+            for (reserveId in reserveIds) {
+                try {
+                    ReservationApi.service.deleteReservation(reserveId, token = TOKEN)
+                } catch (e: Exception) {
+                    // Log pero no rompe el flujo completo
+                    e.printStackTrace()
+                }
+            }
+
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
