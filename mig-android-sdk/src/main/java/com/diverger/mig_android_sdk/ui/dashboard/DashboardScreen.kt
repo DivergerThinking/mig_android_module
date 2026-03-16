@@ -107,6 +107,9 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
                                     selectedTraining = training
                                     showReservationDetail.value = true
                                 }
+                                TrainingCellOption.EditBooking -> {
+                                    // TODO: open edit flow
+                                }
                             }
                         },
                         onReservationAction = { reservation, option ->

@@ -16,6 +16,7 @@ import com.diverger.mig_android_sdk.data.EventModel
 @Composable
 fun TrainingsList(
     trainings: List<EventModel>,
+    showDeleteAndEditOption: Boolean = false,
     onAction: (EventModel, TrainingCellOption) -> Unit
 ) {
     if (trainings.isEmpty()) {
@@ -35,7 +36,10 @@ fun TrainingsList(
                 )
             }
             items(trainings) { training ->
-                TrainingCell(training) { action ->
+                TrainingCell(
+                    training = training,
+                    showDeleteAndEditOption = showDeleteAndEditOption
+                ) { action ->
                     onAction(training, action)
                 }
             }

@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,6 +42,7 @@ import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Eye
 import compose.icons.feathericons.Monitor
 import compose.icons.fontawesomeicons.Solid
@@ -46,19 +50,25 @@ import compose.icons.fontawesomeicons.solid.Building
 import compose.icons.fontawesomeicons.solid.UserCircle
 
 // ═══════════════════════════════════════════════════════════════
-// Options enum
+// Options enum (matches iOS TeamReservationCellComponentOptionSelected)
 // ═══════════════════════════════════════════════════════════════
 
 enum class TrainingCellOption {
-    RemoveCell, SeeDetails
+    RemoveCell, SeeDetails, EditBooking
 }
 
 // ═══════════════════════════════════════════════════════════════
 // Main cell — use this from any screen
+// showDeleteAndEditOption: controls visibility of delete & edit
+// (matches iOS showDeleteAndEditOption)
 // ═══════════════════════════════════════════════════════════════
 
 @Composable
-fun TrainingCell(training: EventModel, onAction: (TrainingCellOption) -> Unit) {
+fun TrainingCell(
+    training: EventModel,
+    showDeleteAndEditOption: Boolean = false,
+    onAction: (TrainingCellOption) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -66,7 +76,7 @@ fun TrainingCell(training: EventModel, onAction: (TrainingCellOption) -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(0.08f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            IconDateAndRemoveBanner(training, onAction)
+            IconDateAndRemoveBanner(training, showDeleteAndEditOption, onAction)
             Spacer(Modifier.height(10.dp))
             ReservationLocation(training)
             Spacer(Modifier.height(10.dp))
@@ -81,18 +91,25 @@ fun TrainingCell(training: EventModel, onAction: (TrainingCellOption) -> Unit) {
                 NotesSection(training.notes)
             }
 
-            ViewBookingButton(onAction)
+            ActionButtons(showDeleteAndEditOption, onAction)
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Private sub-components
+// Icon + Date + Delete button (matches iOS iconDateAndRemoveBannerComponent)
 // ═══════════════════════════════════════════════════════════════
 
 @Composable
-private fun IconDateAndRemoveBanner(training: EventModel, onAction: (TrainingCellOption) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+private fun IconDateAndRemoveBanner(
+    training: EventModel,
+    showDeleteAndEditOption: Boolean,
+    onAction: (TrainingCellOption) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Icon(
             imageVector = when (training.type.lowercase()) {
                 "virtual" -> FeatherIcons.Monitor
@@ -110,8 +127,27 @@ private fun IconDateAndRemoveBanner(training: EventModel, onAction: (TrainingCel
             style = MaterialTheme.typography.labelLarge
         )
         Spacer(Modifier.weight(1f))
+
+        // Delete button — matches iOS minus.circle red
+        if (showDeleteAndEditOption) {
+            IconButton(
+                onClick = { onAction(TrainingCellOption.RemoveCell) },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    Icons.Default.RemoveCircle,
+                    contentDescription = "Eliminar",
+                    tint = Color.Red,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
     }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Location label (matches iOS showReservationLocation)
+// ═══════════════════════════════════════════════════════════════
 
 @Composable
 private fun ReservationLocation(training: EventModel) {
@@ -121,6 +157,10 @@ private fun ReservationLocation(training: EventModel) {
         style = MaterialTheme.typography.labelMedium
     )
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Players carousel (matches iOS playersCarouselComponent)
+// ═══════════════════════════════════════════════════════════════
 
 @Composable
 private fun PlayersCarousel(training: EventModel) {
@@ -174,6 +214,10 @@ private fun PlayerAvatar(player: PlayerModel) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Notes section (matches iOS descriptionComponent)
+// ═══════════════════════════════════════════════════════════════
+
 @Composable
 private fun NotesSection(notes: String) {
     Column(modifier = Modifier.padding(7.dp)) {
@@ -192,9 +236,25 @@ private fun NotesSection(notes: String) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Action buttons (matches iOS buttonsComponent)
+// "Ver reserva" always + "Editar reserva" when allowed
+// ═══════════════════════════════════════════════════════════════
+
 @Composable
-private fun ViewBookingButton(onAction: (TrainingCellOption) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+private fun ActionButtons(
+    showDeleteAndEditOption: Boolean,
+    onAction: (TrainingCellOption) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        // "Ver reserva" — always visible (matches iOS eye + "Ver reserva")
         TextButton(onClick = { onAction(TrainingCellOption.SeeDetails) }) {
             Icon(
                 FeatherIcons.Eye,
@@ -208,6 +268,28 @@ private fun ViewBookingButton(onAction: (TrainingCellOption) -> Unit) {
                 color = Color.Cyan,
                 style = MaterialTheme.typography.titleMedium
             )
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        // "Editar reserva" — only when allowed (matches iOS pencil + "Editar reserva")
+        if (showDeleteAndEditOption) {
+            TextButton(onClick = { onAction(TrainingCellOption.EditBooking) }) {
+                Icon(
+                    FeatherIcons.Edit,
+                    contentDescription = "Editar reserva",
+                    tint = Color.Red,
+                    modifier = Modifier.size(12.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    stringResource(R.string.edit_booking),
+                    color = Color.Red,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
         }
     }
 }

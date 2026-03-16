@@ -196,7 +196,10 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             state = rememberLazyListState()
                         ) {
                             items(teamReservations) { training ->
-                                TrainingCell(training = training) { action ->
+                                TrainingCell(
+                                    training = training,
+                                    showDeleteAndEditOption = viewModel.isManagerOrTrainer()
+                                ) { action ->
                                     when (action) {
                                         TrainingCellOption.SeeDetails -> {
                                             selectedTeamReservation = training
@@ -206,6 +209,11 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                         TrainingCellOption.RemoveCell -> {
                                             selectedTeamReservation = training
                                             showTeamCancelPopup = true
+                                        }
+
+                                        TrainingCellOption.EditBooking -> {
+                                            selectedTeamReservation = training
+                                            showReservationFlow.value = true
                                         }
                                     }
                                 }

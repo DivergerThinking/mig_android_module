@@ -88,6 +88,9 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
                             selectedTraining = training
                             showReservationDetail.value = true
                         }
+                        TrainingCellOption.EditBooking -> {
+                            // TODO: open edit flow
+                        }
                     }
                 })
             }
