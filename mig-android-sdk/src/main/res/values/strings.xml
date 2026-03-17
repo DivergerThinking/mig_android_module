@@ -15,9 +15,13 @@
     <string name="profile">About Me</string>
     <string name="bookings">Bookings</string>
     <string name="next">Next</string>
+    <string name="back">Back</string>
     <string name="select_schedule">Select time slot</string>
     <string name="book_training">Book</string>
     <string name="select_space">Select a space</string>
+    <string name="select_player">Select Players</string>
+    <string name="select_a_player">Select a Player</string>
+    <string name="select_hour">Select Hour</string>
     <string name="booking_creation_success">Booking created successfully</string>
     <string name="booking_creation_failure">Error creating booking</string>
     <string name="insert_id">Enter your ID</string>
@@ -25,6 +29,10 @@
     <string name="accept_label">Accept</string>
     <string name="cancel_label">Cancel</string>
     <string name="select_date">Select a date</string>
+    <string name="date_selected">Date Selected</string>
+    <string name="select_time_slot">Select Time Slot</string>
+    <string name="save">Save</string>
+    <string name="book">Book</string>
     <string name="details_label">DETAILS</string>
     <string name="terms_of_use_label">Terms of Use</string>
     <string name="booking_confirmed">BOOKING CONFIRMED</string>

@@ -8,11 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,9 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
-import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.data.Space
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.dateFromString
 import com.diverger.mig_android_sdk.support.isToday
@@ -83,12 +80,32 @@ fun ReservationFlowDialog(
     val coroutineScope = rememberCoroutineScope()
     val logoBitmap = UserManager.qr_logo?.let { loadBitmapFromResource(it) }
 
-    Dialog(onDismissRequest = { if (!isProcessing) onDismiss() }) {
+    Dialog(
+        onDismissRequest = { if (!isProcessing) onDismiss() },
+        properties = androidx.compose.ui.window.DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.92f)
-                .background(Color.Black, shape = RoundedCornerShape(16.dp))
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.88f)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1A1A1A),
+                            Color.Black,
+                            Color.Black,
+                            Color(0xFF0D0D0D)
+                        )
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(24.dp)
+                )
                 .padding(0.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -319,7 +336,7 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle("Seleccionar Jugador")
+        StepTitle(stringResource(R.string.select_player))
 
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
             Box(
@@ -332,25 +349,26 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
                     .padding(16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Selecciona un jugador", color = SubtleText, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.select_a_player), color = SubtleText, modifier = Modifier.weight(1f))
                     Icon(Icons.Default.KeyboardArrowDown, null, tint = SubtleText, modifier = Modifier.size(14.dp))
                 }
             }
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 teamPlayers.forEach { player ->
-                    val name = player.userId.username
+                    // iOS: player.usersId?.username
+                    val username = player.userId.username
                     DropdownMenuItem(
                         text = {
                             Row {
-                                Text(name)
-                                if (players.contains(name)) {
+                                Text(username)
+                                if (players.contains(username)) {
                                     Spacer(Modifier.weight(1f))
                                     Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp))
                                 }
                             }
                         },
                         onClick = {
-                            viewModel.addPlayer(name)
+                            viewModel.addPlayer(username)
                             expanded = false
                         }
                     )
@@ -372,7 +390,7 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.weight(1f))
 
-        SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
+        SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
         PrimaryFlowButton(stringResource(R.string.next), enabled = players.isNotEmpty()) {
             viewModel.goToNextStep()
         }
@@ -416,7 +434,7 @@ private fun SelectDateStep(viewModel: ReservationFlowViewModel) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StepTitle("Selecciona una fecha", modifier = Modifier.weight(1f))
+            StepTitle(stringResource(R.string.select_date), modifier = Modifier.weight(1f))
             TextButton(onClick = { viewModel.toggleLegendPopup() }) {
                 Text("Leyenda", color = Color.Cyan, fontSize = 13.sp)
             }
@@ -442,7 +460,7 @@ private fun SelectDateStep(viewModel: ReservationFlowViewModel) {
         Spacer(Modifier.height(12.dp))
 
         if (viewModel.currentStep.collectAsState().value > 0) {
-            SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
+            SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
         }
         PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null) {
             viewModel.goToNextStep()
@@ -477,7 +495,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle("Seleccionar Hora")
+        StepTitle(stringResource(R.string.select_hour))
 
         // Selected date card
         selectedDate?.let { date ->
@@ -488,7 +506,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
                     .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
                     .padding(16.dp)
             ) {
-                Text("Fecha seleccionada", color = SubtleText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.date_selected), color = SubtleText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 dateFromString(date)?.toUIDateString()?.let {
                     Text(it, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
@@ -532,7 +550,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.weight(1f))
 
-        SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
+        SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
     }
 }
 
@@ -548,7 +566,7 @@ private fun SelectSpaceStep(viewModel: ReservationFlowViewModel) {
     LaunchedEffect(Unit) { viewModel.fetchAvailableSpaces() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle("Selecciona un espacio")
+        StepTitle(stringResource(R.string.select_space))
         Spacer(Modifier.height(16.dp))
 
         if (spaces.isEmpty()) {
@@ -574,7 +592,7 @@ private fun SelectSpaceStep(viewModel: ReservationFlowViewModel) {
         }
 
         Spacer(Modifier.height(16.dp))
-        SecondaryFlowButton("Atrás") {
+        SecondaryFlowButton(stringResource(R.string.back)) {
             viewModel.cleanSpace()
             viewModel.goToPreviousStep()
         }
@@ -606,7 +624,7 @@ private fun SelectSlotStep(viewModel: ReservationFlowViewModel) {
     val maxLabel = if (isSimulador) "Máximo 1 slot" else if (viewModel.personalReservations) "Máximo 3 slots consecutivos" else "Máximo 2 slots consecutivos"
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle("Selecciona franja horaria")
+        StepTitle(stringResource(R.string.select_time_slot))
         Spacer(Modifier.height(16.dp))
 
         if (slots.isEmpty()) {
@@ -644,7 +662,7 @@ private fun SelectSlotStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.height(12.dp))
 
-        SecondaryFlowButton("Atrás") {
+        SecondaryFlowButton(stringResource(R.string.back)) {
             viewModel.cleanSlots()
             viewModel.goToPreviousStep()
         }
@@ -685,7 +703,7 @@ private fun BottomButtons(
 
     if (isLastStep || isVirtualLastStep) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-            val buttonLabel = if (viewModel.isEditing) "Guardar" else "Reservar"
+            val buttonLabel = if (viewModel.isEditing) stringResource(R.string.save) else stringResource(R.string.book)
 
             PrimaryFlowButton(buttonLabel, enabled = canConfirm) {
                 coroutineScope.launch {
@@ -740,6 +758,8 @@ private fun PrimaryFlowButton(title: String, enabled: Boolean = true, onClick: (
             fontWeight = FontWeight.SemiBold, fontSize = 15.sp
         )
     }
+
+    Spacer(Modifier.height(16.dp))
 }
 
 @Composable

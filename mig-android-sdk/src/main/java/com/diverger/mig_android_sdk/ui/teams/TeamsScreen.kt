@@ -4,6 +4,7 @@ import PlayersTeamViewModel
 import SelectTeamBottomSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
@@ -52,6 +53,7 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
     MIGAndroidSDKTheme {
         Scaffold(
             containerColor = Color.Black,
+            contentWindowInsets = WindowInsets(0),
             bottomBar = { TeamBottomNavigation(navController) { showTeamSelection = true } }
         ) { innerPadding ->
             TeamNavigationGraph(
@@ -92,54 +94,40 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
         )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.98f),
-                        Color.Black.copy(alpha = 0.87f)
-                    )
-                )
-            )
+    NavigationBar(
+        containerColor = Color.Black,
+        contentColor = Color.White,
+        windowInsets = WindowInsets(0)
     ) {
-        NavigationBar(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = Color.Transparent,
-            contentColor = Color.White
-        ) {
-            val currentRoute =
-                navController.currentBackStackEntryAsState().value?.destination?.route
-            items.forEach { item ->
-                NavigationBarItem(
-                    modifier = Modifier.size(22.dp),
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
-                    icon = {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.label,
-                            tint = if (currentRoute == item.route) Color.Cyan else Color.White
-                        )
-                    },
-                    label = {
-                        Text(
-                            item.label,
-                            color = if (currentRoute == item.route) Color.Cyan else Color.White,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    selected = currentRoute == item.route,
-                    onClick = {
-                        if (item.route == "change_team") {
-                            onChangeTeam()
-                        } else {
-                            navController.navigate(item.route)
-                        }
+        val currentRoute =
+            navController.currentBackStackEntryAsState().value?.destination?.route
+        items.forEach { item ->
+            NavigationBarItem(
+                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = if (currentRoute == item.route) Color.Cyan else Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                label = {
+                    Text(
+                        item.label,
+                        color = if (currentRoute == item.route) Color.Cyan else Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                selected = currentRoute == item.route,
+                onClick = {
+                    if (item.route == "change_team") {
+                        onChangeTeam()
+                    } else {
+                        navController.navigate(item.route)
                     }
-                )
-            }
+                }
+            )
         }
     }
 }

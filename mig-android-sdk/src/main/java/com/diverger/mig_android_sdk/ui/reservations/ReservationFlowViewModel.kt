@@ -184,6 +184,16 @@ class ReservationFlowViewModel(
         _selectedPlayers.value = _selectedPlayers.value.filter { it != username }
     }
 
+    /**
+     * Resolve selected usernames back to user IDs for the API.
+     * Matches TeamUser.userId.username → TeamUser.userId.id
+     */
+    private fun resolvePlayerIds(): List<String> {
+        return _selectedPlayers.value.mapNotNull { username ->
+            _teamPlayers.value.firstOrNull { it.userId.username == username }?.userId?.id
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     // Space type mapping (iOS parity)
     // ═══════════════════════════════════════════════════════════
@@ -223,6 +233,8 @@ class ReservationFlowViewModel(
         } catch (_: Exception) {}
 
         // Match training player IDs to team usernames
+        // Match training player IDs against team users to get usernames
+        // iOS: teamPlayers.first(where: { $0.usersId?.id == playerId })?.usersId?.username
         _selectedPlayers.value = event.players?.mapNotNull { playerModel ->
             val playerId = playerModel.userId?.id ?: return@mapNotNull null
             _teamPlayers.value.firstOrNull { it.userId.id == playerId }?.userId?.username
@@ -665,12 +677,6 @@ class ReservationFlowViewModel(
     // ═══════════════════════════════════════════════════════════
     // Helpers
     // ═══════════════════════════════════════════════════════════
-
-    private fun resolvePlayerIds(): List<String> {
-        return _selectedPlayers.value.mapNotNull { username ->
-            _teamPlayers.value.firstOrNull { it.userId.username == username }?.userId?.id
-        }
-    }
 
     data class MarkedDate(
         val date: String,

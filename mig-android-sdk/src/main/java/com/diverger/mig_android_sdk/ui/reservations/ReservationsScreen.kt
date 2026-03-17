@@ -274,8 +274,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(vertical = 16.dp)
+                        .height(65.dp)
+                        .padding(vertical = 6.dp)
                         .padding(horizontal = 50.dp)
                 ) {
                     Text(
