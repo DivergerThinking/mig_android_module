@@ -51,11 +51,12 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 
     MIGAndroidSDKTheme {
         Scaffold(
+            containerColor = Color.Black,
             bottomBar = { TeamBottomNavigation(navController) { showTeamSelection = true } }
         ) { innerPadding ->
             TeamNavigationGraph(
                 navController,
-                Modifier.padding(innerPadding),  // ← ahora usa innerPadding
+                Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
                 user
             )
         }

@@ -234,7 +234,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
             val showBookButton = if (personalReservation) {
                 true
             } else {
-                viewModel.getUserRole().lowercase() == "manager"
+                viewModel.getUserRole().lowercase() == "manager" || viewModel.getUserRole().lowercase() == "trainer"
             }
 
             if (showBookButton) {

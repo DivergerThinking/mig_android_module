@@ -44,14 +44,13 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
     val errorMessage by viewModel.errorMessage.collectAsState()
     val teamLogo by viewModel.teamLogo.collectAsState()
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black)
-        .padding(bottom = 64.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
 
-        Column(modifier = Modifier.padding(16.dp)) {
-            // 📅 **Calendario de Entrenamientos**
-
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             CalendarComponent(
                 isCalendarVisible = isCalendarVisible,
                 onToggle = {
@@ -65,7 +64,6 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 📌 **Próximos Entrenamientos**
             NextTrainingsBanner(
                 isTrainingsVisible = isTrainingsVisible,
                 onToggle = {
@@ -76,31 +74,31 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 📌 **Lista de Entrenamientos**
             when {
-                isLoading -> CircularProgressIndicator(color = Color.White, modifier = Modifier.align(Alignment.CenterHorizontally))
+                isLoading -> CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
                 errorMessage != null -> Text(errorMessage!!, color = Color.Red)
-                else -> if (isTrainingsVisible) TrainingsList(trainings = trainings, onAction = { training, action ->
-                    when(action) {
-                        TrainingCellOption.RemoveCell -> {
+                else -> if (isTrainingsVisible) TrainingsList(
+                    trainings = trainings,
+                    onAction = { training, action ->
+                        when (action) {
+                            TrainingCellOption.RemoveCell -> {}
+                            TrainingCellOption.SeeDetails -> {
+                                selectedTraining = training
+                                showReservationDetail.value = true
+                            }
+
+                            TrainingCellOption.EditBooking -> {
+                                // TODO: open edit flow
+                            }
                         }
-                        TrainingCellOption.SeeDetails -> {
-                            selectedTraining = training
-                            showReservationDetail.value = true
-                        }
-                        TrainingCellOption.EditBooking -> {
-                            // TODO: open edit flow
-                        }
-                    }
-                })
+                    })
             }
 
             if (showReservationDetail.value && selectedTraining != null) {
-//                TeamReservationBottomSheet(
-//                    training = selectedTraining!!,
-//                    onDismiss =
-//                )
-
                 ReservationDetailScreen(
                     isTeamReservation = true,
                     training = selectedTraining!!,
@@ -110,4 +108,3 @@ fun TeamTrainingScreen(viewModel: TeamTrainingViewModel = viewModel()) {
         }
     }
 }
-
