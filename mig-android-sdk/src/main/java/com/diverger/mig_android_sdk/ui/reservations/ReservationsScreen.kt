@@ -98,6 +98,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
+                .then(if (personalReservation) Modifier.padding(top = 55.dp) else Modifier)
         ) {
             // ── Título + Refresh ─────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -234,7 +235,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
             val showBookButton = if (personalReservation) {
                 true
             } else {
-                viewModel.getUserRole().lowercase() == "manager" || viewModel.getUserRole().lowercase() == "trainer"
+                viewModel.getUserRole().lowercase() == "manager"
             }
 
             if (showBookButton) {
@@ -274,8 +275,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(65.dp)
-                        .padding(vertical = 6.dp)
+                        .height(80.dp)
+                        .padding(vertical = 16.dp)
                         .padding(horizontal = 50.dp)
                 ) {
                     Text(

@@ -158,25 +158,25 @@ fun ReservationItem(
                 }
 
                 // Edit booking (only in full mode, not compact)
-                if (!compact) {
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        onReservationPressed(IndividualReservationsCellOptions.EDIT_RESERVATION, reservation)
-                    }) {
-                        Icon(
-                            imageVector = FeatherIcons.Edit,
-                            contentDescription = "Editar Reserva",
-                            tint = Color.Cyan,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(Modifier.width(5.dp))
-                        Text(
-                            stringResource(R.string.edit_booking).uppercase(),
-                            color = Color.Cyan,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
+//                if (!compact) {
+//                    Spacer(Modifier.width(8.dp))
+//                    TextButton(onClick = {
+//                        onReservationPressed(IndividualReservationsCellOptions.EDIT_RESERVATION, reservation)
+//                    }) {
+//                        Icon(
+//                            imageVector = FeatherIcons.Edit,
+//                            contentDescription = "Editar Reserva",
+//                            tint = Color.Cyan,
+//                            modifier = Modifier.size(15.dp)
+//                        )
+//                        Spacer(Modifier.width(5.dp))
+//                        Text(
+//                            stringResource(R.string.edit_booking).uppercase(),
+//                            color = Color.Cyan,
+//                            style = MaterialTheme.typography.titleMedium
+//                        )
+//                    }
+//                }
             }
         }
     }

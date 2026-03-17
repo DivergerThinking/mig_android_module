@@ -8,9 +8,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,7 +34,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
+import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.data.Space
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.dateFromString
 import com.diverger.mig_android_sdk.support.isToday
@@ -171,23 +175,33 @@ fun ReservationFlowDialog(
                             transitionSpec = { fadeIn() with fadeOut() }
                         ) { step ->
                             when {
-                                // Team: step 0 = Place & Notes
+                                // ── Editing team: only players step ──
+                                viewModel.isEditing && !personalReservation && step == 0 ->
+                                    SelectPlayerStep(viewModel)
+
+                                // ── New team: step 0 = Place & Notes ──
                                 !personalReservation && step == 0 -> SelectPlaceAndNotesStep(viewModel)
-                                // Team: step 1 = Players
+                                // ── New team: step 1 = Players ──
                                 !personalReservation && step == 1 -> SelectPlayerStep(viewModel)
-                                // Date step
+
+                                // ── Date step ──
                                 (personalReservation && step == 0) || (!personalReservation && step == 2) ->
                                     SelectDateStep(viewModel)
-                                // Virtual: Time step
+
+                                // ── Virtual: Time step ──
                                 viewModel.isVirtualTeam && (
                                         (personalReservation && step == 1) || (!personalReservation && step == 3)
                                         ) -> SelectTimeStep(viewModel)
-                                // Centre: Space step
+
+                                // ── Centre: Space step ──
                                 (personalReservation && step == 1) || (!personalReservation && step == 3) ->
                                     SelectSpaceStep(viewModel)
-                                // Centre: Slot step
+
+                                // ── Centre: Slot step ──
                                 (personalReservation && step == 2) || (!personalReservation && step == 4) ->
                                     SelectSlotStep(viewModel)
+
+                                // Future: add more steps here when enabling full edit
                             }
                         }
                     }
@@ -336,7 +350,7 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle(stringResource(R.string.select_player))
+        StepTitle("Seleccionar Jugador")
 
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
             Box(
@@ -349,7 +363,7 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
                     .padding(16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.select_a_player), color = SubtleText, modifier = Modifier.weight(1f))
+                    Text("Selecciona un jugador", color = SubtleText, modifier = Modifier.weight(1f))
                     Icon(Icons.Default.KeyboardArrowDown, null, tint = SubtleText, modifier = Modifier.size(14.dp))
                 }
             }
@@ -390,9 +404,17 @@ private fun SelectPlayerStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.weight(1f))
 
-        SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = players.isNotEmpty()) {
-            viewModel.goToNextStep()
+        // Hide "Atrás" when editing team (only 1 step)
+        val currentStep by viewModel.currentStep.collectAsState()
+        if (!(viewModel.isEditing && !viewModel.personalReservations)) {
+            SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
+        }
+
+        // Hide "Next" when editing team (confirm button in BottomButtons handles it)
+        if (!(viewModel.isEditing && !viewModel.personalReservations)) {
+            PrimaryFlowButton(stringResource(R.string.next), enabled = players.isNotEmpty()) {
+                viewModel.goToNextStep()
+            }
         }
     }
 }
@@ -434,7 +456,7 @@ private fun SelectDateStep(viewModel: ReservationFlowViewModel) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StepTitle(stringResource(R.string.select_date), modifier = Modifier.weight(1f))
+            StepTitle("Selecciona una fecha", modifier = Modifier.weight(1f))
             TextButton(onClick = { viewModel.toggleLegendPopup() }) {
                 Text("Leyenda", color = Color.Cyan, fontSize = 13.sp)
             }
@@ -460,7 +482,7 @@ private fun SelectDateStep(viewModel: ReservationFlowViewModel) {
         Spacer(Modifier.height(12.dp))
 
         if (viewModel.currentStep.collectAsState().value > 0) {
-            SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
+            SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
         }
         PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null) {
             viewModel.goToNextStep()
@@ -495,7 +517,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle(stringResource(R.string.select_hour))
+        StepTitle("Seleccionar Hora")
 
         // Selected date card
         selectedDate?.let { date ->
@@ -506,7 +528,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
                     .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
                     .padding(16.dp)
             ) {
-                Text(stringResource(R.string.date_selected), color = SubtleText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text("Fecha seleccionada", color = SubtleText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 dateFromString(date)?.toUIDateString()?.let {
                     Text(it, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
@@ -550,7 +572,7 @@ private fun SelectTimeStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.weight(1f))
 
-        SecondaryFlowButton(stringResource(R.string.back)) { viewModel.goToPreviousStep() }
+        SecondaryFlowButton("Atrás") { viewModel.goToPreviousStep() }
     }
 }
 
@@ -566,7 +588,7 @@ private fun SelectSpaceStep(viewModel: ReservationFlowViewModel) {
     LaunchedEffect(Unit) { viewModel.fetchAvailableSpaces() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle(stringResource(R.string.select_space))
+        StepTitle("Selecciona un espacio")
         Spacer(Modifier.height(16.dp))
 
         if (spaces.isEmpty()) {
@@ -592,7 +614,7 @@ private fun SelectSpaceStep(viewModel: ReservationFlowViewModel) {
         }
 
         Spacer(Modifier.height(16.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) {
+        SecondaryFlowButton("Atrás") {
             viewModel.cleanSpace()
             viewModel.goToPreviousStep()
         }
@@ -624,7 +646,7 @@ private fun SelectSlotStep(viewModel: ReservationFlowViewModel) {
     val maxLabel = if (isSimulador) "Máximo 1 slot" else if (viewModel.personalReservations) "Máximo 3 slots consecutivos" else "Máximo 2 slots consecutivos"
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle(stringResource(R.string.select_time_slot))
+        StepTitle("Selecciona franja horaria")
         Spacer(Modifier.height(16.dp))
 
         if (slots.isEmpty()) {
@@ -662,7 +684,7 @@ private fun SelectSlotStep(viewModel: ReservationFlowViewModel) {
 
         Spacer(Modifier.height(12.dp))
 
-        SecondaryFlowButton(stringResource(R.string.back)) {
+        SecondaryFlowButton("Atrás") {
             viewModel.cleanSlots()
             viewModel.goToPreviousStep()
         }
@@ -689,34 +711,42 @@ private fun BottomButtons(
     val selectedSpace by viewModel.selectedSpace.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val selectedTime by viewModel.selectedTime.collectAsState()
+    val selectedPlayers by viewModel.selectedPlayers.collectAsState()
 
     val isLastStep = currentStep == viewModel.totalSteps - 1
     val isVirtualLastStep = viewModel.isVirtualTeam && (
             (personalReservation && currentStep == 1) || (!personalReservation && currentStep == 3)
             )
 
+    // Editing team: only 1 step (players), confirm when players selected
+    val isEditingTeam = viewModel.isEditing && !personalReservation
+
     val canConfirm = when {
+        isEditingTeam -> selectedPlayers.isNotEmpty()
         isVirtualLastStep -> selectedTime.isNotEmpty()
         isLastStep -> selectedSpace != null && selectedSlots.isNotEmpty() && selectedDate != null
         else -> false
     }
 
-    if (isLastStep || isVirtualLastStep) {
+    if (isLastStep || isVirtualLastStep || isEditingTeam) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-            val buttonLabel = if (viewModel.isEditing) stringResource(R.string.save) else stringResource(R.string.book)
+            val buttonLabel = if (viewModel.isEditing) "Guardar" else "Reservar"
 
             PrimaryFlowButton(buttonLabel, enabled = canConfirm) {
                 coroutineScope.launch {
                     val success = when {
-                        // Virtual team
-                        isVirtualLastStep && !personalReservation -> {
-                            if (viewModel.isEditing) viewModel.updateVirtualTeamReservation()
-                            else viewModel.createVirtualTeamReservation()
+                        // Editing team: only update players
+                        isEditingTeam -> {
+                            if (viewModel.isVirtualTeam) viewModel.updateVirtualTeamReservation()
+                            else viewModel.updateCenterTeamReservation()
                         }
-                        // Centre team
+                        // Virtual team (new)
+                        isVirtualLastStep && !personalReservation -> {
+                            viewModel.createVirtualTeamReservation()
+                        }
+                        // Centre team (new)
                         !personalReservation -> {
-                            if (viewModel.isEditing) viewModel.updateCenterTeamReservation()
-                            else viewModel.createTeamReservation(logoBitmap)
+                            viewModel.createTeamReservation(logoBitmap)
                         }
                         // Individual edit
                         viewModel.isEditing -> viewModel.updateIndividualReservation()
@@ -758,8 +788,6 @@ private fun PrimaryFlowButton(title: String, enabled: Boolean = true, onClick: (
             fontWeight = FontWeight.SemiBold, fontSize = 15.sp
         )
     }
-
-    Spacer(Modifier.height(16.dp))
 }
 
 @Composable

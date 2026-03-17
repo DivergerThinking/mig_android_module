@@ -65,7 +65,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel()) {
     ) {
 
         Column(modifier = Modifier.padding(16.dp)) {
-            Spacer(Modifier.height(64.dp))
+            Spacer(Modifier.height(44.dp))
             CalendarComponent(
                 isCalendarVisible = isCalendarVisible,
                 onToggle = {

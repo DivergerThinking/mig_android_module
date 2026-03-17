@@ -26,6 +26,8 @@ class ReservationFlowViewModel(
     val totalSteps: Int
         get() = when {
             personalReservations -> 3
+            // Editing team: only players step
+            isEditing && !personalReservations -> 1
             isVirtualTeam -> 4   // Place → Players → Date → Time
             else -> 5            // Place → Players → Date → Space → Slot
         }
@@ -589,32 +591,40 @@ class ReservationFlowViewModel(
     // Update team training (centre)
     // ═══════════════════════════════════════════════════════════
 
+    // ═══════════════════════════════════════════════════════════
+    // Update team training — ONLY players for now
+    // Future: uncomment to also update date, space, slots, notes
+    // ═══════════════════════════════════════════════════════════
+
     suspend fun updateCenterTeamReservation(): Boolean {
         val trainingId = teamReservationInfo?.id ?: return false
-        val reserveId = teamReservationInfo?.reserves?.firstOrNull()?.id ?: return false
-        val date = _selectedDate.value ?: return false
-        val space = _selectedSpace.value ?: return false
-        val slots = _selectedSlots.value
-        if (slots.isEmpty()) return false
+        // val reserveId = teamReservationInfo?.reserves?.firstOrNull()?.id ?: return false
+        // val date = _selectedDate.value ?: return false
+        // val space = _selectedSpace.value ?: return false
+        // val slots = _selectedSlots.value
+        // if (slots.isEmpty()) return false
 
-        val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
-        val timeString = slots.sortedBy { it.value }.firstOrNull()?.time ?: _selectedTime.value
-        val typeValue = spaceTypeToBackend(_selectedSpaceType.value)
+        // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
+        // val timeString = slots.sortedBy { it.value }.firstOrNull()?.time ?: _selectedTime.value
+        val typeValue = spaceTypeToBackend(teamReservationInfo.type.let { spaceTypeToUI(it) })
+        val startDate = teamReservationInfo.startDate
+        val time = teamReservationInfo.time
+        val notes = teamReservationInfo.notes ?: ""
         val playerIds = resolvePlayerIds()
-        val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
+        // val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
 
         _isProcessing.value = true
         return try {
-            // Update reserve
-            val reserveWrapper = ReservationWrapper(
-                id = reserveId, status = "active", slot = space.slots.first().id,
-                date = formattedDate, user = null, team = null, training = null,
-                qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = null
-            )
-            ReservationApi.updateReservation(reserveWrapper)
+            // Future: Update reserve with new date/space/slots
+            // val reserveWrapper = ReservationWrapper(
+            //     id = reserveId, status = "active", slot = space.slots.first().id,
+            //     date = formattedDate, user = null, team = null, training = null,
+            //     qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = null
+            // )
+            // ReservationApi.updateReservation(reserveWrapper)
 
-            // Update training
-            TrainingApi.updateTraining(trainingId, typeValue, formattedDate, timeString, _reservationNotes.value, playerIds)
+            // Only update players (and keep existing type/date/time/notes)
+            TrainingApi.updateTraining(trainingId, typeValue, startDate, time, notes, playerIds)
             _reservationSuccess.value = true
             true
         } catch (e: Exception) {
@@ -654,18 +664,27 @@ class ReservationFlowViewModel(
     // Update virtual team training
     // ═══════════════════════════════════════════════════════════
 
+    // ═══════════════════════════════════════════════════════════
+    // Update virtual team training — ONLY players for now
+    // Future: uncomment to also update date, time, notes
+    // ═══════════════════════════════════════════════════════════
+
     suspend fun updateVirtualTeamReservation(): Boolean {
         val trainingId = teamReservationInfo?.id ?: return false
-        val date = _selectedDate.value ?: return false
-        if (_selectedTime.value.isEmpty()) return false
+        // val date = _selectedDate.value ?: return false
+        // if (_selectedTime.value.isEmpty()) return false
 
-        val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
+        // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
+        val startDate = teamReservationInfo.startDate
+        val time = teamReservationInfo.time
+        val notes = teamReservationInfo.notes ?: ""
         val playerIds = resolvePlayerIds()
 
         _isProcessing.value = true
         return try {
+            // Only update players (and keep existing date/time/notes)
             val result = TrainingApi.updateTraining(
-                trainingId, "virtual", formattedDate, _selectedTime.value, _reservationNotes.value, playerIds
+                trainingId, "virtual", startDate, time, notes, playerIds
             )
             _reservationSuccess.value = result.isSuccess
             result.isSuccess
