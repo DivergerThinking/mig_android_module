@@ -20,7 +20,7 @@
     <string name="book_training">Reservar</string>
     <string name="select_space">Selecciona un espacio</string>
     <string name="select_player">Selecciona Jugadores</string>
-    <string name="select_a_player">Selecciona Jugador</string>
+    <string name="select_a_player">Selecciona un Jugador</string>
     <string name="select_hour">Selecciona Hora</string>
     <string name="booking_creation_success">Reserva creada con éxito</string>
     <string name="booking_creation_failure">Error al crear la reserva</string>
@@ -138,4 +138,30 @@
     <string name="invalid_dni">El DNI debe tener 8 dígitos seguidos de una letra mayúscula.</string>
     <string name="insert_confirm_dni">Introduce y confirma tu DNI</string>
     <string name="confirm_dni_warning">Importante: Debes llevar tu DNI contigo para poder acceder al centro la primera vez y validar tu usuario.</string>
+
+    <!-- Reservation Flow - New -->
+    <string name="select_type_placeholder">Selecciona tipo</string>
+    <string name="notes_optional">Notas (Opcional)</string>
+    <string name="notes_label">Notas</string>
+    <string name="ask_simulator_title">¿Quieres añadir tiempo de simulador?</string>
+    <string name="ask_simulator_description">Puedes reservar un slot de simulador adicional junto a tu reserva actual.</string>
+    <string name="yes_add_simulator">Sí, añadir simulador</string>
+    <string name="no_reserve_without_simulator">No, reservar sin simulador</string>
+    <string name="select_simulator_slot_title">Selecciona hora de simulador</string>
+    <string name="max_1_simulator_slot">Máximo 1 slot de simulador</string>
+    <string name="ask_extra_space_title">¿Quieres añadir otro espacio?</string>
+    <string name="ask_extra_space_description">Puedes reservar un espacio de gaming adicional junto a tu reserva de simulador.</string>
+    <string name="yes_add_space">Sí, añadir espacio</string>
+    <string name="no_reserve_only_simulator">No, reservar solo simulador</string>
+    <string name="select_extra_space_title">Selecciona un espacio extra</string>
+    <string name="max_1_slot">Máximo 1 slot</string>
+    <string name="max_2_consecutive_slots">Máximo 2 spots consecutivos</string>
+    <string name="edit_players_title">Editar jugadores</string>
+    <string name="cancel_reservation_title">CANCELAR RESERVA</string>
+    <string name="cancel_team_reservation_message">¿Quieres cancelar la reserva del equipo %1$s?</string>
+    <string name="cancel_reservation_label">Cancelar reserva</string>
+    <string name="edit_reservation_label">Editar reserva</string>
+    <string name="booking_reservation_in">Reserva en %1$s</string>
+    <string name="reload_label">Recargar</string>
+    <string name="delete_label">Eliminar</string>
 </resources>

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.*
+import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.support.generateQrBitmap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +26,17 @@ class ReservationFlowViewModel(
 
     val totalSteps: Int
         get() = when {
-            personalReservations -> 3
-            // Editing team: only players step
-            isEditing && !personalReservations -> 1
+            personalReservations -> personalStepCount
+            isEditing && !personalReservations -> 1  // Edit team: only players
             isVirtualTeam -> 4   // Place → Players → Date → Time
             else -> 5            // Place → Players → Date → Space → Slot
+        }
+
+    /** Dynamic step count for individual based on add-on choices (like iOS personalStepCount) */
+    private val personalStepCount: Int
+        get() = when {
+            isSelectedSpaceSimulator -> if (_wantsExtraSpace.value) 6 else 4
+            else -> if (_wantsSimulator.value) 5 else 4
         }
 
     // ── Date ─────────────────────────────────────────────────
@@ -39,7 +46,7 @@ class ReservationFlowViewModel(
     private val _initialSelectedDateMillis = MutableStateFlow<Long?>(null)
     val initialSelectedDateMillis: StateFlow<Long?> = _initialSelectedDateMillis
 
-    // ── Slots ────────────────────────────────────────────────
+    // ── Slots (main reservation) ─────────────────────────────
     private val _availableSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
     val availableSlots: StateFlow<List<GamingSpaceTime>> = _availableSlots
 
@@ -82,6 +89,35 @@ class ReservationFlowViewModel(
     private val _selectedTime = MutableStateFlow("")
     val selectedTime: StateFlow<String> = _selectedTime
 
+    // ── Simulator add-on (individual only) ───────────────────
+    private val _wantsSimulator = MutableStateFlow(false)
+    val wantsSimulator: StateFlow<Boolean> = _wantsSimulator
+
+    private val _simulatorSpace = MutableStateFlow<Space?>(null)
+    val simulatorSpace: StateFlow<Space?> = _simulatorSpace
+
+    private val _availableSimulatorSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
+    val availableSimulatorSlots: StateFlow<List<GamingSpaceTime>> = _availableSimulatorSlots
+
+    private val _simulatorSelectedSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
+    val simulatorSelectedSlots: StateFlow<List<GamingSpaceTime>> = _simulatorSelectedSlots
+
+    // ── Extra space add-on (individual only, when space IS simulator) ──
+    private val _wantsExtraSpace = MutableStateFlow(false)
+    val wantsExtraSpace: StateFlow<Boolean> = _wantsExtraSpace
+
+    private val _extraSpace = MutableStateFlow<Space?>(null)
+    val extraSpace: StateFlow<Space?> = _extraSpace
+
+    private val _availableExtraSpaceSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
+    val availableExtraSpaceSlots: StateFlow<List<GamingSpaceTime>> = _availableExtraSpaceSlots
+
+    private val _extraSpaceSelectedSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
+    val extraSpaceSelectedSlots: StateFlow<List<GamingSpaceTime>> = _extraSpaceSelectedSlots
+
+    private val _enabledExtraSpaceSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
+    val enabledExtraSpaceSlots: StateFlow<List<GamingSpaceTime>> = _enabledExtraSpaceSlots
+
     // ── Loading / Processing ─────────────────────────────────
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -92,18 +128,27 @@ class ReservationFlowViewModel(
     private val _reservationSuccess = MutableStateFlow(false)
     val reservationSuccess: StateFlow<Boolean> = _reservationSuccess
 
-    // ── Legend popup ──────────────────────────────────────────
     private val _showLegendPopup = MutableStateFlow(false)
     val showLegendPopup: StateFlow<Boolean> = _showLegendPopup
 
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-    // ── Editing check ────────────────────────────────────────
+    // ── Computed ──────────────────────────────────────────────
     val isEditing: Boolean
         get() = teamReservationInfo != null || individualReservationInfo != null
 
     val isVirtualTeam: Boolean
         get() = _selectedSpaceType.value?.lowercase() == "virtual"
+
+    val isSelectedSpaceSimulator: Boolean
+        get() = _selectedSpace.value?.device?.lowercase()?.contains("simulador") == true
+
+    val nonSimulatorSpaces: List<Space>
+        get() = _availableSpaces.value.filter { !it.device.lowercase().contains("simulador") }
+
+    /** Whether the slot step should go to ask-addon instead of confirming */
+    val shouldGoToAskAddon: Boolean
+        get() = personalReservations && !isEditing
 
     init {
         loadCalendarData()
@@ -118,55 +163,32 @@ class ReservationFlowViewModel(
     fun getSummaryTokens(): List<String> {
         val tokens = mutableListOf<String>()
         val step = _currentStep.value
-
-        if (!personalReservations && step > 0) {
-            _selectedSpaceType.value?.let { tokens.add(it) }
-        }
-        if (!personalReservations && step > 1 && _selectedPlayers.value.isNotEmpty()) {
-            tokens.add(_selectedPlayers.value.joinToString(", "))
-        }
-        val dateThreshold = if (personalReservations) 0 else 2
-        if (step > dateThreshold) {
-            _selectedDate.value?.let { tokens.add(it) }
-        }
-        val spaceThreshold = if (personalReservations) 1 else 3
-        if (step > spaceThreshold) {
-            _selectedSpace.value?.let { tokens.add(it.device) }
-        }
+        if (!personalReservations && step > 0) _selectedSpaceType.value?.let { tokens.add(it) }
+        if (!personalReservations && step > 1 && _selectedPlayers.value.isNotEmpty()) tokens.add(_selectedPlayers.value.joinToString(", "))
+        if (step > (if (personalReservations) 0 else 2)) _selectedDate.value?.let { tokens.add(it) }
+        if (step > (if (personalReservations) 1 else 3)) _selectedSpace.value?.let { tokens.add(it.device) }
         return tokens
+    }
+
+    fun getSummaryTitle(): String {
+        return if (isEditing && !personalReservations) "Editar jugadores" else "Reservar espacio"
     }
 
     // ═══════════════════════════════════════════════════════════
     // Navigation
     // ═══════════════════════════════════════════════════════════
 
-    fun goToNextStep() {
-        if (_currentStep.value < totalSteps - 1) _currentStep.value++
-    }
-
-    fun goToPreviousStep() {
-        if (_currentStep.value > 0) _currentStep.value--
-    }
+    fun goToNextStep() { if (_currentStep.value < totalSteps - 1) _currentStep.value++ }
+    fun goToPreviousStep() { if (_currentStep.value > 0) _currentStep.value-- }
 
     // ═══════════════════════════════════════════════════════════
-    // Space type (team)
+    // Setters
     // ═══════════════════════════════════════════════════════════
 
-    fun setSelectedSpaceType(type: String) {
-        _selectedSpaceType.value = type
-    }
-
-    fun setReservationNotes(notes: String) {
-        _reservationNotes.value = notes
-    }
-
-    fun setSelectedTime(time: String) {
-        _selectedTime.value = time
-    }
-
-    fun toggleLegendPopup() {
-        _showLegendPopup.value = !_showLegendPopup.value
-    }
+    fun setSelectedSpaceType(type: String) { _selectedSpaceType.value = type }
+    fun setReservationNotes(notes: String) { _reservationNotes.value = notes }
+    fun setSelectedTime(time: String) { _selectedTime.value = time }
+    fun toggleLegendPopup() { _showLegendPopup.value = !_showLegendPopup.value }
 
     // ═══════════════════════════════════════════════════════════
     // Players (team)
@@ -177,19 +199,13 @@ class ReservationFlowViewModel(
     }
 
     fun addPlayer(username: String) {
-        if (!_selectedPlayers.value.contains(username)) {
-            _selectedPlayers.value = _selectedPlayers.value + username
-        }
+        if (!_selectedPlayers.value.contains(username)) _selectedPlayers.value = _selectedPlayers.value + username
     }
 
     fun removePlayer(username: String) {
         _selectedPlayers.value = _selectedPlayers.value.filter { it != username }
     }
 
-    /**
-     * Resolve selected usernames back to user IDs for the API.
-     * Matches TeamUser.userId.username → TeamUser.userId.id
-     */
     private fun resolvePlayerIds(): List<String> {
         return _selectedPlayers.value.mapNotNull { username ->
             _teamPlayers.value.firstOrNull { it.userId.username == username }?.userId?.id
@@ -197,20 +213,15 @@ class ReservationFlowViewModel(
     }
 
     // ═══════════════════════════════════════════════════════════
-    // Space type mapping (iOS parity)
+    // Space type mapping
     // ═══════════════════════════════════════════════════════════
 
     companion object {
         fun spaceTypeToUI(backendValue: String?): String? = when (backendValue?.lowercase()) {
-            "centre" -> "E-Sports Center"
-            "virtual" -> "Virtual"
-            else -> null
+            "centre" -> "E-Sports Center"; "virtual" -> "Virtual"; else -> null
         }
-
         fun spaceTypeToBackend(uiValue: String?): String = when (uiValue?.lowercase()) {
-            "e-sports center" -> "centre"
-            "virtual" -> "virtual"
-            else -> "centre"
+            "e-sports center" -> "centre"; "virtual" -> "virtual"; else -> "centre"
         }
     }
 
@@ -228,15 +239,8 @@ class ReservationFlowViewModel(
         _selectedSpaceType.value = spaceTypeToUI(event.type)
         _selectedTime.value = event.time
         _selectedDate.value = event.startDate
+        try { dateFormatter.parse(event.startDate)?.let { _initialSelectedDateMillis.value = it.time } } catch (_: Exception) {}
 
-        try {
-            val date = dateFormatter.parse(event.startDate)
-            date?.let { _initialSelectedDateMillis.value = it.time }
-        } catch (_: Exception) {}
-
-        // Match training player IDs to team usernames
-        // Match training player IDs against team users to get usernames
-        // iOS: teamPlayers.first(where: { $0.usersId?.id == playerId })?.usersId?.username
         _selectedPlayers.value = event.players?.mapNotNull { playerModel ->
             val playerId = playerModel.userId?.id ?: return@mapNotNull null
             _teamPlayers.value.firstOrNull { it.userId.id == playerId }?.userId?.username
@@ -245,13 +249,10 @@ class ReservationFlowViewModel(
         if (event.type.lowercase() != "virtual") {
             val reserveSlotId = event.reserves?.firstOrNull()?.slot ?: return
             fetchAvailableSpaces {
-                _selectedSpace.value = _availableSpaces.value.firstOrNull { space ->
-                    space.slots.any { it.id == reserveSlotId }
-                }
+                _selectedSpace.value = _availableSpaces.value.firstOrNull { space -> space.slots.any { it.id == reserveSlotId } }
                 val dayValue = calculateDayValue(_selectedDate.value ?: return@fetchAvailableSpaces)
                 fetchAvailableSlots(dayValue) {
-                    val reserveTimes = event.reserves?.firstOrNull()?.times
-                        ?.mapNotNull { it.gamingSpaceTimesID?.time }?.toSet() ?: emptySet()
+                    val reserveTimes = event.reserves?.firstOrNull()?.times?.mapNotNull { it.gamingSpaceTimesID?.time }?.toSet() ?: emptySet()
                     _selectedSlots.value = _availableSlots.value.filter { it.time in reserveTimes }
                     updateEnabledSlots()
                 }
@@ -261,16 +262,10 @@ class ReservationFlowViewModel(
 
     private fun populateFromIndividualReservation(reservation: Reservation) {
         _selectedDate.value = reservation.date
-
-        try {
-            val date = dateFormatter.parse(reservation.date)
-            date?.let { _initialSelectedDateMillis.value = it.time }
-        } catch (_: Exception) {}
+        try { dateFormatter.parse(reservation.date)?.let { _initialSelectedDateMillis.value = it.time } } catch (_: Exception) {}
 
         fetchAvailableSpaces {
-            _selectedSpace.value = _availableSpaces.value.firstOrNull { space ->
-                space.slots.any { it.id == reservation.slot.id }
-            }
+            _selectedSpace.value = _availableSpaces.value.firstOrNull { space -> space.slots.any { it.id == reservation.slot.id } }
             val dayValue = calculateDayValue(reservation.date)
             fetchAvailableSlots(dayValue) {
                 val reserveTimes = reservation.times.map { it.time }.toSet()
@@ -287,24 +282,14 @@ class ReservationFlowViewModel(
     private fun loadCalendarData() {
         viewModelScope.launch {
             _isLoading.value = true
-
-            val blockedDeferred = async { BlockedDaysService.fetchBlockedDates() }
-            val individualDeferred = async { fetchIndividualReservations() }
-            val teamDeferred = async { fetchTeamTrainings() }
-
-            val blockedResult = blockedDeferred.await()
-            val individualMarks = individualDeferred.await()
-            val teamMarks = teamDeferred.await()
+            val blocked = async { BlockedDaysService.fetchBlockedDates() }
+            val individual = async { fetchIndividualReservations() }
+            val team = async { fetchTeamTrainings() }
 
             val allMarks = mutableListOf<MarkedDate>()
-
-            blockedResult.onSuccess { dates ->
-                _blockedDates.value = dates
-                allMarks.addAll(dates.map { MarkedDate(it, isBlocked = true) })
-            }
-
-            allMarks.addAll(individualMarks)
-            allMarks.addAll(teamMarks)
+            blocked.await().onSuccess { dates -> _blockedDates.value = dates; allMarks.addAll(dates.map { MarkedDate(it, isBlocked = true) }) }
+            allMarks.addAll(individual.await())
+            allMarks.addAll(team.await())
 
             _markedDates.value = allMarks.distinctBy { it.date }
             calculateAvailableDates()
@@ -315,35 +300,23 @@ class ReservationFlowViewModel(
     private suspend fun fetchIndividualReservations(): List<MarkedDate> {
         val userId = UserManager.getUser()?.id ?: return emptyList()
         return try {
-            val result = ReservationApi.getReservations(userId)
-            result.getOrDefault(emptyList()).mapNotNull { reservation ->
-                reservation.date?.let { MarkedDate(it, isReservation = true) }
-            }
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error fetching individual reservations: ${e.message}")
-            emptyList()
-        }
+            ReservationApi.getReservations(userId).getOrDefault(emptyList()).mapNotNull { it.date?.let { d -> MarkedDate(d, isReservation = true) } }
+        } catch (e: Exception) { Log.e("FlowVM", "Error individual: ${e.message}"); emptyList() }
     }
 
     private suspend fun fetchTeamTrainings(): List<MarkedDate> {
         val team = UserManager.getSelectedTeam() ?: return emptyList()
         return try {
-            val result = TrainingApi.getTrainings(team.id)
-            result.getOrDefault(emptyList()).mapNotNull { training ->
-                MarkedDate(training.startDate, isTraining = true)
-            }
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error fetching team trainings: ${e.message}")
-            emptyList()
-        }
+            TrainingApi.getTrainings(team.id).getOrDefault(emptyList()).map { MarkedDate(it.startDate, isTraining = true) }
+        } catch (e: Exception) { Log.e("FlowVM", "Error trainings: ${e.message}"); emptyList() }
     }
 
     private fun calculateAvailableDates() {
         val today = Calendar.getInstance()
         val dates = mutableListOf<String>()
         for (i in 0..30) {
-            val formatted = dateFormatter.format(today.time)
-            if (!_blockedDates.value.contains(formatted)) dates.add(formatted)
+            val f = dateFormatter.format(today.time)
+            if (!_blockedDates.value.contains(f)) dates.add(f)
             today.add(Calendar.DAY_OF_YEAR, 1)
         }
         _availableDates.value = dates
@@ -354,69 +327,143 @@ class ReservationFlowViewModel(
     // ═══════════════════════════════════════════════════════════
 
     fun setSelectedDate(date: String) {
-        // Check if blocked
         if (_markedDates.value.any { it.date == date && it.isBlocked }) return
         _selectedDate.value = date
-        val dayValue = calculateDayValue(date)
-        fetchAvailableSlots(dayValue)
+        fetchAvailableSlots(calculateDayValue(date))
     }
 
     private fun calculateDayValue(dateString: String): Int {
         val date = dateFormatter.parse(dateString) ?: return 0
-        val calendar = Calendar.getInstance().apply { time = date }
-        return calendar.get(Calendar.DAY_OF_WEEK) - 1
+        val cal = Calendar.getInstance().apply { time = date }
+        val weekday = cal.get(Calendar.DAY_OF_WEEK)
+        return if (weekday == Calendar.SUNDAY) 7 else weekday - 1
     }
 
     // ═══════════════════════════════════════════════════════════
-    // Slots
+    // Slots (main)
     // ═══════════════════════════════════════════════════════════
 
     private fun fetchAvailableSlots(dayValue: Int, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
-                val isSimulador = _selectedSpace.value?.device?.lowercase()?.contains("simulador") == true
-                _availableSlots.value = if (isSimulador) slots else slots.filter { !it.time.endsWith(":30") }
+                _availableSlots.value = if (isSelectedSpaceSimulator) slots else slots.filter { !it.time.endsWith(":30") }
                 updateEnabledSlots()
-            }.onFailure { error ->
-                Log.e("ReservationFlowVM", "Error fetching slots: ${error.message}")
-            }
+            }.onFailure { Log.e("FlowVM", "Error slots: ${it.message}") }
             onComplete?.invoke()
         }
     }
 
     private fun updateEnabledSlots() {
         val selected = _selectedSlots.value
-        if (selected.isEmpty()) {
-            _enabledSlots.value = _availableSlots.value
-            return
-        }
-
-        val isSimulador = _selectedSpace.value?.device?.lowercase()?.contains("simulador") == true
-        val maxSlots = if (isSimulador) 1 else if (personalReservations) 3 else 2
-
+        if (selected.isEmpty()) { _enabledSlots.value = _availableSlots.value; return }
+        val maxSlots = if (isSelectedSpaceSimulator) 1 else if (personalReservations) 3 else 2
         val sorted = selected.sortedBy { it.value }
-        val minVal = sorted.first().value
-        val maxVal = sorted.last().value
-
+        val minVal = sorted.first().value; val maxVal = sorted.last().value
         _enabledSlots.value = _availableSlots.value.filter { slot ->
-            (slot.value in minVal..(maxVal + 1) && slot.value <= minVal + (maxSlots - 1))
-                    || selected.any { it.id == slot.id }
+            (slot.value in minVal..(maxVal + 1) && slot.value <= minVal + (maxSlots - 1)) || selected.any { it.id == slot.id }
         }
     }
 
     fun toggleSlotSelection(slot: GamingSpaceTime) {
         val current = _selectedSlots.value.toMutableList()
-        if (current.any { it.id == slot.id }) current.removeAll { it.id == slot.id }
-        else current.add(slot)
-        _selectedSlots.value = current
-        updateEnabledSlots()
+        if (current.any { it.id == slot.id }) current.removeAll { it.id == slot.id } else current.add(slot)
+        _selectedSlots.value = current; updateEnabledSlots()
     }
 
-    fun cleanSlots() {
-        _selectedSlots.value = emptyList()
-        updateEnabledSlots()
+    fun cleanSlots() { _selectedSlots.value = emptyList(); updateEnabledSlots() }
+
+    // ═══════════════════════════════════════════════════════════
+    // Simulator add-on
+    // ═══════════════════════════════════════════════════════════
+
+    fun setWantsSimulator(value: Boolean) { _wantsSimulator.value = value }
+
+    fun findSimulatorSpace() {
+        _simulatorSpace.value = _availableSpaces.value.firstOrNull { it.device.lowercase().contains("simulador") }
     }
+
+    fun fetchSimulatorSlots(onComplete: (() -> Unit)? = null) {
+        val dayValue = calculateDayValue(_selectedDate.value ?: return)
+        viewModelScope.launch {
+            val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
+            result.onSuccess { slots -> _availableSimulatorSlots.value = slots }
+            onComplete?.invoke()
+        }
+    }
+
+    fun toggleSimulatorSlotSelection(slot: GamingSpaceTime) {
+        if (_simulatorSelectedSlots.value.any { it.id == slot.id }) {
+            _simulatorSelectedSlots.value = emptyList()
+        } else {
+            _simulatorSelectedSlots.value = listOf(slot) // Max 1
+        }
+    }
+
+    fun resetSimulatorSelection() {
+        _wantsSimulator.value = false; _simulatorSelectedSlots.value = emptyList(); _availableSimulatorSlots.value = emptyList()
+    }
+
+    fun isSimulatorSlotBlockedByMain(slot: GamingSpaceTime): Boolean {
+        val blockedHours = _selectedSlots.value.mapNotNull { hourFromTime(it.time) }.toSet()
+        return hourFromTime(slot.time)?.let { blockedHours.contains(it) } ?: false
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Extra space add-on
+    // ═══════════════════════════════════════════════════════════
+
+    fun setWantsExtraSpace(value: Boolean) { _wantsExtraSpace.value = value }
+
+    fun selectExtraSpace(space: Space) {
+        if (_extraSpace.value?.id == space.id) {
+            _extraSpace.value = null; _availableExtraSpaceSlots.value = emptyList()
+            _extraSpaceSelectedSlots.value = emptyList(); _enabledExtraSpaceSlots.value = emptyList()
+        } else {
+            _extraSpace.value = space; _availableExtraSpaceSlots.value = emptyList()
+            _extraSpaceSelectedSlots.value = emptyList(); _enabledExtraSpaceSlots.value = emptyList()
+        }
+    }
+
+    fun fetchExtraSpaceSlots(onComplete: (() -> Unit)? = null) {
+        val dayValue = calculateDayValue(_selectedDate.value ?: return)
+        viewModelScope.launch {
+            val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
+            result.onSuccess { slots ->
+                val filtered = slots.filter { !it.time.endsWith(":30") }
+                _availableExtraSpaceSlots.value = filtered; _enabledExtraSpaceSlots.value = filtered
+            }
+            onComplete?.invoke()
+        }
+    }
+
+    fun toggleExtraSpaceSlotSelection(slot: GamingSpaceTime) {
+        val current = _extraSpaceSelectedSlots.value.toMutableList()
+        if (current.any { it.id == slot.id }) current.removeAll { it.id == slot.id } else current.add(slot)
+        _extraSpaceSelectedSlots.value = current; updateEnabledExtraSpaceSlots()
+    }
+
+    private fun updateEnabledExtraSpaceSlots() {
+        val selected = _extraSpaceSelectedSlots.value
+        if (selected.isEmpty()) { _enabledExtraSpaceSlots.value = _availableExtraSpaceSlots.value; return }
+        val sorted = selected.sortedBy { it.value }
+        val minVal = sorted.first().value; val maxVal = sorted.last().value
+        _enabledExtraSpaceSlots.value = _availableExtraSpaceSlots.value.filter { slot ->
+            (slot.value in minVal..(maxVal + 1) && slot.value <= minVal + 2) || selected.any { it.id == slot.id }
+        }
+    }
+
+    fun resetExtraSpaceSelection() {
+        _wantsExtraSpace.value = false; _extraSpace.value = null
+        _extraSpaceSelectedSlots.value = emptyList(); _availableExtraSpaceSlots.value = emptyList(); _enabledExtraSpaceSlots.value = emptyList()
+    }
+
+    fun isExtraSpaceSlotBlockedBySimulator(slot: GamingSpaceTime): Boolean {
+        val blockedHours = _selectedSlots.value.mapNotNull { hourFromTime(it.time) }.toSet()
+        return hourFromTime(slot.time)?.let { blockedHours.contains(it) } ?: false
+    }
+
+    private fun hourFromTime(time: String): Int? = time.split(":").firstOrNull()?.toIntOrNull()
 
     // ═══════════════════════════════════════════════════════════
     // Spaces
@@ -426,40 +473,27 @@ class ReservationFlowViewModel(
         viewModelScope.launch {
             val result = SpaceService.fetchSpaces()
             result.onSuccess { spaces ->
-                _availableSpaces.value = if (!personalReservations) {
-                    spaces.filter { !it.device.lowercase().contains("simulador") }
-                } else spaces
-            }.onFailure { error ->
-                Log.e("ReservationFlowVM", "Error fetching spaces: ${error.message}")
-            }
+                _availableSpaces.value = if (!personalReservations) spaces.filter { !it.device.lowercase().contains("simulador") } else spaces
+            }.onFailure { Log.e("FlowVM", "Error spaces: ${it.message}") }
             onComplete?.invoke()
         }
     }
 
     fun selectSpace(space: Space) {
-        if (_selectedSpace.value?.id == space.id) {
-            _selectedSpace.value = null
-        } else {
-            _selectedSpace.value = space
-            _availableSlots.value = emptyList()
-            _selectedSlots.value = emptyList()
-            _enabledSlots.value = emptyList()
-        }
+        if (_selectedSpace.value?.id == space.id) { _selectedSpace.value = null }
+        else { _selectedSpace.value = space; _availableSlots.value = emptyList(); _selectedSlots.value = emptyList(); _enabledSlots.value = emptyList() }
     }
 
-    fun cleanSpace() {
-        _selectedSpace.value = null
-    }
+    fun cleanSpace() { _selectedSpace.value = null }
 
     // ═══════════════════════════════════════════════════════════
-    // Create individual reservation
+    // Create individual reservation + add-on
     // ═══════════════════════════════════════════════════════════
 
     suspend fun createReservation(userId: String, withLogo: Bitmap?): Boolean {
         val date = _selectedDate.value ?: return false
         val space = _selectedSpace.value ?: return false
-        val slots = _selectedSlots.value
-        if (slots.isEmpty()) return false
+        val slots = _selectedSlots.value; if (slots.isEmpty()) return false
 
         val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
         val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
@@ -481,14 +515,56 @@ class ReservationFlowViewModel(
                         val qrImage = UploadImageService().uploadQrBitmap(qrBitmap, "${response.qrValue}.jpg")
                         val updated = reservation.copy(id = response.id, qrImage = qrImage, qrValue = response.qrValue)
                         val updateResult = ReservationApi.updateReservation(updated)
-                        if (updateResult.isSuccess) { _reservationSuccess.value = true; true }
-                        else { ReservationApi.deleteReservation(response.id); false }
+                        if (updateResult.isSuccess) {
+                            // Create add-on if needed
+                            val addonSuccess = createAddonIfNeeded(userId, formattedDate, withLogo)
+                            // Send email
+                            sendIndividualReservationEmail(formattedDate, space.device, slots)
+                            _reservationSuccess.value = addonSuccess; addonSuccess
+                        } else { ReservationApi.deleteReservation(response.id); false }
                     } else { ReservationApi.deleteReservation(response.id); false }
                 } else { response?.id?.let { ReservationApi.deleteReservation(it) }; false }
             } else false
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error creating reservation: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+        } catch (e: Exception) { Log.e("FlowVM", "Error creating reservation: ${e.message}"); false }
+        finally { _isProcessing.value = false }
+    }
+
+    /** Creates simulator or extra space add-on reservation if the user opted in */
+    private suspend fun createAddonIfNeeded(userId: String, date: String, withLogo: Bitmap?): Boolean {
+        // Simulator add-on
+        if (_wantsSimulator.value && _simulatorSelectedSlots.value.isNotEmpty()) {
+            val simSpace = _simulatorSpace.value ?: return true
+            return createAddonReservation(userId, date, simSpace, _simulatorSelectedSlots.value, withLogo)
+        }
+        // Extra space add-on
+        if (_wantsExtraSpace.value && _extraSpaceSelectedSlots.value.isNotEmpty()) {
+            val extra = _extraSpace.value ?: return true
+            return createAddonReservation(userId, date, extra, _extraSpaceSelectedSlots.value, withLogo)
+        }
+        return true
+    }
+
+    private suspend fun createAddonReservation(userId: String, date: String, space: Space, times: List<GamingSpaceTime>, withLogo: Bitmap?): Boolean {
+        val mappedTimes = times.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
+        val wrapper = ReservationWrapper(
+            id = null, status = "active", slot = space.slots.first().id,
+            date = date, user = userId, team = null, training = null,
+            qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = emptyList()
+        )
+        return try {
+            val result = ReservationApi.createReservation(wrapper)
+            if (result.isSuccess) {
+                val response = result.getOrNull()
+                if (response?.qrValue != null && response.id != null) {
+                    val qr = generateQrBitmap(response.qrValue, logoBitmap = withLogo)
+                    if (qr != null) {
+                        val qrImage = UploadImageService().uploadQrBitmap(qr, "${response.qrValue}.jpg")
+                        ReservationApi.updateReservation(wrapper.copy(id = response.id, qrImage = qrImage, qrValue = response.qrValue))
+                    }
+                }
+                true
+            } else false
+        } catch (e: Exception) { Log.e("FlowVM", "Error addon: ${e.message}"); false }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -499,8 +575,7 @@ class ReservationFlowViewModel(
         val reservationId = individualReservationInfo?.id ?: return false
         val date = _selectedDate.value ?: return false
         val space = _selectedSpace.value ?: return false
-        val slots = _selectedSlots.value
-        if (slots.isEmpty()) return false
+        val slots = _selectedSlots.value; if (slots.isEmpty()) return false
 
         val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
         val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
@@ -510,27 +585,23 @@ class ReservationFlowViewModel(
             date = formattedDate, user = null, team = null, training = null,
             qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = null
         )
-
         _isProcessing.value = true
         return try {
             val result = ReservationApi.updateReservation(wrapper)
-            _reservationSuccess.value = result.isSuccess
-            result.isSuccess
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error updating individual: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+            _reservationSuccess.value = result.isSuccess; result.isSuccess
+        } catch (e: Exception) { Log.e("FlowVM", "Error updating individual: ${e.message}"); false }
+        finally { _isProcessing.value = false }
     }
 
     // ═══════════════════════════════════════════════════════════
-    // Create team training (centre)
+    // Create team training (centre) — full flow
     // ═══════════════════════════════════════════════════════════
 
     suspend fun createTeamReservation(withLogo: Bitmap?): Boolean {
         val date = _selectedDate.value ?: return false
         val space = _selectedSpace.value ?: return false
         val teamId = UserManager.getSelectedTeam()?.id ?: return false
-        val slots = _selectedSlots.value
-        if (slots.isEmpty()) return false
+        val slots = _selectedSlots.value; if (slots.isEmpty()) return false
 
         val playerIds = resolvePlayerIds()
         val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
@@ -539,18 +610,12 @@ class ReservationFlowViewModel(
 
         _isProcessing.value = true
         return try {
-            // 1. Create training
-            val trainingResult = TrainingApi.createTraining(
-                TrainingRequest(
-                    status = "active", type = typeValue, startDate = formattedDate,
-                    time = timeString, team = teamId, notes = _reservationNotes.value,
-                    players = playerIds.map { mapOf("users_id" to it) }, reserves = emptyList()
-                )
-            )
-
+            val trainingResult = TrainingApi.createTraining(TrainingRequest(
+                status = "active", type = typeValue, startDate = formattedDate,
+                time = timeString, team = teamId, notes = _reservationNotes.value,
+                players = playerIds.map { mapOf("users_id" to it) }, reserves = emptyList()
+            ))
             val trainingId = trainingResult.getOrNull()?.id ?: return false
-
-            // 2. Create reserve per player
             val reserveIds = mutableListOf<Int>()
             val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
 
@@ -562,34 +627,23 @@ class ReservationFlowViewModel(
                 )
                 val reserveResult = ReservationApi.createReservation(reservation)
                 val reserveResponse = reserveResult.getOrNull() ?: continue
-
                 reserveResponse.id?.let { reserveIds.add(it) }
-
-                // Generate + upload QR
                 if (reserveResponse.qrValue != null && reserveResponse.id != null) {
                     val qr = generateQrBitmap(reserveResponse.qrValue, logoBitmap = withLogo)
                     if (qr != null) {
                         val qrImage = UploadImageService().uploadQrBitmap(qr, "${reserveResponse.qrValue}.jpg")
-                        val updated = reservation.copy(id = reserveResponse.id, qrImage = qrImage, qrValue = reserveResponse.qrValue)
-                        ReservationApi.updateReservation(updated)
+                        ReservationApi.updateReservation(reservation.copy(id = reserveResponse.id, qrImage = qrImage, qrValue = reserveResponse.qrValue))
                     }
                 }
             }
-
             if (reserveIds.isEmpty()) return false
-
-            // 3. Link reserves to training
             TrainingApi.linkReservesToTraining(trainingId, reserveIds)
-            _reservationSuccess.value = true
-            true
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error creating team reservation: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+            // Send email to each player
+            sendTeamReservationEmails(formattedDate, space.device, slots)
+            _reservationSuccess.value = true; true
+        } catch (e: Exception) { Log.e("FlowVM", "Error team reservation: ${e.message}"); false }
+        finally { _isProcessing.value = false }
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // Update team training (centre)
-    // ═══════════════════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════════════════
     // Update team training — ONLY players for now
@@ -598,38 +652,29 @@ class ReservationFlowViewModel(
 
     suspend fun updateCenterTeamReservation(): Boolean {
         val trainingId = teamReservationInfo?.id ?: return false
-        // val reserveId = teamReservationInfo?.reserves?.firstOrNull()?.id ?: return false
-        // val date = _selectedDate.value ?: return false
-        // val space = _selectedSpace.value ?: return false
-        // val slots = _selectedSlots.value
-        // if (slots.isEmpty()) return false
-
-        // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
-        // val timeString = slots.sortedBy { it.value }.firstOrNull()?.time ?: _selectedTime.value
-        val typeValue = spaceTypeToBackend(teamReservationInfo.type.let { spaceTypeToUI(it) })
-        val startDate = teamReservationInfo.startDate
-        val time = teamReservationInfo.time
-        val notes = teamReservationInfo.notes ?: ""
         val playerIds = resolvePlayerIds()
-        // val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
-
         _isProcessing.value = true
         return try {
-            // Future: Update reserve with new date/space/slots
-            // val reserveWrapper = ReservationWrapper(
-            //     id = reserveId, status = "active", slot = space.slots.first().id,
-            //     date = formattedDate, user = null, team = null, training = null,
-            //     qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = null
-            // )
-            // ReservationApi.updateReservation(reserveWrapper)
+            // Only update players
+            val result = TrainingApi.updateTrainingPlayers(trainingId, playerIds)
+            _reservationSuccess.value = result.isSuccess; result.isSuccess
 
-            // Only update players (and keep existing type/date/time/notes)
-            TrainingApi.updateTraining(trainingId, typeValue, startDate, time, notes, playerIds)
-            _reservationSuccess.value = true
-            true
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error updating team centre: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+            // Future: full update
+            // val reserveId = teamReservationInfo?.reserves?.firstOrNull()?.id ?: return false
+            // val date = _selectedDate.value ?: return false
+            // val space = _selectedSpace.value ?: return false
+            // val slots = _selectedSlots.value; if (slots.isEmpty()) return false
+            // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
+            // val timeString = slots.sortedBy { it.value }.firstOrNull()?.time ?: _selectedTime.value
+            // val typeValue = spaceTypeToBackend(_selectedSpaceType.value)
+            // val mappedTimes = slots.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
+            // val reserveWrapper = ReservationWrapper(id = reserveId, status = "active", slot = space.slots.first().id,
+            //     date = formattedDate, user = null, team = null, training = null,
+            //     qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = null)
+            // ReservationApi.updateReservation(reserveWrapper)
+            // TrainingApi.updateTraining(trainingId, typeValue, formattedDate, timeString, _reservationNotes.value, playerIds)
+        } catch (e: Exception) { Log.e("FlowVM", "Error updating centre: ${e.message}"); false }
+        finally { _isProcessing.value = false }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -646,23 +691,19 @@ class ReservationFlowViewModel(
 
         _isProcessing.value = true
         return try {
-            val result = TrainingApi.createTraining(
-                TrainingRequest(
-                    status = "active", type = "virtual", startDate = formattedDate,
-                    time = _selectedTime.value, team = teamId, notes = _reservationNotes.value,
-                    players = playerIds.map { mapOf("users_id" to it) }, reserves = emptyList()
-                )
-            )
-            _reservationSuccess.value = result.isSuccess
-            result.isSuccess
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error creating virtual: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+            val result = TrainingApi.createTraining(TrainingRequest(
+                status = "active", type = "virtual", startDate = formattedDate,
+                time = _selectedTime.value, team = teamId, notes = _reservationNotes.value,
+                players = playerIds.map { mapOf("users_id" to it) }, reserves = emptyList()
+            ))
+            if (result.isSuccess) {
+                // Send email to each player
+                sendVirtualTrainingEmails(formattedDate, _selectedTime.value)
+            }
+            _reservationSuccess.value = result.isSuccess; result.isSuccess
+        } catch (e: Exception) { Log.e("FlowVM", "Error virtual: ${e.message}"); false }
+        finally { _isProcessing.value = false }
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // Update virtual team training
-    // ═══════════════════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════════════════
     // Update virtual team training — ONLY players for now
@@ -671,30 +712,124 @@ class ReservationFlowViewModel(
 
     suspend fun updateVirtualTeamReservation(): Boolean {
         val trainingId = teamReservationInfo?.id ?: return false
-        // val date = _selectedDate.value ?: return false
-        // if (_selectedTime.value.isEmpty()) return false
-
-        // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
-        val startDate = teamReservationInfo.startDate
-        val time = teamReservationInfo.time
-        val notes = teamReservationInfo.notes ?: ""
         val playerIds = resolvePlayerIds()
-
         _isProcessing.value = true
         return try {
-            // Only update players (and keep existing date/time/notes)
-            val result = TrainingApi.updateTraining(
-                trainingId, "virtual", startDate, time, notes, playerIds
-            )
-            _reservationSuccess.value = result.isSuccess
-            result.isSuccess
-        } catch (e: Exception) {
-            Log.e("ReservationFlowVM", "Error updating virtual: ${e.message}"); false
-        } finally { _isProcessing.value = false }
+            val result = TrainingApi.updateTrainingPlayers(trainingId, playerIds)
+            _reservationSuccess.value = result.isSuccess; result.isSuccess
+
+            // Future: full update
+            // val date = _selectedDate.value ?: return false
+            // if (_selectedTime.value.isEmpty()) return false
+            // val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
+            // val result = TrainingApi.updateTraining(trainingId, "virtual", formattedDate, _selectedTime.value, _reservationNotes.value, playerIds)
+        } catch (e: Exception) { Log.e("FlowVM", "Error updating virtual: ${e.message}"); false }
+        finally { _isProcessing.value = false }
     }
 
     // ═══════════════════════════════════════════════════════════
-    // Helpers
+    // Email sending via Directus Flows
+    // ═══════════════════════════════════════════════════════════
+
+    private fun sendIndividualReservationEmail(date: String, device: String, times: List<GamingSpaceTime>) {
+        val user = UserManager.getUser() ?: return
+        Log.d("FlowVM", ">>> User: ${user?.id}, email: '${user?.email}'")
+        if (user == null) { Log.w("FlowVM", ">>> User is NULL, aborting email"); return }
+        val email = user.email; if (email.isBlank()) return
+        if (email.isBlank()) { Log.w("FlowVM", ">>> Email is BLANK, aborting email"); return }
+        Log.d("FlowVM", ">>> Sending email to: $email")
+        val sortedTimes = times.sortedBy { it.value }.joinToString(" - ") { it.time }
+        val extraBlock = buildExtraBlock(date)
+
+        viewModelScope.launch {
+            Log.d("FlowVM", ">>> About to call triggerEmailFlow")
+
+            try {
+                val result = TrainingApi.triggerEmailFlow(
+                    isIndividual = true,
+                    body = mapOf(
+                        "email" to email,
+                        "first_name" to (user.firstName ?: ""),
+                        "date" to date,
+                        "times" to sortedTimes,
+                        "device" to device,
+                        "extra_block" to extraBlock
+                    )
+                )
+                Log.d("FlowVM", ">>> triggerEmailFlow result: $result")
+
+            } catch (e: Exception) {
+                Log.e("FlowVM", "Error email: ${e.message}")
+            }
+        }
+    }
+
+    /** Send email to each player after creating a centre team training (like iOS sendTeamReservationEmail per player) */
+    private fun sendTeamReservationEmails(date: String, device: String, times: List<GamingSpaceTime>) {
+        val sortedTimes = times.sortedBy { it.value }.joinToString(" - ") { it.time }
+
+        _selectedPlayers.value.forEach { username ->
+            val teamUser = _teamPlayers.value.firstOrNull { it.userId.username == username } ?: return@forEach
+            val email = teamUser.userId.email ?: return@forEach
+            if (email.isBlank()) return@forEach
+
+            viewModelScope.launch {
+                try {
+                    TrainingApi.triggerEmailFlow(
+                        isIndividual = false,
+                        body = mapOf(
+                            "email" to email,
+                            "first_name" to username,
+                            "date" to date,
+                            "times" to sortedTimes,
+                            "device" to device
+                        )
+                    )
+                } catch (e: Exception) { Log.e("FlowVM", "Error team email for $username: ${e.message}") }
+            }
+        }
+    }
+
+    /** Send email to each player after creating a virtual team training (like iOS sendVirtualTrainingEmail per player) */
+    private fun sendVirtualTrainingEmails(date: String, time: String) {
+        _selectedPlayers.value.forEach { username ->
+            val teamUser = _teamPlayers.value.firstOrNull { it.userId.username == username } ?: return@forEach
+            val email = teamUser.userId.email ?: return@forEach
+            if (email.isBlank()) return@forEach
+
+            viewModelScope.launch {
+                try {
+                    TrainingApi.triggerEmailFlow(
+                        isIndividual = false,
+                        body = mapOf(
+                            "email" to email,
+                            "first_name" to username,
+                            "date" to date,
+                            "times" to time,
+                            "device" to "Virtual"
+                        )
+                    )
+                } catch (e: Exception) { Log.e("FlowVM", "Error virtual email for $username: ${e.message}") }
+            }
+        }
+    }
+
+    private fun buildExtraBlock(date: String): String {
+        if (_wantsSimulator.value && _simulatorSelectedSlots.value.isNotEmpty()) {
+            val device = _simulatorSpace.value?.device ?: return ""
+            val times = _simulatorSelectedSlots.value.sortedBy { it.value }.joinToString(" - ") { it.time }
+            return "<p><strong><u>Reserva extra incluida:</u></strong><br><strong>Fecha:</strong> $date<br><strong>Hora:</strong> $times<br><strong>Dispositivo:</strong> $device</p>"
+        }
+        if (_wantsExtraSpace.value && _extraSpaceSelectedSlots.value.isNotEmpty()) {
+            val device = _extraSpace.value?.device ?: return ""
+            val times = _extraSpaceSelectedSlots.value.sortedBy { it.value }.joinToString(" - ") { it.time }
+            return "<p><strong><u>Reserva extra incluida:</u></strong><br><strong>Fecha:</strong> $date<br><strong>Hora:</strong> $times<br><strong>Dispositivo:</strong> $device</p>"
+        }
+        return ""
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Data classes
     // ═══════════════════════════════════════════════════════════
 
     data class MarkedDate(

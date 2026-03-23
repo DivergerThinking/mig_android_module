@@ -204,7 +204,7 @@ object UserManager {
         @GET("teams")
         suspend fun getTeamsByUser(
             @Query("filter[users][users_id][_eq]") userId: String,
-            @Query("fields") fields: String = "id,name,description,picture,apply_membership,status,discord,users.roles.*,users.users_id.id,users.users_id.username,users.users_id.avatar,competitions.competitions_id,date_edited",
+            @Query("fields") fields: String = "id,name,description,picture,apply_membership,status,discord,users.roles.*,users.users_id.id,users.users_id.username,users.users_id.avatar,users.users_id.email,competitions.competitions_id,date_edited",
             @Header("Authorization") token: String,
         ): TeamResponse
 
@@ -304,6 +304,7 @@ data class UserId(
     val id: String,
     val username: String,
     val avatar: String?,
+    val email: String?,
 )
 
 data class TeamCompetition(

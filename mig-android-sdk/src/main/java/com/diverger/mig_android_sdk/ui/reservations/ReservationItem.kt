@@ -55,7 +55,8 @@ fun ReservationItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = if (compact) 0.dp else 20.dp),
+            .padding(horizontal = if (compact) 0.dp else 20.dp)
+            .padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -157,26 +158,26 @@ fun ReservationItem(
                     )
                 }
 
-                // Edit booking (only in full mode, not compact)
-//                if (!compact) {
-//                    Spacer(Modifier.width(8.dp))
-//                    TextButton(onClick = {
-//                        onReservationPressed(IndividualReservationsCellOptions.EDIT_RESERVATION, reservation)
-//                    }) {
-//                        Icon(
-//                            imageVector = FeatherIcons.Edit,
-//                            contentDescription = "Editar Reserva",
-//                            tint = Color.Cyan,
-//                            modifier = Modifier.size(15.dp)
-//                        )
-//                        Spacer(Modifier.width(5.dp))
-//                        Text(
-//                            stringResource(R.string.edit_booking).uppercase(),
-//                            color = Color.Cyan,
-//                            style = MaterialTheme.typography.titleMedium
-//                        )
-//                    }
-//                }
+                // Edit booking — hidden for now, uncomment to enable
+                // if (!compact) {
+                //     Spacer(Modifier.width(8.dp))
+                //     TextButton(onClick = {
+                //         onReservationPressed(IndividualReservationsCellOptions.EDIT_RESERVATION, reservation)
+                //     }) {
+                //         Icon(
+                //             imageVector = FeatherIcons.Edit,
+                //             contentDescription = "Editar Reserva",
+                //             tint = Color.Cyan,
+                //             modifier = Modifier.size(15.dp)
+                //         )
+                //         Spacer(Modifier.width(5.dp))
+                //         Text(
+                //             stringResource(R.string.edit_booking).uppercase(),
+                //             color = Color.Cyan,
+                //             style = MaterialTheme.typography.titleMedium
+                //         )
+                //     }
+                // }
             }
         }
     }

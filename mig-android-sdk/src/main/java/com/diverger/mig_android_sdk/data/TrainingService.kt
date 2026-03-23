@@ -1,7 +1,12 @@
 package com.diverger.mig_android_sdk.data
 
+import android.util.Log
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -119,20 +124,85 @@ object TrainingApi {
     }
 
     /**
+     * Update ONLY the players array of a training.
+     * Used for team edit flow (only players editable for now).
+     */
+    suspend fun updateTrainingPlayers(trainingId: String, playerIds: List<String>): Result<Unit> {
+        return try {
+            val playersMapped = playerIds.map { mapOf("users_id" to it) }
+            val body = mapOf<String, Any>("players" to playersMapped)
+            service.updateTraining(trainingId, body, TOKEN)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Trigger a Directus Flow to send a reservation email.
+     * iOS equivalent: DirectusService.shared.triggerFlow(flowId:body:)
+     */
+    suspend fun triggerEmailFlow(isIndividual: Boolean, body: Map<String, String>): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val flowId = if (isIndividual) getIndividualFlowId() else getTeamFlowId()
+                val url = "${EnvironmentManager.getBaseServerUrl()}/cms/flows/trigger/$flowId"
+
+                Log.d("TrainingApi", "Triggering email flow: $url")
+                Log.d("TrainingApi", "Body: $body")
+
+                val client = getUnsafeOkHttpClient()
+                val jsonBody = org.json.JSONObject(body).toString()
+                val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+                val requestBody = jsonBody.toRequestBody(mediaType)
+
+                val request = okhttp3.Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .addHeader("Authorization", TOKEN)
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+
+                val response = client.newCall(request).execute()
+                Log.d("TrainingApi", "Email flow response: ${response.code} ${response.message}")
+
+                if (response.isSuccessful) {
+                    Log.d("TrainingApi", "Email sent successfully")
+                    Result.success(Unit)
+                } else {
+                    val errorBody = response.body?.string()
+                    Log.e("TrainingApi", "Email flow failed: $errorBody")
+                    Result.failure(Exception("Flow trigger failed: ${response.code}"))
+                }
+            } catch (e: Exception) {
+                Log.e("TrainingApi", "Error triggering email flow: ${e.message}")
+                Result.failure(e)
+            }
+        }
+    }
+
+    private fun getIndividualFlowId(): String {
+        val isPro = EnvironmentManager.getBaseServerUrl().contains("webesports")
+        return if (isPro) "4740cad9-f737-4eea-abf4-228b1d606e30" else "d0e0e727-d47f-48bd-92c9-85ba3046579f"
+    }
+
+    private fun getTeamFlowId(): String {
+        val isPro = EnvironmentManager.getBaseServerUrl().contains("webesports")
+        return if (isPro) "a9754b93-655a-488c-b43f-5501ae6c3b11" else "3a753e17-6004-461d-b548-ad3cebdb3111"
+    }
+
+    /**
      * Elimina un training y sus reserves asociadas (si es presencial).
      * Replica la lógica de iOS: primero borra el training, luego las reserves.
      */
     suspend fun deleteTraining(trainingId: String, reserveIds: List<Int>): Result<Unit> {
         return try {
-            // 1. Borrar el training
             service.deleteTraining(trainingId, token = TOKEN)
 
-            // 2. Borrar las reserves asociadas (si las hay)
             for (reserveId in reserveIds) {
                 try {
                     ReservationApi.service.deleteReservation(reserveId, token = TOKEN)
                 } catch (e: Exception) {
-                    // Log pero no rompe el flujo completo
                     e.printStackTrace()
                 }
             }
@@ -143,6 +213,10 @@ object TrainingApi {
         }
     }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Models
+// ═══════════════════════════════════════════════════════════════
 
 data class TrainingResponse(val data: List<EventModel>)
 

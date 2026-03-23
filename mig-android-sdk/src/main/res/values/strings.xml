@@ -70,7 +70,7 @@
     <string name="no_name_team">Team without name</string>
     <string name="selected">Selected</string>
     <string name="error_getting_trainings">Error retrieving trainings.</string>
-    <string name="tournament_about_this_competition">ABOUT THIS COMPETITION...</string>
+    <string name="tournament_about_this_competition">ABOUT THIS COMPETITION…</string>
     <string name="tournament_details">DETAILS</string>
     <string name="tournament_rules">RULES</string>
     <string name="tournament_contact">CONTACT</string>
@@ -92,23 +92,17 @@
     <string name="invalid_date">Invalid date</string>
     <string name="competitions_label">COMPETITIONS</string>
     <string name="select_season">Select a season</string>
-
-    <!-- Competitions Overview -->
     <string name="local_league_title">Municipal League</string>
     <string name="local_league_description">Esports Series Madrid</string>
-    <string name="local_league_overview">Madrid in Game is the Madrid City Council’s initiative to elevate amateur Esports talent through the creation of the Esports Series Madrid competitions. They consist of two seasons per year in which you can face the best players in a safe and optimal gaming environment.</string>
-
+    <string name="local_league_overview">Madrid in Game is the Madrid City Council\'s initiative to elevate amateur Esports talent through the creation of the Esports Series Madrid competitions. They consist of two seasons per year in which you can face the best players in a safe and optimal gaming environment.</string>
     <string name="junior_league_title">Junior Municipal League</string>
     <string name="junior_league_description">Esports Series Madrid</string>
     <string name="junior_league_overview">The equivalent of Esports Series Madrid for schools and high schools in the city. The ESM Junior Esports is your entry point to participate with your educational center in the junior municipal league of League of Legends and Rocket League.</string>
-
     <string name="storm_circuit_title">Storm Circuit</string>
     <string name="storm_circuit_description">Esports Series Madrid</string>
     <string name="storm_circuit_overview">The Esports Series Madrid of Madrid in Game will be an official stop of the Circuito Tormenta. They will feature League of Legends and Valorant competitions, along with a major in-person Grand Final. The tournaments will award points for the overall ranking of the corresponding Circuito Tormenta Split.</string>
-
     <string name="other_competition_title">Other competitions</string>
     <string name="other_competition_description">Esports Series Madrid</string>
-
     <string name="error_obtaining_trainings">Error retrieving trainings.</string>
     <string name="reservation_cancelled_sucessfully">Booking cancelled successfully</string>
     <string name="error_cancelling_reservation">Error cancelling booking</string>
@@ -144,4 +138,30 @@
     <string name="invalid_dni">The id should contain 8 digits and an uppercase letter.</string>
     <string name="insert_confirm_dni">Enter and confirm your ID</string>
     <string name="confirm_dni_warning">Important: You must bring your ID with you to access the center for the first time and validate your user account.</string>
+
+    <!-- Reservation Flow - New -->
+    <string name="select_type_placeholder">Select type</string>
+    <string name="notes_optional">Notes (Optional)</string>
+    <string name="notes_label">Notes</string>
+    <string name="ask_simulator_title">Do you want to add simulator time?</string>
+    <string name="ask_simulator_description">You can book an additional simulator slot along with your current reservation.</string>
+    <string name="yes_add_simulator">Yes, add simulator</string>
+    <string name="no_reserve_without_simulator">No, book without simulator</string>
+    <string name="select_simulator_slot_title">Select simulator time</string>
+    <string name="max_1_simulator_slot">Maximum 1 simulator slot</string>
+    <string name="ask_extra_space_title">Do you want to add another space?</string>
+    <string name="ask_extra_space_description">You can book an additional gaming space along with your simulator reservation.</string>
+    <string name="yes_add_space">Yes, add space</string>
+    <string name="no_reserve_only_simulator">No, book simulator only</string>
+    <string name="select_extra_space_title">Select an extra space</string>
+    <string name="max_1_slot">Maximum 1 slot</string>
+    <string name="max_2_consecutive_slots">Maximum 2 consecutive slots</string>
+    <string name="edit_players_title">Edit players</string>
+    <string name="cancel_reservation_title">CANCEL BOOKING</string>
+    <string name="cancel_team_reservation_message">Do you want to cancel the booking for team %1$s?</string>
+    <string name="cancel_reservation_label">Cancel booking</string>
+    <string name="edit_reservation_label">Edit booking</string>
+    <string name="booking_reservation_in">Booking in %1$s</string>
+    <string name="reload_label">Reload</string>
+    <string name="delete_label">Delete</string>
 </resources>
