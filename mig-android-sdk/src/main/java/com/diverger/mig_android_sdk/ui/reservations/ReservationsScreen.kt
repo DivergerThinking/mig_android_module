@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.ui.components.TrainingCellOption
 import com.diverger.mig_android_sdk.ui.components.TrainingCell
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
@@ -63,6 +64,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
         val teamReservations by viewModel.teamReservations.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         val message by viewModel.toastMessage.collectAsState()
+        val selectedTeam by UserManager.selectedTeam.collectAsState()
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
@@ -81,8 +83,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
         var showDniDialog by remember { mutableStateOf(false) }
         var enteredDni by remember { mutableStateOf("") }
 
-        // ── Fetch según modo ─────────────────────────────────────
-        LaunchedEffect(userId, personalReservation) {
+        // ── Fetch según modo (se relanza al cambiar de equipo) ───
+        LaunchedEffect(userId, personalReservation, selectedTeam?.id) {
             viewModel.refreshData(personalReservation, userId)
         }
 
@@ -230,8 +232,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
             }
 
             // ── Botón "Reservar" ─────────────────────────────────
-            // Individual: siempre visible
-            // Equipo: solo Manager (igual que iOS)
+            // Individual: siempre visible, habilitado según reserves_allowed
+            // Equipo: solo Manager, habilitado según teamReservationLimit
             val showBookButton = if (personalReservation) {
                 true
             } else {
@@ -239,6 +241,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
             }
 
             if (showBookButton) {
+                val canBook = if (personalReservation) viewModel.userCanBook() else viewModel.teamCanBook()
+
                 Button(
                     onClick = {
                         if (personalReservation) {
@@ -264,14 +268,22 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                 }
                             }
                         } else {
-                            // Team: nueva reserva — limpiar selección previa
-                            selectedTeamReservation = null
-                            selectedReservation = null
-                            showReservationFlow.value = true
+                            // Team: check limit
+                            if (!viewModel.teamCanBook()) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.booking_limit_reached),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                selectedTeamReservation = null
+                                selectedReservation = null
+                                showReservationFlow.value = true
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (personalReservation && !viewModel.userCanBook()) Color.Gray else Color.Cyan
+                        containerColor = if (canBook) Color.Cyan else Color.Gray
                     ),
                     modifier = Modifier
                         .fillMaxWidth()

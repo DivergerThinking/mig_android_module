@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk.ui.reservations
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.R
@@ -188,7 +189,9 @@ class ReservationViewModel() : ViewModel() {
         }
     }
 
-    // ── Booking permission checks ────────────────────────────────
+    // ══════════════════════════════════════════════════════════════
+    // Booking permission checks — Individual
+    // ══════════════════════════════════════════════════════════════
 
     fun userCanBook(): Boolean {
         val reservationCount = reservations.value.count()
@@ -200,9 +203,18 @@ class ReservationViewModel() : ViewModel() {
         return user?.dni?.isNotBlank() ?: false
     }
 
+//    fun userIsValidated(): Boolean {
+//        val user = UserManager.getUser()
+//        Log.d("ReservationVM", ">>> status: '${user?.status}', hasDNI: ${userHasDNI()}")
+//        val validStatuses = listOf("published", "active")
+//
+//        return (userHasDNI() && user?.status?.lowercase() == "published")
+//    }
+
     fun userIsValidated(): Boolean {
         val user = UserManager.getUser()
-        return (userHasDNI() && user?.status?.lowercase() == "published")
+        val validStatuses = listOf("published", "active")
+        return userHasDNI() && user?.status?.lowercase() in validStatuses
     }
 
     private fun userReservationLimit(): Int {
@@ -212,5 +224,37 @@ class ReservationViewModel() : ViewModel() {
         } else {
             1
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // Booking permission checks — Team
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * Whether the current team can create a new reservation.
+     * Compares active team reservations against the team limit.
+     */
+    fun teamCanBook(): Boolean {
+        val currentCount = teamReservations.value.count()
+        return currentCount < teamReservationLimit()
+    }
+
+    /**
+     * Maximum number of active reservations allowed for the team.
+     *
+     * Currently hardcoded to [DEFAULT_TEAM_RESERVATION_LIMIT].
+     * TODO: Replace with a backend field from Team model when available,
+     *       e.g. `UserManager.getSelectedTeam()?.reservesAllowed ?: DEFAULT_TEAM_RESERVATION_LIMIT`
+     */
+    private fun teamReservationLimit(): Int {
+        // Future: read from backend team field
+        // val team = UserManager.getSelectedTeam()
+        // return team?.reservesAllowed ?: DEFAULT_TEAM_RESERVATION_LIMIT
+        return DEFAULT_TEAM_RESERVATION_LIMIT
+    }
+
+    companion object {
+        /** Default max reservations per team until backend provides the value */
+        const val DEFAULT_TEAM_RESERVATION_LIMIT = 3
     }
 }
