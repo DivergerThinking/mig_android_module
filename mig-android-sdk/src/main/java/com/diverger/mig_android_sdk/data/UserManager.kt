@@ -354,6 +354,8 @@ fun UnsafeAsyncImage(
     contentScale: ContentScale = ContentScale.Crop,
     placeholder: Painter? = null,
     error: Painter? = null,
+    onLoading: (() -> Unit)? = null,
+    onSuccess: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
 
@@ -369,6 +371,8 @@ fun UnsafeAsyncImage(
         contentScale = contentScale,
         placeholder = placeholder,
         error = error,
+        onLoading = { onLoading?.invoke() },
+        onSuccess = { onSuccess?.invoke() },
         onError = { throwable ->
             Log.e(
                 "ImageLoad",

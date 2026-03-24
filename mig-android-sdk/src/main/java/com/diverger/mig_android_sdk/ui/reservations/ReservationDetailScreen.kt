@@ -41,8 +41,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -254,11 +256,14 @@ private fun ReservationDetailRow(text: String) {
 
 @Composable
 private fun RemoteQrImage(url: String, contentDescription: String) {
+    var isLoading by remember { mutableStateOf(true) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .aspectRatio(1f)
-            .background(Color.White, RoundedCornerShape(10.dp))
+            .background(Color.White, RoundedCornerShape(10.dp)),
+        contentAlignment = Alignment.Center
     ) {
         UnsafeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -270,7 +275,12 @@ private fun RemoteQrImage(url: String, contentDescription: String) {
             error = rememberVectorPainter(Icons.Default.BrokenImage),
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize(),
+            onLoading = { isLoading = true },
+            onSuccess = { isLoading = false }
         )
+        if (isLoading) {
+            CircularProgressIndicator(color = Color.Cyan)
+        }
     }
 }
 
