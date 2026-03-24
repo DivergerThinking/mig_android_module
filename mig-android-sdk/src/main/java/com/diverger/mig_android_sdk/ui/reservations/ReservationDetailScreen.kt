@@ -172,7 +172,7 @@ fun ReservationDetailContent(
 
         if (showFlipCard) {
             val configuration = LocalConfiguration.current
-            val desiredHeight: Dp = configuration.screenHeightDp.dp * 2 / 3
+            val desiredHeight: Dp = configuration.screenHeightDp.dp * 7 / 10
 
             HolographicFlippableCard(
                 targetAngle = targetAngle,
@@ -256,6 +256,7 @@ private fun ReservationDetailRow(text: String) {
 private fun RemoteQrImage(url: String, contentDescription: String) {
     Box(
         modifier = Modifier
+            .fillMaxWidth(0.9f)
             .aspectRatio(1f)
             .background(Color.White, RoundedCornerShape(10.dp))
     ) {
@@ -320,9 +321,9 @@ private fun LocalQrImage(
 private fun BitmapQrImage(bitmap: Bitmap, qrSize: Int, contentDescription: String) {
     Box(
         modifier = Modifier
+            .fillMaxWidth(0.9f)
             .aspectRatio(1f)
             .background(Color.White, RoundedCornerShape(10.dp))
-            .size(qrSize.dp)
     ) {
         Image(
             bitmap = bitmap.asImageBitmap(),
