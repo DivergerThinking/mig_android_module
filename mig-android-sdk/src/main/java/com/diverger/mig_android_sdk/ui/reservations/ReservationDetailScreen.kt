@@ -201,7 +201,7 @@ fun ReservationDetailContent(
 
         if (showFlipCard) {
             Button(
-                onClick = { targetAngle += 180f },
+                onClick = { targetAngle += if (isFlipped) 180f else -180f },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
                 modifier = Modifier
                     .padding(12.dp)

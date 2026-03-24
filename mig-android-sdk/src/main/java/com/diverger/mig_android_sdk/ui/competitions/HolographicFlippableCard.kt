@@ -1,7 +1,7 @@
 package com.diverger.mig_android_sdk.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -17,9 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,52 +88,63 @@ fun HolographicFlippableCard(
     back: @Composable ColumnScope.() -> Unit
 ) {
     var dragOffsetX by remember { mutableFloatStateOf(0f) }
-    var dragRotation by remember { mutableFloatStateOf(0f) }
-
+    // Single Animatable drives all rotation: drag snaps directly into it,
+    // flip animation starts from wherever the finger left off — no snap/bounce.
+    val rotation = remember { Animatable(targetAngle) }
+    val scope = rememberCoroutineScope()
     val currentTargetAngle by rememberUpdatedState(targetAngle)
     val currentOnAngleChange by rememberUpdatedState(onAngleChange)
 
-    val baseRotation by animateFloatAsState(
-        targetValue = targetAngle,
-        animationSpec = spring(
-            dampingRatio = 0.75f,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "flipRotation"
+    val flipSpec = spring<Float>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessLow
     )
+
+    // React to external targetAngle changes (e.g. button press)
+    LaunchedEffect(targetAngle) {
+        rotation.animateTo(targetAngle, flipSpec)
+    }
 
     Box(
         modifier = modifier
             .graphicsLayer {
-                rotationY = baseRotation + dragRotation
+                rotationY = rotation.value
                 cameraDistance = 12 * density
             }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
-                        if (abs(dragRotation) > 25f) {
-                            if (dragRotation > 0f) {
-                                currentOnAngleChange(currentTargetAngle + 180f)
+                        val base = currentTargetAngle
+                        val drag = rotation.value - base
+                        scope.launch {
+                            if (abs(drag) > 25f) {
+                                val newTarget = if (drag > 0f) base + 180f else base - 180f
+                                currentOnAngleChange(newTarget)
+                                rotation.animateTo(newTarget, flipSpec)
                             } else {
-                                currentOnAngleChange(currentTargetAngle - 180f)
+                                rotation.animateTo(base, flipSpec)
                             }
                         }
-                        dragRotation = 0f
                         dragOffsetX = 0f
                     },
                     onDragCancel = {
-                        dragRotation = 0f
+                        scope.launch { rotation.animateTo(currentTargetAngle, flipSpec) }
                         dragOffsetX = 0f
                     },
                     onHorizontalDrag = { _, amount ->
-                        dragRotation = (dragRotation + amount / 5f).coerceIn(-45f, 45f)
+                        // On the back face the content is mirrored (rotationY = 180f),
+                        // so we invert the drag direction to match the finger movement visually.
+                        val normalized = ((currentTargetAngle % 360f) + 360f) % 360f
+                        val faceFactor = if (normalized in 90f..270f) -1f else 1f
+                        val newValue = (rotation.value + (amount * faceFactor) / 5f)
+                            .coerceIn(currentTargetAngle - 45f, currentTargetAngle + 45f)
+                        scope.launch { rotation.snapTo(newValue) }
                         dragOffsetX += amount
                     }
                 )
             }
     ) {
-        val totalRotation = baseRotation + dragRotation
-        val normalized = ((totalRotation % 360f) + 360f) % 360f
+        val normalized = ((rotation.value % 360f) + 360f) % 360f
         val showFront = normalized < 90f || normalized > 270f
 
         if (showFront) {
