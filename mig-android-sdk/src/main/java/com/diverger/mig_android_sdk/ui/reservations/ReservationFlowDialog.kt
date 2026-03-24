@@ -143,6 +143,7 @@ fun ReservationFlowDialog(
                 if (!isProcessing) {
                     BottomButtons(viewModel, personalReservation, userId, logoBitmap, coroutineScope, context, onReservationSuccess, onDismiss)
                 }
+                Spacer(Modifier.height(16.dp))
             }
         }
     }
@@ -584,7 +585,7 @@ private fun PillButton(title: String, isSelected: Boolean, isEnabled: Boolean, o
     Button(onClick = onClick, enabled = isEnabled, modifier = Modifier.height(44.dp), shape = RoundedCornerShape(22.dp),
         colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) Color.Cyan else Color.Transparent, disabledContainerColor = Color.Transparent),
         border = when { isSelected -> null; isEnabled -> BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)); else -> BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)) }
-    ) { Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, color = when { isSelected -> Color.Black; isEnabled -> Color.White; else -> DisabledText }) }
+    ) { Text(title, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, color = when { isSelected -> Color.Black; isEnabled -> Color.White; else -> DisabledText }) }
 }
 
 @Composable

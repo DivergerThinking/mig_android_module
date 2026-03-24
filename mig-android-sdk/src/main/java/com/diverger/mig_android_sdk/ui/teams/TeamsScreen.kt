@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
@@ -116,7 +117,8 @@ fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> U
                     Text(
                         item.label,
                         color = if (currentRoute == item.route) Color.Cyan else Color.White,
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center
                     )
                 },
                 selected = currentRoute == item.route,
