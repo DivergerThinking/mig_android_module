@@ -76,17 +76,36 @@ object UserManager {
                 Result.success(Unit)
             } else {
                 val dniValue = madridInGameUserData.dni
-                val newUserResponse = apiService.createUser(
-                    userRequest = UserRequest(
-                        madridInGameUserData.email,
-                        madridInGameUserData.userName,
-                        dniValue,
-                        name = madridInGameUserData.name,
-                        lastName = madridInGameUserData.lastName,
-                        phone = madridInGameUserData.phone
-                    ),
-                    token = "Bearer $accessToken"
-                )
+                val newUserResponse = try {
+                    apiService.createUser(
+                        userRequest = UserRequest(
+                            madridInGameUserData.email,
+                            madridInGameUserData.userName,
+                            dniValue,
+                            name = madridInGameUserData.name,
+                            lastName = madridInGameUserData.lastName,
+                            phone = madridInGameUserData.phone
+                        ),
+                        token = "Bearer $accessToken"
+                    )
+                } catch (e: Exception) {
+                    // If creation failed and dni was provided, retry without it (duplicate dni)
+                    if (dniValue != null) {
+                        apiService.createUser(
+                            userRequest = UserRequest(
+                                madridInGameUserData.email,
+                                madridInGameUserData.userName,
+                                null,
+                                name = madridInGameUserData.name,
+                                lastName = madridInGameUserData.lastName,
+                                phone = madridInGameUserData.phone
+                            ),
+                            token = "Bearer $accessToken"
+                        )
+                    } else {
+                        throw e
+                    }
+                }
 
                 if (newUserResponse.data == null) {
                     return@withContext Result.failure(Exception("Error: No se pudo crear el usuario. Respuesta vacía."))
@@ -282,7 +301,7 @@ data class Team(
     val name: String?,
     val description: String?,
     val picture: String?,
-    @SerializedName("apply_membership") val applyMembership: Boolean?,
+    @SerializedName("apply_membership") val applyMembership: Int?,
     val status: String?,
     val discord: String?,
     @SerializedName("date_edited") val dateEdited: String?,

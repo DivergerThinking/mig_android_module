@@ -175,9 +175,7 @@ class ReservationViewModel() : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
 
-            val result = runCatching {
-                UserManager.updateUser(userId, dni = dni)
-            }
+            val result = UserManager.updateUser(userId, dni = dni)
 
             result.onSuccess {
                 onResult(true)
