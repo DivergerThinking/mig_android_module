@@ -54,6 +54,16 @@ interface ReservationService {
         @Header("Authorization") token: String
     ): ReservationResponse
 
+    // 📌 Ocupación de slots por espacio y fecha
+    @GET("gaming_space_reserves")
+    suspend fun getReservationsBySlots(
+        @Query("filter[slot][_in]") slotIds: String,
+        @Query("filter[date][_eq]") date: String,
+        @Query("fields") fields: String = "slot.id,times.gaming_space_times_id.id",
+        @Query("limit") limit: String = "-1",
+        @Header("Authorization") token: String
+    ): SlotOccupancyResponse
+
     // 📌 Obtener reservas de equipo filtradas por usuario
     @GET("gaming_space_reserves")
     suspend fun getReservationsByTeamAndUser(
@@ -135,6 +145,19 @@ object ReservationApi {
         }
     }
 
+    suspend fun getReservationsBySlots(slotIds: List<Int>, date: String): Result<List<SlotOccupancyEntry>> {
+        return try {
+            val response = service.getReservationsBySlots(
+                slotIds = slotIds.joinToString(","),
+                date = date,
+                token = TOKEN
+            )
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteReservation(id: Int): Result<Unit> {
         return try {
             service.deleteReservation(id, token = TOKEN)
@@ -213,3 +236,16 @@ data class GamingSpaceTimeId(
 data class SlotId(
     val id:Int
 )
+
+// Occupancy query response models
+data class SlotOccupancyResponse(val data: List<SlotOccupancyEntry>)
+
+data class SlotOccupancyEntry(
+    val slot: SlotIdOnly,
+    @SerializedName("times") val timesContainer: List<Map<String, OccupancyTimeId>>
+) {
+    val timeIds: List<Int> get() = timesContainer.mapNotNull { it["gaming_space_times_id"]?.id }
+}
+
+data class SlotIdOnly(val id: Int)
+data class OccupancyTimeId(val id: Int)

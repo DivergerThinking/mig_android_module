@@ -82,6 +82,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
         // DNI
         var showDniDialog by remember { mutableStateOf(false) }
         var enteredDni by remember { mutableStateOf("") }
+        var dniError by remember { mutableStateOf<String?>(null) }
 
         // ── Fetch según modo (se relanza al cambiar de equipo) ───
         LaunchedEffect(userId, personalReservation, selectedTeam?.id) {
@@ -338,10 +339,22 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             DniTextField(
                                 enteredDni,
-                                onDniChange = { enteredDni = it },
+                                onDniChange = {
+                                    enteredDni = it
+                                    dniError = null
+                                },
                                 isLoading = isLoading
                             )
-                            Spacer(modifier = Modifier.height(20.dp))
+                            if (dniError != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = dniError!!,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 stringResource(R.string.confirm_dni_warning),
                                 style = MaterialTheme.typography.labelMedium,
@@ -353,15 +366,18 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                         Button(
                             onClick = {
                                 if (enteredDni.isNotBlank()) {
-                                    showDniDialog = false
                                     coroutineScope.launch {
                                         viewModel.updateUserDNI(
                                             userId,
                                             dni = enteredDni
                                         ) { result ->
                                             if (result) {
+                                                dniError = null
                                                 enteredDni = ""
+                                                showDniDialog = false
                                                 showReservationFlow.value = true
+                                            } else {
+                                                dniError = context.getString(R.string.dni_already_in_use)
                                             }
                                         }
                                     }
@@ -375,6 +391,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                     dismissButton = {
                         Button(
                             onClick = {
+                                dniError = null
+                                enteredDni = ""
                                 showDniDialog = false
                                 showReservationFlow.value = false
                             },

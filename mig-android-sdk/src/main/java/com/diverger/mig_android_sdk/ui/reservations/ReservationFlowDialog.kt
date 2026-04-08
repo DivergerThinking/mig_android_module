@@ -337,6 +337,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
     val slots by vm.availableSlots.collectAsState(); val selectedSlots by vm.selectedSlots.collectAsState()
     val enabledSlots by vm.enabledSlots.collectAsState(); val selectedDate by vm.selectedDate.collectAsState()
     val selectedSpace by vm.selectedSpace.collectAsState()
+    val isLoadingOccupancy by vm.isLoadingOccupancy.collectAsState()
 
     LaunchedEffect(Unit) { if (slots.isEmpty()) selectedDate?.let { vm.setSelectedDate(it) } }
 
@@ -345,7 +346,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_time_slot)); Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot -> val isEnabled = enabledSlots.contains(slot); val isSelected = selectedSlots.contains(slot)
                 val cal = Calendar.getInstance(); val hourPlus1 = cal.get(Calendar.HOUR_OF_DAY) + 1
@@ -395,17 +396,20 @@ private fun SelectSimulatorSlotStep(vm: ReservationFlowViewModel) {
     val slots by vm.availableSimulatorSlots.collectAsState()
     val selectedSlots by vm.simulatorSelectedSlots.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
+    val isLoadingSimulatorOccupancy by vm.isLoadingSimulatorOccupancy.collectAsState()
+    val occupiedSimulatorTimeIds by vm.occupiedSimulatorTimeIds.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_simulator_slot_title)); Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingSimulatorOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot ->
                 val isSelected = selectedSlots.any { it.id == slot.id }
                 val cal = Calendar.getInstance(); val hourPlus1 = cal.get(Calendar.HOUR_OF_DAY) + 1
                 val isTodayDate = isToday(selectedDate); val isTimeValid = slot.value > hourPlus1
                 val isBlocked = vm.isSimulatorSlotBlockedByMain(slot)
-                val computed = if (isTodayDate) (isTimeValid && !isBlocked) else !isBlocked
+                val isOccupied = occupiedSimulatorTimeIds.contains(slot.id)
+                val computed = if (isTodayDate) (isTimeValid && !isBlocked && !isOccupied) else (!isBlocked && !isOccupied)
                 PillButton(slot.time, isSelected, computed) { if (computed) vm.toggleSimulatorSlotSelection(slot) }
             }
         }}
@@ -468,12 +472,13 @@ private fun SelectExtraSlotStep(vm: ReservationFlowViewModel) {
     val enabledSlots by vm.enabledExtraSpaceSlots.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
     val extraSpace by vm.extraSpace.collectAsState()
+    val isLoadingExtraSpaceOccupancy by vm.isLoadingExtraSpaceOccupancy.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_time_slot))
         extraSpace?.let { Text(it.device, color = Color.Cyan, fontSize = 14.sp) }
         Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingExtraSpaceOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot ->
                 val isEnabled = enabledSlots.contains(slot); val isSelected = selectedSlots.contains(slot)

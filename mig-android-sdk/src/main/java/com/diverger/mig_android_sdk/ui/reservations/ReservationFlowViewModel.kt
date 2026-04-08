@@ -118,6 +118,30 @@ class ReservationFlowViewModel(
     private val _enabledExtraSpaceSlots = MutableStateFlow<List<GamingSpaceTime>>(emptyList())
     val enabledExtraSpaceSlots: StateFlow<List<GamingSpaceTime>> = _enabledExtraSpaceSlots
 
+    // ── Slot occupancy ───────────────────────────────────────
+    private val _isLoadingOccupancy = MutableStateFlow(false)
+    val isLoadingOccupancy: StateFlow<Boolean> = _isLoadingOccupancy
+
+    private val _occupiedTimeIds = MutableStateFlow<Set<Int>>(emptySet())
+    val occupiedTimeIds: StateFlow<Set<Int>> = _occupiedTimeIds
+
+    private val _isLoadingSimulatorOccupancy = MutableStateFlow(false)
+    val isLoadingSimulatorOccupancy: StateFlow<Boolean> = _isLoadingSimulatorOccupancy
+
+    private val _occupiedSimulatorTimeIds = MutableStateFlow<Set<Int>>(emptySet())
+    val occupiedSimulatorTimeIds: StateFlow<Set<Int>> = _occupiedSimulatorTimeIds
+
+    private val _isLoadingExtraSpaceOccupancy = MutableStateFlow(false)
+    val isLoadingExtraSpaceOccupancy: StateFlow<Boolean> = _isLoadingExtraSpaceOccupancy
+
+    private val _occupiedExtraSpaceTimeIds = MutableStateFlow<Set<Int>>(emptySet())
+    val occupiedExtraSpaceTimeIds: StateFlow<Set<Int>> = _occupiedExtraSpaceTimeIds
+
+    // Per-slot occupancy maps: slotId → Set<timeId> — used to pick a free slot at booking time
+    private var slotOccupancyMap: Map<Int, Set<Int>> = emptyMap()
+    private var simulatorSlotOccupancyMap: Map<Int, Set<Int>> = emptyMap()
+    private var extraSpaceSlotOccupancyMap: Map<Int, Set<Int>> = emptyMap()
+
     // ── Loading / Processing ─────────────────────────────────
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -348,19 +372,51 @@ class ReservationFlowViewModel(
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
                 _availableSlots.value = if (isSelectedSpaceSimulator) slots else slots.filter { !it.time.endsWith(":30") }
-                updateEnabledSlots()
-            }.onFailure { Log.e("FlowVM", "Error slots: ${it.message}") }
+                val space = _selectedSpace.value
+                val date = _selectedDate.value
+                if (space != null && date != null) {
+                    _isLoadingOccupancy.value = true
+                    fetchOccupiedTimes(space, date) { onComplete?.invoke() }
+                } else {
+                    updateEnabledSlots()
+                    onComplete?.invoke()
+                }
+            }.onFailure { Log.e("FlowVM", "Error slots: ${it.message}"); onComplete?.invoke() }
+        }
+    }
+
+    private fun fetchOccupiedTimes(space: Space, date: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            val result = ReservationApi.getReservationsBySlots(space.slots.map { it.id }, date)
+            result.onSuccess { entries ->
+                val perSlot = mutableMapOf<Int, MutableSet<Int>>()
+                val slotsPerTime = mutableMapOf<Int, MutableSet<Int>>()
+                for (entry in entries) {
+                    for (timeId in entry.timeIds) {
+                        perSlot.getOrPut(entry.slot.id) { mutableSetOf() }.add(timeId)
+                        slotsPerTime.getOrPut(timeId) { mutableSetOf() }.add(entry.slot.id)
+                    }
+                }
+                slotOccupancyMap = perSlot
+                _occupiedTimeIds.value = slotsPerTime.entries
+                    .filter { it.value.size >= space.slots.size }
+                    .map { it.key }.toSet()
+            }.onFailure { Log.e("FlowVM", "Error occupancy: ${it.message}") }
+            _isLoadingOccupancy.value = false
+            updateEnabledSlots()
             onComplete?.invoke()
         }
     }
 
     private fun updateEnabledSlots() {
+        val occupied = _occupiedTimeIds.value
+        val notOccupied = _availableSlots.value.filter { it.id !in occupied }
         val selected = _selectedSlots.value
-        if (selected.isEmpty()) { _enabledSlots.value = _availableSlots.value; return }
+        if (selected.isEmpty()) { _enabledSlots.value = notOccupied; return }
         val maxSlots = if (isSelectedSpaceSimulator) 1 else if (personalReservations) 3 else 2
         val sorted = selected.sortedBy { it.value }
         val minVal = sorted.first().value; val maxVal = sorted.last().value
-        _enabledSlots.value = _availableSlots.value.filter { slot ->
+        _enabledSlots.value = notOccupied.filter { slot ->
             (slot.value in minVal..(maxVal + 1) && slot.value <= minVal + (maxSlots - 1)) || selected.any { it.id == slot.id }
         }
     }
@@ -387,7 +443,38 @@ class ReservationFlowViewModel(
         val dayValue = calculateDayValue(_selectedDate.value ?: return)
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
-            result.onSuccess { slots -> _availableSimulatorSlots.value = slots }
+            result.onSuccess { slots ->
+                _availableSimulatorSlots.value = slots
+                val space = _simulatorSpace.value
+                val date = _selectedDate.value
+                if (space != null && date != null) {
+                    _isLoadingSimulatorOccupancy.value = true
+                    fetchOccupiedSimulatorTimes(space, date) { onComplete?.invoke() }
+                    return@onSuccess
+                }
+            }.onFailure { Log.e("FlowVM", "Error simulator slots: ${it.message}") }
+            onComplete?.invoke()
+        }
+    }
+
+    private fun fetchOccupiedSimulatorTimes(space: Space, date: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            val result = ReservationApi.getReservationsBySlots(space.slots.map { it.id }, date)
+            result.onSuccess { entries ->
+                val perSlot = mutableMapOf<Int, MutableSet<Int>>()
+                val slotsPerTime = mutableMapOf<Int, MutableSet<Int>>()
+                for (entry in entries) {
+                    for (timeId in entry.timeIds) {
+                        perSlot.getOrPut(entry.slot.id) { mutableSetOf() }.add(timeId)
+                        slotsPerTime.getOrPut(timeId) { mutableSetOf() }.add(entry.slot.id)
+                    }
+                }
+                simulatorSlotOccupancyMap = perSlot
+                _occupiedSimulatorTimeIds.value = slotsPerTime.entries
+                    .filter { it.value.size >= space.slots.size }
+                    .map { it.key }.toSet()
+            }.onFailure { Log.e("FlowVM", "Error simulator occupancy: ${it.message}") }
+            _isLoadingSimulatorOccupancy.value = false
             onComplete?.invoke()
         }
     }
@@ -402,6 +489,7 @@ class ReservationFlowViewModel(
 
     fun resetSimulatorSelection() {
         _wantsSimulator.value = false; _simulatorSelectedSlots.value = emptyList(); _availableSimulatorSlots.value = emptyList()
+        _occupiedSimulatorTimeIds.value = emptySet(); _isLoadingSimulatorOccupancy.value = false; simulatorSlotOccupancyMap = emptyMap()
     }
 
     fun isSimulatorSlotBlockedByMain(slot: GamingSpaceTime): Boolean {
@@ -430,9 +518,39 @@ class ReservationFlowViewModel(
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
-                val filtered = slots.filter { !it.time.endsWith(":30") }
-                _availableExtraSpaceSlots.value = filtered; _enabledExtraSpaceSlots.value = filtered
-            }
+                _availableExtraSpaceSlots.value = slots.filter { !it.time.endsWith(":30") }
+                val space = _extraSpace.value
+                val date = _selectedDate.value
+                if (space != null && date != null) {
+                    _isLoadingExtraSpaceOccupancy.value = true
+                    fetchOccupiedExtraSpaceTimes(space, date) { onComplete?.invoke() }
+                    return@onSuccess
+                }
+                updateEnabledExtraSpaceSlots()
+            }.onFailure { Log.e("FlowVM", "Error extra slots: ${it.message}") }
+            onComplete?.invoke()
+        }
+    }
+
+    private fun fetchOccupiedExtraSpaceTimes(space: Space, date: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            val result = ReservationApi.getReservationsBySlots(space.slots.map { it.id }, date)
+            result.onSuccess { entries ->
+                val perSlot = mutableMapOf<Int, MutableSet<Int>>()
+                val slotsPerTime = mutableMapOf<Int, MutableSet<Int>>()
+                for (entry in entries) {
+                    for (timeId in entry.timeIds) {
+                        perSlot.getOrPut(entry.slot.id) { mutableSetOf() }.add(timeId)
+                        slotsPerTime.getOrPut(timeId) { mutableSetOf() }.add(entry.slot.id)
+                    }
+                }
+                extraSpaceSlotOccupancyMap = perSlot
+                _occupiedExtraSpaceTimeIds.value = slotsPerTime.entries
+                    .filter { it.value.size >= space.slots.size }
+                    .map { it.key }.toSet()
+            }.onFailure { Log.e("FlowVM", "Error extra space occupancy: ${it.message}") }
+            _isLoadingExtraSpaceOccupancy.value = false
+            updateEnabledExtraSpaceSlots()
             onComplete?.invoke()
         }
     }
@@ -444,11 +562,13 @@ class ReservationFlowViewModel(
     }
 
     private fun updateEnabledExtraSpaceSlots() {
+        val occupied = _occupiedExtraSpaceTimeIds.value
+        val notOccupied = _availableExtraSpaceSlots.value.filter { it.id !in occupied }
         val selected = _extraSpaceSelectedSlots.value
-        if (selected.isEmpty()) { _enabledExtraSpaceSlots.value = _availableExtraSpaceSlots.value; return }
+        if (selected.isEmpty()) { _enabledExtraSpaceSlots.value = notOccupied; return }
         val sorted = selected.sortedBy { it.value }
         val minVal = sorted.first().value; val maxVal = sorted.last().value
-        _enabledExtraSpaceSlots.value = _availableExtraSpaceSlots.value.filter { slot ->
+        _enabledExtraSpaceSlots.value = notOccupied.filter { slot ->
             (slot.value in minVal..(maxVal + 1) && slot.value <= minVal + 2) || selected.any { it.id == slot.id }
         }
     }
@@ -456,6 +576,7 @@ class ReservationFlowViewModel(
     fun resetExtraSpaceSelection() {
         _wantsExtraSpace.value = false; _extraSpace.value = null
         _extraSpaceSelectedSlots.value = emptyList(); _availableExtraSpaceSlots.value = emptyList(); _enabledExtraSpaceSlots.value = emptyList()
+        _occupiedExtraSpaceTimeIds.value = emptySet(); _isLoadingExtraSpaceOccupancy.value = false; extraSpaceSlotOccupancyMap = emptyMap()
     }
 
     fun isExtraSpaceSlotBlockedBySimulator(slot: GamingSpaceTime): Boolean {
@@ -481,7 +602,11 @@ class ReservationFlowViewModel(
 
     fun selectSpace(space: Space) {
         if (_selectedSpace.value?.id == space.id) { _selectedSpace.value = null }
-        else { _selectedSpace.value = space; _availableSlots.value = emptyList(); _selectedSlots.value = emptyList(); _enabledSlots.value = emptyList() }
+        else {
+            _selectedSpace.value = space
+            _availableSlots.value = emptyList(); _selectedSlots.value = emptyList(); _enabledSlots.value = emptyList()
+            _occupiedTimeIds.value = emptySet(); _isLoadingOccupancy.value = false; slotOccupancyMap = emptyMap()
+        }
     }
 
     fun cleanSpace() { _selectedSpace.value = null }
@@ -489,6 +614,16 @@ class ReservationFlowViewModel(
     // ═══════════════════════════════════════════════════════════
     // Create individual reservation + add-on
     // ═══════════════════════════════════════════════════════════
+
+    /** Returns the first slot ID in the space that has no conflict with the given times. */
+    private fun findFreeSlot(space: Space, occupancyMap: Map<Int, Set<Int>>, times: List<GamingSpaceTime>): Int {
+        val selectedTimeIds = times.map { it.id }.toSet()
+        for (slot in space.slots) {
+            val bookedTimeIds = occupancyMap[slot.id] ?: emptySet()
+            if (bookedTimeIds.none { it in selectedTimeIds }) return slot.id
+        }
+        return space.slots.first().id
+    }
 
     suspend fun createReservation(userId: String, withLogo: Bitmap?): Boolean {
         val date = _selectedDate.value ?: return false
@@ -499,7 +634,7 @@ class ReservationFlowViewModel(
         val formattedDate = try { dateFormatter.format(dateFormatter.parse(date)!!) } catch (_: Exception) { return false }
 
         val reservation = ReservationWrapper(
-            id = null, status = "active", slot = space.slots.first().id,
+            id = null, status = "active", slot = findFreeSlot(space, slotOccupancyMap, slots),
             date = formattedDate, user = userId, team = null, training = null,
             qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = emptyList()
         )
@@ -534,20 +669,22 @@ class ReservationFlowViewModel(
         // Simulator add-on
         if (_wantsSimulator.value && _simulatorSelectedSlots.value.isNotEmpty()) {
             val simSpace = _simulatorSpace.value ?: return true
-            return createAddonReservation(userId, date, simSpace, _simulatorSelectedSlots.value, withLogo)
+            val slotId = findFreeSlot(simSpace, simulatorSlotOccupancyMap, _simulatorSelectedSlots.value)
+            return createAddonReservation(userId, date, slotId, _simulatorSelectedSlots.value, withLogo)
         }
         // Extra space add-on
         if (_wantsExtraSpace.value && _extraSpaceSelectedSlots.value.isNotEmpty()) {
             val extra = _extraSpace.value ?: return true
-            return createAddonReservation(userId, date, extra, _extraSpaceSelectedSlots.value, withLogo)
+            val slotId = findFreeSlot(extra, extraSpaceSlotOccupancyMap, _extraSpaceSelectedSlots.value)
+            return createAddonReservation(userId, date, slotId, _extraSpaceSelectedSlots.value, withLogo)
         }
         return true
     }
 
-    private suspend fun createAddonReservation(userId: String, date: String, space: Space, times: List<GamingSpaceTime>, withLogo: Bitmap?): Boolean {
+    private suspend fun createAddonReservation(userId: String, date: String, slotId: Int, times: List<GamingSpaceTime>, withLogo: Bitmap?): Boolean {
         val mappedTimes = times.map { mapOf("gaming_space_times_id" to GamingSpaceTimeId(id = it.id)) }
         val wrapper = ReservationWrapper(
-            id = null, status = "active", slot = space.slots.first().id,
+            id = null, status = "active", slot = slotId,
             date = date, user = userId, team = null, training = null,
             qrImage = null, qrValue = null, timesContainer = mappedTimes, peripheralLoans = emptyList()
         )
