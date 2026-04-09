@@ -217,10 +217,9 @@ class ReservationViewModel() : ViewModel() {
 
     private fun userReservationLimit(): Int {
         val user = UserManager.getUser()
-        return if (userIsValidated()) {
-            (user?.reservesAllowed ?: 1)
-        } else {
-            1
+        return when (user?.status?.lowercase()) {
+            "active" -> 3
+            else -> 1
         }
     }
 
