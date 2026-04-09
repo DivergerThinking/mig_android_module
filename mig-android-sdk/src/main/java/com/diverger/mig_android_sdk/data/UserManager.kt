@@ -301,7 +301,7 @@ data class Team(
     val name: String?,
     val description: String?,
     val picture: String?,
-    @SerializedName("apply_membership") val applyMembership: Int?,
+    @SerializedName("apply_membership") val applyMembership: Boolean?,
     val status: String?,
     val discord: String?,
     @SerializedName("date_edited") val dateEdited: String?,

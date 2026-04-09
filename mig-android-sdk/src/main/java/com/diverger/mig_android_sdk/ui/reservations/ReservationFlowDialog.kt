@@ -268,8 +268,20 @@ private fun SelectDateStep(vm: ReservationFlowViewModel) {
             }
         }
         Spacer(Modifier.height(12.dp))
+        val hasReservationOnDate = selectedDate != null && vm.personalReservations && !vm.isEditing &&
+            markedDates.any { it.isReservation && it.date == selectedDate }
+        if (hasReservationOnDate) {
+            Text(
+                text = stringResource(R.string.no_more_reservations_on_date),
+                color = Color.Red.copy(alpha = 0.85f),
+                fontSize = 13.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+        }
         if (vm.currentStep.collectAsState().value > 0) SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null) { vm.goToNextStep() }
+        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null && !hasReservationOnDate) { vm.goToNextStep() }
     }
 }
 
