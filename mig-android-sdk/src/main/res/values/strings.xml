@@ -64,6 +64,7 @@
     <string name="confirm_booking_cancellation">Do you want to cancel the booking?</string>
     <string name="confirm_booking_cancellation_date">Do you want to cancel the booking for %1$s - %2$s?</string>
     <string name="booking_limit_reached">The booking limit has been reached.</string>
+    <string name="no_more_reservations_on_date">You cannot make more reservations on this date, please select another.</string>
     <string name="booking_limit_reached_and_dni_required">The maximum number of bookings has been reached for unverified users. Please verify your ID and try again.</string>
     <string name="booking_info_slot">BOOKING - %1$s</string>
     <string name="team_selection_title">Which team do you want to manage?</string>
@@ -164,4 +165,19 @@
     <string name="booking_reservation_in">Booking in %1$s</string>
     <string name="reload_label">Reload</string>
     <string name="delete_label">Delete</string>
+    <!-- DNI / NIE / Passport dialog -->
+    <string name="passport_label">Passport</string>
+    <string name="invalid_document_dni_id">The document does not match any recognised DNI or European ID format.</string>
+    <string name="invalid_document_nie">NIE must start with X, Y or Z, followed by 7 digits and a letter.</string>
+    <string name="invalid_document_passport">The passport does not match any recognised format.</string>
+    <string name="confirm_title_dni_id">Confirm your DNI / ID</string>
+    <string name="confirm_title_nie">Confirm your NIE</string>
+    <string name="confirm_title_passport">Confirm your Passport</string>
+    <string name="intro_title_dni_id">Enter and confirm your DNI / ID</string>
+    <string name="intro_title_nie">Enter and confirm your NIE</string>
+    <string name="intro_title_passport">Enter and confirm your Passport</string>
+    <string name="duplicate_document_dni_id">This DNI/ID is already linked to another user.</string>
+    <string name="duplicate_document_nie">This NIE is already linked to another user.</string>
+    <string name="duplicate_document_passport">This passport is already linked to another user.</string>
+    <string name="error_document_update">An error occurred. Please try again.</string>
 </resources>

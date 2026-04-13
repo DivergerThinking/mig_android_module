@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk.data
 
 import android.util.Log
+import retrofit2.HttpException
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -30,6 +31,8 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+
+class DuplicateDocumentException : Exception("Document already linked to another user")
 
 object UserManager {
     private var user: User? = null
@@ -76,17 +79,36 @@ object UserManager {
                 Result.success(Unit)
             } else {
                 val dniValue = madridInGameUserData.dni
-                val newUserResponse = apiService.createUser(
-                    userRequest = UserRequest(
-                        madridInGameUserData.email,
-                        madridInGameUserData.userName,
-                        dniValue,
-                        name = madridInGameUserData.name,
-                        lastName = madridInGameUserData.lastName,
-                        phone = madridInGameUserData.phone
-                    ),
-                    token = "Bearer $accessToken"
-                )
+                val newUserResponse = try {
+                    apiService.createUser(
+                        userRequest = UserRequest(
+                            madridInGameUserData.email,
+                            madridInGameUserData.userName,
+                            dniValue,
+                            name = madridInGameUserData.name,
+                            lastName = madridInGameUserData.lastName,
+                            phone = madridInGameUserData.phone
+                        ),
+                        token = "Bearer $accessToken"
+                    )
+                } catch (e: Exception) {
+                    // If creation failed and dni was provided, retry without it (duplicate dni)
+                    if (dniValue != null) {
+                        apiService.createUser(
+                            userRequest = UserRequest(
+                                madridInGameUserData.email,
+                                madridInGameUserData.userName,
+                                null,
+                                name = madridInGameUserData.name,
+                                lastName = madridInGameUserData.lastName,
+                                phone = madridInGameUserData.phone
+                            ),
+                            token = "Bearer $accessToken"
+                        )
+                    } else {
+                        throw e
+                    }
+                }
 
                 if (newUserResponse.data == null) {
                     return@withContext Result.failure(Exception("Error: No se pudo crear el usuario. Respuesta vacía."))
@@ -116,6 +138,12 @@ object UserManager {
                     Result.success(Unit)
                 } else {
                     Result.failure(Exception("Error: No se pudo actualizar el DNI."))
+                }
+            } catch (e: HttpException) {
+                if (e.code() == 400 || e.code() == 409) {
+                    Result.failure(DuplicateDocumentException())
+                } else {
+                    Result.failure(e)
                 }
             } catch (e: Exception) {
                 Result.failure(e)

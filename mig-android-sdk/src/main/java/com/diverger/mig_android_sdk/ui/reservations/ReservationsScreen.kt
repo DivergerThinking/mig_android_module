@@ -3,6 +3,8 @@ package com.diverger.mig_android_sdk.ui.reservations
 import ReservationFlowDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -41,10 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
@@ -82,6 +87,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
         // DNI
         var showDniDialog by remember { mutableStateOf(false) }
         var enteredDni by remember { mutableStateOf("") }
+        var dniError by remember { mutableStateOf<String?>(null) }
 
         // ── Fetch según modo (se relanza al cambiar de equipo) ───
         LaunchedEffect(userId, personalReservation, selectedTeam?.id) {
@@ -316,32 +322,103 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
 
             // ── Diálogo DNI ──────────────────────────────────────
             if (showDniDialog) {
-                val dniRegex = remember { Regex("^[0-9]{8}[A-Za-z]$") }
+                var selectedDocType by remember { mutableStateOf(DocumentType.DNI_ID) }
 
                 AlertDialog(
                     onDismissRequest = { if (!isLoading) showDniDialog = false },
                     title = {
-                        Column {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                stringResource(R.string.insert_id),
+                                stringResource(when (selectedDocType) {
+                                    DocumentType.DNI_ID   -> R.string.confirm_title_dni_id
+                                    DocumentType.NIE      -> R.string.confirm_title_nie
+                                    DocumentType.PASSPORT -> R.string.confirm_title_passport
+                                }),
                                 style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                             Text(
-                                stringResource(R.string.insert_confirm_dni),
+                                stringResource(when (selectedDocType) {
+                                    DocumentType.DNI_ID   -> R.string.intro_title_dni_id
+                                    DocumentType.NIE      -> R.string.intro_title_nie
+                                    DocumentType.PASSPORT -> R.string.intro_title_passport
+                                }),
                                 style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     },
                     text = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Document type selector
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(1.dp, Color.Cyan.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            ) {
+                                DocumentType.entries.forEach { type ->
+                                    val selected = type == selectedDocType
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .background(if (selected) Color.Cyan else Color.White.copy(alpha = 0.08f))
+                                            .clickable {
+                                                selectedDocType = type
+                                                enteredDni = ""
+                                                dniError = null
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when (type) {
+                                                DocumentType.DNI_ID   -> "DNI / ID"
+                                                DocumentType.NIE      -> "NIE"
+                                                DocumentType.PASSPORT -> stringResource(R.string.passport_label)
+                                            },
+                                            color = if (selected) Color.Black else Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
                             DniTextField(
-                                enteredDni,
-                                onDniChange = { enteredDni = it },
+                                enteredDni = enteredDni,
+                                label = when (selectedDocType) {
+                                    DocumentType.DNI_ID   -> "DNI / ID"
+                                    DocumentType.NIE      -> "NIE"
+                                    DocumentType.PASSPORT -> stringResource(R.string.passport_label)
+                                },
+                                isValid = enteredDni.isEmpty() || selectedDocType.validate(enteredDni),
+                                validationError = when (selectedDocType) {
+                                    DocumentType.DNI_ID   -> stringResource(R.string.invalid_document_dni_id)
+                                    DocumentType.NIE      -> stringResource(R.string.invalid_document_nie)
+                                    DocumentType.PASSPORT -> stringResource(R.string.invalid_document_passport)
+                                },
+                                onDniChange = {
+                                    enteredDni = it
+                                    dniError = null
+                                },
                                 isLoading = isLoading
                             )
-                            Spacer(modifier = Modifier.height(20.dp))
+                            if (dniError != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = dniError!!,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 stringResource(R.string.confirm_dni_warning),
                                 style = MaterialTheme.typography.labelMedium,
@@ -353,21 +430,30 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                         Button(
                             onClick = {
                                 if (enteredDni.isNotBlank()) {
-                                    showDniDialog = false
                                     coroutineScope.launch {
                                         viewModel.updateUserDNI(
                                             userId,
                                             dni = enteredDni
-                                        ) { result ->
-                                            if (result) {
+                                        ) { success, isDuplicate ->
+                                            if (success) {
+                                                dniError = null
                                                 enteredDni = ""
+                                                showDniDialog = false
                                                 showReservationFlow.value = true
+                                            } else if (isDuplicate) {
+                                                dniError = when (selectedDocType) {
+                                                    DocumentType.DNI_ID   -> context.getString(R.string.duplicate_document_dni_id)
+                                                    DocumentType.NIE      -> context.getString(R.string.duplicate_document_nie)
+                                                    DocumentType.PASSPORT -> context.getString(R.string.duplicate_document_passport)
+                                                }
+                                            } else {
+                                                dniError = context.getString(R.string.error_document_update)
                                             }
                                         }
                                     }
                                 }
                             },
-                            enabled = dniRegex.matches(enteredDni) && !isLoading,
+                            enabled = selectedDocType.validate(enteredDni) && !isLoading,
                         ) {
                             Text(stringResource(R.string.accept_label), color = Color.Black)
                         }
@@ -375,6 +461,8 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                     dismissButton = {
                         Button(
                             onClick = {
+                                dniError = null
+                                enteredDni = ""
                                 showDniDialog = false
                                 showReservationFlow.value = false
                             },
@@ -482,17 +570,19 @@ fun CancelTeamReservationPopup(
 @Composable
 fun DniTextField(
     enteredDni: String,
+    label: String,
+    isValid: Boolean,
+    validationError: String,
     onDniChange: (String) -> Unit,
     isLoading: Boolean
 ) {
-    val dniRegex = remember { Regex("^[0-9]{8}[A-Za-z]\$") }
-    val isError = enteredDni.isNotEmpty() && !dniRegex.matches(enteredDni)
+    val isError = enteredDni.isNotEmpty() && !isValid
 
     Column {
         OutlinedTextField(
             value = enteredDni,
             onValueChange = { onDniChange(it) },
-            label = { Text(stringResource(R.string.id_label)) },
+            placeholder = { Text(label, color = Color.White.copy(alpha = 0.5f)) },
             singleLine = true,
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth(),
@@ -500,7 +590,7 @@ fun DniTextField(
             supportingText = {
                 if (isError) {
                     Text(
-                        text = stringResource(R.string.invalid_dni),
+                        text = validationError,
                         color = MaterialTheme.colorScheme.error
                     )
                 }

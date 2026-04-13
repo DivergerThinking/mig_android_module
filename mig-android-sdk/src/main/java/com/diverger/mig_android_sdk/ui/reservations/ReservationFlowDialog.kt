@@ -130,7 +130,20 @@ fun ReservationFlowDialog(
                                 viewModel.isVirtualTeam && ((personalReservation && step == 1) || (!personalReservation && step == 3)) -> SelectTimeStep(viewModel)
                                 (personalReservation && step == 1) || (!personalReservation && step == 3) -> SelectSpaceStep(viewModel)
                                 (personalReservation && step == 2) || (!personalReservation && step == 4) -> SelectSlotStep(viewModel)
-                                personalReservation && !viewModel.isSelectedSpaceSimulator && step == 3 -> AskSimulatorStep(viewModel)
+                                personalReservation && !viewModel.isSelectedSpaceSimulator && step == 3 -> AskSimulatorStep(
+                                    vm = viewModel,
+                                    onNoClick = {
+                                        coroutineScope.launch {
+                                            viewModel.resetSimulatorSelection()
+                                            viewModel.resetExtraSpaceSelection()
+                                            val success = if (viewModel.isEditing) viewModel.updateIndividualReservation() else viewModel.createReservation(userId, logoBitmap)
+                                            val msg = if (success) context.getString(R.string.booking_creation_success) else context.getString(R.string.booking_creation_failure)
+                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            if (success) onReservationSuccess()
+                                            onDismiss()
+                                        }
+                                    }
+                                )
                                 personalReservation && !viewModel.isSelectedSpaceSimulator && step == 4 -> SelectSimulatorSlotStep(viewModel)
                                 personalReservation && viewModel.isSelectedSpaceSimulator && step == 3 -> AskExtraSpaceStep(viewModel)
                                 personalReservation && viewModel.isSelectedSpaceSimulator && step == 4 -> SelectExtraSpaceStep(viewModel)
@@ -268,8 +281,20 @@ private fun SelectDateStep(vm: ReservationFlowViewModel) {
             }
         }
         Spacer(Modifier.height(12.dp))
+        val hasReservationOnDate = selectedDate != null && vm.personalReservations && !vm.isEditing &&
+            markedDates.any { it.isReservation && it.date == selectedDate }
+        if (hasReservationOnDate) {
+            Text(
+                text = stringResource(R.string.no_more_reservations_on_date),
+                color = Color.Red.copy(alpha = 0.85f),
+                fontSize = 13.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+        }
         if (vm.currentStep.collectAsState().value > 0) SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null) { vm.goToNextStep() }
+        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null && !hasReservationOnDate) { vm.goToNextStep() }
     }
 }
 
@@ -337,6 +362,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
     val slots by vm.availableSlots.collectAsState(); val selectedSlots by vm.selectedSlots.collectAsState()
     val enabledSlots by vm.enabledSlots.collectAsState(); val selectedDate by vm.selectedDate.collectAsState()
     val selectedSpace by vm.selectedSpace.collectAsState()
+    val isLoadingOccupancy by vm.isLoadingOccupancy.collectAsState()
 
     LaunchedEffect(Unit) { if (slots.isEmpty()) selectedDate?.let { vm.setSelectedDate(it) } }
 
@@ -345,7 +371,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_time_slot)); Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot -> val isEnabled = enabledSlots.contains(slot); val isSelected = selectedSlots.contains(slot)
                 val cal = Calendar.getInstance(); val hourPlus1 = cal.get(Calendar.HOUR_OF_DAY) + 1
@@ -368,7 +394,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
 // ═══════════════════════════════════════════════════════════════
 
 @Composable
-private fun AskSimulatorStep(vm: ReservationFlowViewModel) {
+private fun AskSimulatorStep(vm: ReservationFlowViewModel, onNoClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.weight(1f))
         Text("🎮", fontSize = 48.sp)
@@ -379,10 +405,7 @@ private fun AskSimulatorStep(vm: ReservationFlowViewModel) {
         Spacer(Modifier.weight(1f))
         SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
         Spacer(Modifier.height(4.dp))
-        Button(onClick = { vm.setWantsSimulator(true); vm.findSimulatorSpace(); vm.fetchSimulatorSlots(); vm.goToNextStep() },
-            modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-        ) { Text(stringResource(R.string.yes_add_simulator), color = Color.Cyan, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
+        SecondaryFlowButton(stringResource(R.string.no_reserve_without_simulator)) { onNoClick() }
     }
 }
 
@@ -395,17 +418,20 @@ private fun SelectSimulatorSlotStep(vm: ReservationFlowViewModel) {
     val slots by vm.availableSimulatorSlots.collectAsState()
     val selectedSlots by vm.simulatorSelectedSlots.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
+    val isLoadingSimulatorOccupancy by vm.isLoadingSimulatorOccupancy.collectAsState()
+    val occupiedSimulatorTimeIds by vm.occupiedSimulatorTimeIds.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_simulator_slot_title)); Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingSimulatorOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot ->
                 val isSelected = selectedSlots.any { it.id == slot.id }
                 val cal = Calendar.getInstance(); val hourPlus1 = cal.get(Calendar.HOUR_OF_DAY) + 1
                 val isTodayDate = isToday(selectedDate); val isTimeValid = slot.value > hourPlus1
                 val isBlocked = vm.isSimulatorSlotBlockedByMain(slot)
-                val computed = if (isTodayDate) (isTimeValid && !isBlocked) else !isBlocked
+                val isOccupied = occupiedSimulatorTimeIds.contains(slot.id)
+                val computed = if (isTodayDate) (isTimeValid && !isBlocked && !isOccupied) else (!isBlocked && !isOccupied)
                 PillButton(slot.time, isSelected, computed) { if (computed) vm.toggleSimulatorSlotSelection(slot) }
             }
         }}
@@ -468,12 +494,13 @@ private fun SelectExtraSlotStep(vm: ReservationFlowViewModel) {
     val enabledSlots by vm.enabledExtraSpaceSlots.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
     val extraSpace by vm.extraSpace.collectAsState()
+    val isLoadingExtraSpaceOccupancy by vm.isLoadingExtraSpaceOccupancy.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         StepTitle(stringResource(R.string.select_time_slot))
         extraSpace?.let { Text(it.device, color = Color.Cyan, fontSize = 14.sp) }
         Spacer(Modifier.height(16.dp))
-        if (slots.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
+        if (slots.isEmpty() || isLoadingExtraSpaceOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot ->
                 val isEnabled = enabledSlots.contains(slot); val isSelected = selectedSlots.contains(slot)
@@ -533,7 +560,7 @@ private fun BottomButtons(
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
             val buttonLabel = when {
                 isEditingTeam -> stringResource(R.string.save)
-                isAskSimulatorStep -> stringResource(R.string.no_reserve_without_simulator)
+                isAskSimulatorStep -> stringResource(R.string.yes_add_simulator)
                 isAskExtraSpaceStep -> stringResource(R.string.no_reserve_only_simulator)
                 vm.isEditing -> stringResource(R.string.save)
                 else -> stringResource(R.string.book)
@@ -541,9 +568,16 @@ private fun BottomButtons(
 
             PrimaryFlowButton(buttonLabel, enabled = canConfirm) {
                 coroutineScope.launch {
+                    if (isAskSimulatorStep) {
+                        vm.setWantsSimulator(true)
+                        vm.findSimulatorSpace()
+                        vm.fetchSimulatorSlots()
+                        vm.goToNextStep()
+                        return@launch
+                    }
                     val success = when {
                         isEditingTeam -> { if (vm.isVirtualTeam) vm.updateVirtualTeamReservation() else vm.updateCenterTeamReservation() }
-                        isAskSimulatorStep || isAskExtraSpaceStep -> { vm.resetSimulatorSelection(); vm.resetExtraSpaceSelection(); if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
+                        isAskExtraSpaceStep -> { vm.resetSimulatorSelection(); vm.resetExtraSpaceSelection(); if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
                         isSimulatorSlotStep || isExtraSlotStep -> { if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
                         isVirtualLastStep && !personalReservation -> vm.createVirtualTeamReservation()
                         isSlotStepNoAddon && !personalReservation -> vm.createTeamReservation(logoBitmap)

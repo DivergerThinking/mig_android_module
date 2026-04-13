@@ -47,7 +47,7 @@ object WeekTimeService {
             }
             val times = response.data.flatMap { weekData ->
                 weekData.times.map { it.gamingSpaceTime }
-            }.sortedBy { it.value } // Ordena por `value` como en iOS
+            }.sortedBy { it.time } // Sort chronologically by "HH:mm" string
 
             Result.success(times)
         } catch (e: Exception) {
