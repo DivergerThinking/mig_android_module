@@ -444,7 +444,7 @@ class ReservationFlowViewModel(
         viewModelScope.launch {
             val result = WeekTimeService.fetchWeekTimeByDay(dayValue)
             result.onSuccess { slots ->
-                _availableSimulatorSlots.value = slots
+                _availableSimulatorSlots.value = slots.sortedBy { it.time }
                 val space = _simulatorSpace.value
                 val date = _selectedDate.value
                 if (space != null && date != null) {

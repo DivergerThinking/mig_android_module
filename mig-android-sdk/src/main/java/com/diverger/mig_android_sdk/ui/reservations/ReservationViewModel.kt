@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.data.DuplicateDocumentException
 import com.diverger.mig_android_sdk.data.EventModel
+import com.diverger.mig_android_sdk.data.ParametersService
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.ReservationApi
 import com.diverger.mig_android_sdk.data.TrainingApi
@@ -16,6 +18,7 @@ import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class ReservationViewModel() : ViewModel() {
@@ -91,7 +94,9 @@ class ReservationViewModel() : ViewModel() {
 
         viewModelScope.launch {
             _isLoading.value = true
+            val parametersDeferred = async { ParametersService.fetchParameters() }
             val result = TrainingApi.getTrainings(teamId)
+            parametersDeferred.await().onSuccess { trainingsTeamLimit = it.trainingsTeamLimit }
             result.onSuccess { trainings ->
                 // Asignar teamName y filtrar solo futuras (red de seguridad)
                 val today = Date()
@@ -171,16 +176,16 @@ class ReservationViewModel() : ViewModel() {
 
     // ── DNI ──────────────────────────────────────────────────────
 
-    fun updateUserDNI(userId: String, dni: String, onResult: (Boolean) -> Unit) {
+    fun updateUserDNI(userId: String, dni: String, onResult: (success: Boolean, isDuplicate: Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
 
             val result = UserManager.updateUser(userId, dni = dni)
 
             result.onSuccess {
-                onResult(true)
-            }.onFailure {
-                onResult(false)
+                onResult(true, false)
+            }.onFailure { error ->
+                onResult(false, error is DuplicateDocumentException)
             }
 
             _isLoading.value = false
@@ -232,26 +237,16 @@ class ReservationViewModel() : ViewModel() {
      * Compares active team reservations against the team limit.
      */
     fun teamCanBook(): Boolean {
-        val currentCount = teamReservations.value.count()
-        return currentCount < teamReservationLimit()
+        if (getUserRole().lowercase() != "manager") return false
+        return teamReservations.value.count() < teamReservationLimit()
     }
 
-    /**
-     * Maximum number of active reservations allowed for the team.
-     *
-     * Currently hardcoded to [DEFAULT_TEAM_RESERVATION_LIMIT].
-     * TODO: Replace with a backend field from Team model when available,
-     *       e.g. `UserManager.getSelectedTeam()?.reservesAllowed ?: DEFAULT_TEAM_RESERVATION_LIMIT`
-     */
-    private fun teamReservationLimit(): Int {
-        // Future: read from backend team field
-        // val team = UserManager.getSelectedTeam()
-        // return team?.reservesAllowed ?: DEFAULT_TEAM_RESERVATION_LIMIT
-        return DEFAULT_TEAM_RESERVATION_LIMIT
-    }
+    private fun teamReservationLimit(): Int = trainingsTeamLimit
+
+    // ── App parameters (fetched from backend) ────────────────────
+    private var trainingsTeamLimit: Int = DEFAULT_TEAM_RESERVATION_LIMIT
 
     companion object {
-        /** Default max reservations per team until backend provides the value */
-        const val DEFAULT_TEAM_RESERVATION_LIMIT = 3
+        private const val DEFAULT_TEAM_RESERVATION_LIMIT = 3
     }
 }

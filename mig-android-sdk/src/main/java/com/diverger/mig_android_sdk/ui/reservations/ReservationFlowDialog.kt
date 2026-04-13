@@ -130,7 +130,20 @@ fun ReservationFlowDialog(
                                 viewModel.isVirtualTeam && ((personalReservation && step == 1) || (!personalReservation && step == 3)) -> SelectTimeStep(viewModel)
                                 (personalReservation && step == 1) || (!personalReservation && step == 3) -> SelectSpaceStep(viewModel)
                                 (personalReservation && step == 2) || (!personalReservation && step == 4) -> SelectSlotStep(viewModel)
-                                personalReservation && !viewModel.isSelectedSpaceSimulator && step == 3 -> AskSimulatorStep(viewModel)
+                                personalReservation && !viewModel.isSelectedSpaceSimulator && step == 3 -> AskSimulatorStep(
+                                    vm = viewModel,
+                                    onNoClick = {
+                                        coroutineScope.launch {
+                                            viewModel.resetSimulatorSelection()
+                                            viewModel.resetExtraSpaceSelection()
+                                            val success = if (viewModel.isEditing) viewModel.updateIndividualReservation() else viewModel.createReservation(userId, logoBitmap)
+                                            val msg = if (success) context.getString(R.string.booking_creation_success) else context.getString(R.string.booking_creation_failure)
+                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            if (success) onReservationSuccess()
+                                            onDismiss()
+                                        }
+                                    }
+                                )
                                 personalReservation && !viewModel.isSelectedSpaceSimulator && step == 4 -> SelectSimulatorSlotStep(viewModel)
                                 personalReservation && viewModel.isSelectedSpaceSimulator && step == 3 -> AskExtraSpaceStep(viewModel)
                                 personalReservation && viewModel.isSelectedSpaceSimulator && step == 4 -> SelectExtraSpaceStep(viewModel)
@@ -381,7 +394,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
 // ═══════════════════════════════════════════════════════════════
 
 @Composable
-private fun AskSimulatorStep(vm: ReservationFlowViewModel) {
+private fun AskSimulatorStep(vm: ReservationFlowViewModel, onNoClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.weight(1f))
         Text("🎮", fontSize = 48.sp)
@@ -392,10 +405,7 @@ private fun AskSimulatorStep(vm: ReservationFlowViewModel) {
         Spacer(Modifier.weight(1f))
         SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
         Spacer(Modifier.height(4.dp))
-        Button(onClick = { vm.setWantsSimulator(true); vm.findSimulatorSpace(); vm.fetchSimulatorSlots(); vm.goToNextStep() },
-            modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-        ) { Text(stringResource(R.string.yes_add_simulator), color = Color.Cyan, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
+        SecondaryFlowButton(stringResource(R.string.no_reserve_without_simulator)) { onNoClick() }
     }
 }
 
@@ -550,7 +560,7 @@ private fun BottomButtons(
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
             val buttonLabel = when {
                 isEditingTeam -> stringResource(R.string.save)
-                isAskSimulatorStep -> stringResource(R.string.no_reserve_without_simulator)
+                isAskSimulatorStep -> stringResource(R.string.yes_add_simulator)
                 isAskExtraSpaceStep -> stringResource(R.string.no_reserve_only_simulator)
                 vm.isEditing -> stringResource(R.string.save)
                 else -> stringResource(R.string.book)
@@ -558,9 +568,16 @@ private fun BottomButtons(
 
             PrimaryFlowButton(buttonLabel, enabled = canConfirm) {
                 coroutineScope.launch {
+                    if (isAskSimulatorStep) {
+                        vm.setWantsSimulator(true)
+                        vm.findSimulatorSpace()
+                        vm.fetchSimulatorSlots()
+                        vm.goToNextStep()
+                        return@launch
+                    }
                     val success = when {
                         isEditingTeam -> { if (vm.isVirtualTeam) vm.updateVirtualTeamReservation() else vm.updateCenterTeamReservation() }
-                        isAskSimulatorStep || isAskExtraSpaceStep -> { vm.resetSimulatorSelection(); vm.resetExtraSpaceSelection(); if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
+                        isAskExtraSpaceStep -> { vm.resetSimulatorSelection(); vm.resetExtraSpaceSelection(); if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
                         isSimulatorSlotStep || isExtraSlotStep -> { if (vm.isEditing) vm.updateIndividualReservation() else vm.createReservation(userId, logoBitmap) }
                         isVirtualLastStep && !personalReservation -> vm.createVirtualTeamReservation()
                         isSlotStepNoAddon && !personalReservation -> vm.createTeamReservation(logoBitmap)

@@ -165,4 +165,15 @@
     <string name="booking_reservation_in">Booking in %1$s</string>
     <string name="reload_label">Reload</string>
     <string name="delete_label">Delete</string>
+    <!-- DNI / NIE / Passport dialog -->
+    <string name="passport_label">Passport</string>
+    <string name="invalid_document_dni_id">The document does not match any recognised DNI or European ID format.</string>
+    <string name="invalid_document_nie">NIE must start with X, Y or Z, followed by 7 digits and a letter.</string>
+    <string name="invalid_document_passport">The passport does not match any recognised format.</string>
+    <string name="confirm_title_dni_id">Confirm your DNI / ID</string>
+    <string name="confirm_title_nie">Confirm your NIE</string>
+    <string name="confirm_title_passport">Confirm your Passport</string>
+    <string name="intro_title_dni_id">Enter and confirm your DNI / ID</string>
+    <string name="intro_title_nie">Enter and confirm your NIE</string>
+    <string name="intro_title_passport">Enter and confirm your Passport</string>
 </resources>

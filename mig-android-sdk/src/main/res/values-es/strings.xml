@@ -165,4 +165,15 @@
     <string name="booking_reservation_in">Reserva en %1$s</string>
     <string name="reload_label">Recargar</string>
     <string name="delete_label">Eliminar</string>
+    <!-- DNI / NIE / Pasaporte dialog -->
+    <string name="passport_label">Pasaporte</string>
+    <string name="invalid_document_dni_id">El documento no corresponde a ningún formato de DNI o ID europeo reconocido.</string>
+    <string name="invalid_document_nie">El NIE debe comenzar con X, Y o Z, seguido de 7 dígitos y una letra.</string>
+    <string name="invalid_document_passport">El pasaporte no corresponde a ningún formato reconocido.</string>
+    <string name="confirm_title_dni_id">Confirma tu DNI / ID</string>
+    <string name="confirm_title_nie">Confirma tu NIE</string>
+    <string name="confirm_title_passport">Confirma tu Pasaporte</string>
+    <string name="intro_title_dni_id">Introduce y confirma tu DNI / ID</string>
+    <string name="intro_title_nie">Introduce y confirma tu NIE</string>
+    <string name="intro_title_passport">Introduce y confirma tu Pasaporte</string>
 </resources>

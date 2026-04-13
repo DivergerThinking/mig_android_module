@@ -1,6 +1,7 @@
 package com.diverger.mig_android_sdk.data
 
 import android.util.Log
+import retrofit2.HttpException
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -30,6 +31,8 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+
+class DuplicateDocumentException : Exception("Document already linked to another user")
 
 object UserManager {
     private var user: User? = null
@@ -135,6 +138,12 @@ object UserManager {
                     Result.success(Unit)
                 } else {
                     Result.failure(Exception("Error: No se pudo actualizar el DNI."))
+                }
+            } catch (e: HttpException) {
+                if (e.code() == 400 || e.code() == 409) {
+                    Result.failure(DuplicateDocumentException())
+                } else {
+                    Result.failure(e)
                 }
             } catch (e: Exception) {
                 Result.failure(e)
