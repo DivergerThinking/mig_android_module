@@ -176,4 +176,8 @@
     <string name="intro_title_dni_id">Introduce y confirma tu DNI / ID</string>
     <string name="intro_title_nie">Introduce y confirma tu NIE</string>
     <string name="intro_title_passport">Introduce y confirma tu Pasaporte</string>
+    <string name="duplicate_document_dni_id">Este DNI/ID ya está vinculado a otro usuario.</string>
+    <string name="duplicate_document_nie">Este NIE ya está vinculado a otro usuario.</string>
+    <string name="duplicate_document_passport">Este pasaporte ya está vinculado a otro usuario.</string>
+    <string name="error_document_update">Ha ocurrido un error. Por favor, inténtalo de nuevo.</string>
 </resources>
