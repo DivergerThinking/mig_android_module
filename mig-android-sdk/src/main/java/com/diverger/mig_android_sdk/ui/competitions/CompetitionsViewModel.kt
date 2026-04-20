@@ -9,42 +9,41 @@ import com.diverger.mig_android_sdk.support.getCurrentYear
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class CompetitionsViewModel : ViewModel() {
 
-    // 🔄 Estado de carga
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // 🚨 Mensaje de error
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _competitions = MutableStateFlow<List<Competition>>(emptyList())
     val competitions: StateFlow<List<Competition>> = _competitions
 
-    private val _selectedYear = MutableStateFlow<String>("${getCurrentYear()}")
+    private val _selectedYear = MutableStateFlow("${getCurrentYear()}")
     val selectedYear: StateFlow<String> = _selectedYear
 
     private val _availableYears = MutableStateFlow<List<String>>(emptyList())
     val availableYears: StateFlow<List<String>> = _availableYears
 
-    private val validCompetitions = arrayOf("esm", "junior", "stormCircuit",  "other")
+    // Matches competition.type (the competition's own type, not game.type)
+    private val validCompetitions = arrayOf("esm", "junior", "stormCircuit", "other")
 
     init {
-        fetchCompetitions()
+        // Mirror iOS: build year list from 2024 to current year, then fetch current year
+        _availableYears.value = initAvailableYears()
+        fetchCompetitions(getCurrentYear())
     }
 
-    private fun fetchAvailableYears(competitions: List<Competition>) {
-        _availableYears.value = getUniqueYears(competitions).map { it.toString() }
+    // Mirrors iOS initAllSeasons() — hardcoded range starting 2024
+    private fun initAvailableYears(): List<String> {
+        val currentYear = getCurrentYear()
+        return (2024..currentYear).map { it.toString() }.sortedDescending()
     }
 
-    private fun fetchCompetitions(year: Int? = null) {
+    private fun fetchCompetitions(year: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
@@ -58,17 +57,16 @@ class CompetitionsViewModel : ViewModel() {
                     CompetitionsApi.getAllCompetitions(year)
                 }
 
-                fetchAvailableYears(response)
+                // Mirror iOS filterCompetitonsByType: filter by competition.type, not game.type
+                val filtered = response.filter { it.type in validCompetitions }
+                val sorted = filtered.sortedBy { it.game?.priority ?: Int.MAX_VALUE }
 
-                val filteredByYear = filterCompetitionsByYear(response, selectedYear.value.toInt())
-
-                if (response.isNotEmpty()) {
-                    _competitions.value = filteredByYear
+                if (sorted.isNotEmpty()) {
+                    _competitions.value = sorted
                 } else {
                     _competitions.value = emptyList()
                     _errorMessage.value = "No hay competiciones disponibles para este año."
                 }
-
 
             } catch (e: Exception) {
                 _competitions.value = emptyList()
@@ -83,32 +81,4 @@ class CompetitionsViewModel : ViewModel() {
         _selectedYear.value = year
         fetchCompetitions(year.toInt())
     }
-
-    private fun parseDateSafe(dateStr: String?): Date? {
-        if (dateStr.isNullOrBlank()) return null
-        return try {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(dateStr)
-        } catch (e: ParseException) {
-            null
-        }
-    }
-
-    private fun filterCompetitionsByYear(competitions: List<Competition>, year: Int): List<Competition> {
-        return competitions.filter { competition ->
-            parseDateSafe(competition.startDate)?.let { date ->
-                Calendar.getInstance().apply { time = date }.get(Calendar.YEAR) == year
-            } == true && competition.game?.type in validCompetitions
-        }
-    }
-
-    private fun getUniqueYears(competitions: List<Competition>): Set<Int> {
-        val years = mutableSetOf<Int>()
-        competitions.filter { it.game?.type in validCompetitions}.forEach { competition ->
-            parseDateSafe(competition.startDate)?.let { date ->
-                years.add(Calendar.getInstance().apply { time = date }.get(Calendar.YEAR))
-            }
-        }
-        return years
-    }
-
 }

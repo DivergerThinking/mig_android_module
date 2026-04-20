@@ -180,4 +180,16 @@
     <string name="duplicate_document_nie">This NIE is already linked to another user.</string>
     <string name="duplicate_document_passport">This passport is already linked to another user.</string>
     <string name="error_document_update">An error occurred. Please try again.</string>
+    <string name="user_banned_title">Account Suspended</string>
+    <string name="user_banned_message">Your account has been suspended. You cannot make reservations.</string>
+    <string name="modality_in_person">Presencial / Online</string>
+    <string name="modality_online">Online</string>
+    <string name="see_more">See more</string>
+    <string name="see_less">See less</string>
+    <string name="pdf_download">Download PDF</string>
+    <string name="pdf_open">Open PDF</string>
+    <string name="rules_section_text">Text</string>
+    <string name="rules_section_pdf">PDF Document</string>
+    <string name="contact_card_title">WANT TO KNOW MORE?</string>
+    <string name="contact_join_discord">Join Discord</string>
 </resources>

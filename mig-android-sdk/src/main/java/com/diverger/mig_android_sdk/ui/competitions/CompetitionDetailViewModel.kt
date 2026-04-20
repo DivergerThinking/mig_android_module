@@ -1,3 +1,5 @@
+package com.diverger.mig_android_sdk.ui.competitions
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.Competition

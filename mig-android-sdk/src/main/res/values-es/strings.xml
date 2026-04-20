@@ -180,4 +180,16 @@
     <string name="duplicate_document_nie">Este NIE ya está vinculado a otro usuario.</string>
     <string name="duplicate_document_passport">Este pasaporte ya está vinculado a otro usuario.</string>
     <string name="error_document_update">Ha ocurrido un error. Por favor, inténtalo de nuevo.</string>
+    <string name="user_banned_title">Cuenta Suspendida</string>
+    <string name="user_banned_message">Tu cuenta ha sido suspendida. No puedes realizar reservas.</string>
+    <string name="modality_in_person">Presencial / Online</string>
+    <string name="modality_online">Online</string>
+    <string name="see_more">Ver más</string>
+    <string name="see_less">Ver menos</string>
+    <string name="pdf_download">Descargar PDF</string>
+    <string name="pdf_open">Abrir PDF</string>
+    <string name="rules_section_text">Texto</string>
+    <string name="rules_section_pdf">Documento PDF</string>
+    <string name="contact_card_title">¿QUIERES SABER MÁS?</string>
+    <string name="contact_join_discord">Unirse a Discord</string>
 </resources>

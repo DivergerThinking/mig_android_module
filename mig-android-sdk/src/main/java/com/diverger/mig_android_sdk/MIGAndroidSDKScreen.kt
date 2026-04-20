@@ -1,6 +1,6 @@
 package com.diverger.mig_android_sdk
 
-import CompetitionDetailScreen
+import com.diverger.mig_android_sdk.ui.competitions.CompetitionDetailScreen
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

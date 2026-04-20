@@ -31,7 +31,9 @@ data class Competition(
     val details: String?,
     val contact: String?,
     val splits: List<Split>?,
-    val game: Game?
+    val game: Game?,
+    val type: String?,
+    @SerializedName("pdf_file") val pdfFile: String?
 )
 
 // 📌 **Modelo de Juego**
@@ -41,7 +43,8 @@ data class Game(
     val image: String?,
     val banner: String?,
     val type: String,
-    val description: String?
+    val description: String?,
+    val priority: Int?
 )
 
 // 📌 **Modelo de Split**
@@ -66,7 +69,7 @@ interface CompetitionsService {
     @GET("competitions")
     suspend fun getAllCompetitions(
         @Query("fields") fields: String = "*,game.*, splits.*, splits.tournaments.*",
-        @Query("filter[start_date][_between]") yearRange: String?,
+        @Query(value = "filter[season][_eq]", encoded = true) season: String?,
         @Header("Authorization") token: String
     ): CompetitionResponse
 
@@ -100,15 +103,18 @@ object CompetitionsApi {
     }
 
     suspend fun getAllCompetitions(year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01,$it-12-31" }
-        return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
+        val season = year?.toString()
+        return service.getAllCompetitions(
+            fields = "*,game.*,splits.*,splits.tournaments.*",
+            season = season,
+            token = TOKEN
+        ).data
     }
 
     suspend fun getCompetitionsByTeam(teamId: String, year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01$it-12-31" }
-        // TODO : Cambiar cuando haya competiciones para mi team
-        //return service.getCompetitionsByTeam(teamId = teamId, yearRange = yearRange, token = TOKEN).data
-        return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
+        val season = year?.toString()
+        // TODO: Filter by team when team competitions are available
+        return service.getAllCompetitions(season = season, token = TOKEN).data
     }
 
     suspend fun getCompetitionById(competitionId: String): Competition {
