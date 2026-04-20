@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
             context = this,
             madridInGameUserData = madridInGameUserData,
             accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY",
-            isPreRelease = true
+            isPreRelease = false
         )
 
 //        MadridInGameAndroidModuleEntryPoint.launch(
