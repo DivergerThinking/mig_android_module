@@ -89,6 +89,9 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
         var enteredDni by remember { mutableStateOf("") }
         var dniError by remember { mutableStateOf<String?>(null) }
 
+        // Banned / inactive user
+        var showBannedDialog by remember { mutableStateOf(false) }
+
         // ── Fetch según modo (se relanza al cambiar de equipo) ───
         LaunchedEffect(userId, personalReservation, selectedTeam?.id) {
             viewModel.refreshData(personalReservation, userId)
@@ -192,9 +195,13 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                             }
 
                                             IndividualReservationsCellOptions.EDIT_RESERVATION -> {
-                                                selectedReservation = res
-                                                selectedTeamReservation = null
-                                                showReservationFlow.value = true
+                                                if (UserManager.getUser()?.status?.lowercase() == "inactive") {
+                                                    showBannedDialog = true
+                                                } else {
+                                                    selectedReservation = res
+                                                    selectedTeamReservation = null
+                                                    showReservationFlow.value = true
+                                                }
                                             }
                                         }
                                     }
@@ -226,8 +233,12 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                         }
 
                                         TrainingCellOption.EditBooking -> {
-                                            selectedTeamReservation = training
-                                            showReservationFlow.value = true
+                                            if (UserManager.getUser()?.status?.lowercase() == "inactive") {
+                                                showBannedDialog = true
+                                            } else {
+                                                selectedTeamReservation = training
+                                                showReservationFlow.value = true
+                                            }
                                         }
                                     }
                                 }
@@ -243,15 +254,18 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
             val showBookButton = if (personalReservation) {
                 true
             } else {
-                viewModel.getUserRole().lowercase() == "manager"
+                viewModel.isManagerOrTrainer()
             }
 
             if (showBookButton) {
-                val canBook = if (personalReservation) viewModel.userCanBook() else viewModel.teamCanBook()
+                val userIsBanned = UserManager.getUser()?.status?.lowercase() == "inactive"
+                val canBook = !userIsBanned && if (personalReservation) viewModel.userCanBook() else viewModel.teamCanBook()
 
                 Button(
                     onClick = {
-                        if (personalReservation) {
+                        if (UserManager.getUser()?.status?.lowercase() == "inactive") {
+                            showBannedDialog = true
+                        } else if (personalReservation) {
                             if (viewModel.userIsValidated() && !viewModel.userCanBook()) {
                                 Toast.makeText(
                                     context,
@@ -469,6 +483,37 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             enabled = !isLoading
                         ) {
                             Text(stringResource(R.string.cancel_label), color = Color.Black)
+                        }
+                    },
+                    containerColor = Color.DarkGray,
+                    titleContentColor = Color.White,
+                    textContentColor = Color.White
+                )
+            }
+
+            // ── Diálogo usuario baneado / inactivo ───────────────
+            if (showBannedDialog) {
+                AlertDialog(
+                    onDismissRequest = { showBannedDialog = false },
+                    title = {
+                        Text(
+                            stringResource(R.string.user_banned_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    text = {
+                        Text(
+                            stringResource(R.string.user_banned_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        Button(onClick = { showBannedDialog = false }) {
+                            Text(stringResource(R.string.close_label), color = Color.Black)
                         }
                     },
                     containerColor = Color.DarkGray,

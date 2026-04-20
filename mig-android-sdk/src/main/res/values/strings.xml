@@ -180,4 +180,6 @@
     <string name="duplicate_document_nie">This NIE is already linked to another user.</string>
     <string name="duplicate_document_passport">This passport is already linked to another user.</string>
     <string name="error_document_update">An error occurred. Please try again.</string>
+    <string name="user_banned_title">Account Suspended</string>
+    <string name="user_banned_message">Your account has been suspended. You cannot make reservations.</string>
 </resources>

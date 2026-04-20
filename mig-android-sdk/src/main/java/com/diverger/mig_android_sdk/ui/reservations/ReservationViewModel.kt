@@ -237,7 +237,7 @@ class ReservationViewModel() : ViewModel() {
      * Compares active team reservations against the team limit.
      */
     fun teamCanBook(): Boolean {
-        if (getUserRole().lowercase() != "manager") return false
+        if (!isManagerOrTrainer()) return false
         return teamReservations.value.count() < teamReservationLimit()
     }
 

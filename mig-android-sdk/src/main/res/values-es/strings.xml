@@ -180,4 +180,6 @@
     <string name="duplicate_document_nie">Este NIE ya está vinculado a otro usuario.</string>
     <string name="duplicate_document_passport">Este pasaporte ya está vinculado a otro usuario.</string>
     <string name="error_document_update">Ha ocurrido un error. Por favor, inténtalo de nuevo.</string>
+    <string name="user_banned_title">Cuenta Suspendida</string>
+    <string name="user_banned_message">Tu cuenta ha sido suspendida. No puedes realizar reservas.</string>
 </resources>
