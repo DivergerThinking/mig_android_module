@@ -31,6 +31,8 @@ import coil.compose.AsyncImage
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Competition
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.support.LocalizationManager
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -51,7 +53,7 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
                 .padding(16.dp)
         ) {
             Text(
-                stringResource(R.string.competitions_label),
+                localizedString("competitions.heading", R.string.competitions_label),
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 10.dp)
@@ -101,7 +103,7 @@ fun DropdownMenuComponent(selectedYear: String, options: List<String>, onYearSel
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedYear.ifEmpty { stringResource(R.string.select_season) },
+                    text = selectedYear.ifEmpty { localizedString("competitions.season", R.string.select_season) },
                     color = Color.White,
                     modifier = Modifier.weight(1f)
                 )
@@ -170,7 +172,7 @@ fun CompetitionLeagueSection(league: LeagueModel, navController: NavController) 
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = if (isDescriptionExpanded) stringResource(R.string.see_less) else stringResource(R.string.see_more),
+                        text = if (isDescriptionExpanded) localizedString("dashboard.profile.seeLess", R.string.see_less) else localizedString("dashboard.profile.seeMore", R.string.see_more),
                         color = Color.Cyan,
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
                     )
@@ -215,8 +217,8 @@ fun CompetitionCard(competition: Competition, modifier: Modifier = Modifier, onC
     val imageUrl = "${EnvironmentManager.getAssetsBaseUrl()}${competition.game?.image ?: ""}"
     val gameType = competition.game?.type
     val modalityText = when (gameType) {
-        "in-person" -> stringResource(R.string.modality_in_person)
-        "online"    -> stringResource(R.string.modality_online)
+        "in-person" -> localizedString("competition.modality.hybrid", R.string.modality_in_person)
+        "online"    -> localizedString("competition.modality.online", R.string.modality_online)
         else        -> null
     }
     val modalityColor = if (gameType == "online") Color(0xFF00C853) else Color.Cyan
@@ -304,31 +306,31 @@ fun CompetitionsViewModel.getLeaguesWithCompetitions(context: Context): List<Lea
 
     if (esm.isNotEmpty()) {
         list.add(LeagueModel(
-            title = context.getString(R.string.local_league_title),
+            title = LocalizationManager.string("competitions.municipalLeague") ?: context.getString(R.string.local_league_title),
             seriesTitle = context.getString(R.string.local_league_description),
-            description = context.getString(R.string.local_league_overview),
+            description = LocalizationManager.string("competitions.subheadings.townLeague") ?: context.getString(R.string.local_league_overview),
             competitions = esm
         ))
     }
     if (junior.isNotEmpty()) {
         list.add(LeagueModel(
-            title = context.getString(R.string.junior_league_title),
+            title = LocalizationManager.string("competitions.juniorLeague") ?: context.getString(R.string.junior_league_title),
             seriesTitle = context.getString(R.string.junior_league_description),
-            description = context.getString(R.string.junior_league_overview),
+            description = LocalizationManager.string("competitions.subheadings.junior") ?: context.getString(R.string.junior_league_overview),
             competitions = junior
         ))
     }
     if (stormCircuit.isNotEmpty()) {
         list.add(LeagueModel(
-            title = context.getString(R.string.storm_circuit_title),
+            title = LocalizationManager.string("competitions.stormCircuit") ?: context.getString(R.string.storm_circuit_title),
             seriesTitle = context.getString(R.string.storm_circuit_description),
-            description = context.getString(R.string.storm_circuit_overview),
+            description = LocalizationManager.string("competitions.subheadings.storm") ?: context.getString(R.string.storm_circuit_overview),
             competitions = stormCircuit
         ))
     }
     if (other.isNotEmpty()) {
         list.add(LeagueModel(
-            title = context.getString(R.string.other_competition_title),
+            title = LocalizationManager.string("competitions.otherLeague") ?: context.getString(R.string.other_competition_title),
             seriesTitle = "",
             description = context.getString(R.string.other_competition_description),
             competitions = other

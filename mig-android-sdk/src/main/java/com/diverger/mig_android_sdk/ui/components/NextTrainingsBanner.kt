@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.support.localizedString
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 
@@ -32,7 +33,7 @@ fun NextTrainingsBanner(isTrainingsVisible: Boolean, onToggle: () -> Unit) {
 
         Box(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(R.string.future_trainings),
+                text = localizedString("dashboard.teams.teamAreas.training.upcoming", R.string.future_trainings),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleLarge,

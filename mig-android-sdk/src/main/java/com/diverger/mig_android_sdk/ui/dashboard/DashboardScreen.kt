@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.ui.components.CalendarComponent
@@ -150,13 +151,13 @@ fun UnifiedScheduleList(
     onReservationAction: (Reservation, IndividualReservationsCellOptions) -> Unit,
 ) {
     if (trainings.isEmpty() && reservations.isEmpty()) {
-        Text(stringResource(R.string.no_scheduled_trainings), color = Color.Gray, style = MaterialTheme.typography.labelMedium)
+        Text(localizedString("dashboard.teams.teamAreas.trainings.noTrainings", R.string.no_scheduled_trainings), color = Color.Gray, style = MaterialTheme.typography.labelMedium)
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             if (reservations.isNotEmpty()) {
                 item {
                     Text(
-                        text = stringResource(R.string.individual_bookings).uppercase(),
+                        text = localizedString("dashboard.profile.reserves.title", R.string.individual_bookings).uppercase(),
                         color = Color.Gray,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(vertical = 8.dp)

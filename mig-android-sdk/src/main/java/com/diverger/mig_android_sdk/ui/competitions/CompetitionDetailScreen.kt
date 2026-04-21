@@ -54,6 +54,7 @@ import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
 import com.diverger.mig_android_sdk.data.getUnsafeOkHttpClient
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
@@ -199,14 +200,14 @@ fun OverviewTabContent(overview: String?) {
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Text(
-            text = stringResource(R.string.tournament_about_this_competition),
+            text = localizedString("competitions.about", R.string.tournament_about_this_competition),
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 10.dp)
         )
         Text(
-            text = if (overview.isNullOrBlank()) stringResource(R.string.no_information_available) else cleanHtml(overview),
+            text = if (overview.isNullOrBlank()) localizedString("competitions.subheadings.notFound", R.string.no_information_available) else cleanHtml(overview),
             color = Color.White.copy(alpha = 0.85f),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -249,7 +250,7 @@ fun DetailsTabContent() {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            text = stringResource(R.string.tournament_details),
+            text = localizedString("competitions.details", R.string.tournament_details),
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium,
@@ -358,7 +359,7 @@ fun RulesTabContent(rules: String?, pdfFile: String?) {
             hasText && pdfUrl != null -> {
                 // Accordion: text section
                 RulesAccordionRow(
-                    label = stringResource(R.string.rules_section_text),
+                    label = localizedString("rules.section.text", R.string.rules_section_text),
                     icon = Icons.Default.Description,
                     isExpanded = expandedSection == "text",
                     onToggle = { expandedSection = if (expandedSection == "text") null else "text" }
@@ -374,7 +375,7 @@ fun RulesTabContent(rules: String?, pdfFile: String?) {
                 HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
                 // Accordion: PDF section
                 RulesAccordionRow(
-                    label = stringResource(R.string.rules_section_pdf),
+                    label = localizedString("rules.section.pdf", R.string.rules_section_pdf),
                     icon = Icons.Default.PictureAsPdf,
                     isExpanded = expandedSection == "pdf",
                     onToggle = { expandedSection = if (expandedSection == "pdf") null else "pdf" }
@@ -407,7 +408,7 @@ fun RulesTabContent(rules: String?, pdfFile: String?) {
 private fun RulesTitleRow(pdfUrl: String?, context: Context, modifier: Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(R.string.tournament_rules),
+            text = localizedString("competitions.rules", R.string.tournament_rules),
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium,
@@ -424,7 +425,7 @@ private fun RulesTitleRow(pdfUrl: String?, context: Context, modifier: Modifier)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
-                    Text(stringResource(R.string.pdf_download), color = Color.Black, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+                    Text(localizedString("pdf.download", R.string.pdf_download), color = Color.Black, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
                 }
             }
         }
@@ -486,7 +487,7 @@ fun ContactTabContent(contact: String?) {
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Text(
-            text = stringResource(R.string.tournament_contact),
+            text = localizedString("competitions.contact", R.string.tournament_contact),
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium,
@@ -606,7 +607,7 @@ fun TournamentTab(selectedSplit: Split?) {
         if (tournaments.isEmpty()) {
             item {
                 Text(
-                    text = stringResource(R.string.no_tournaments_available),
+                    text = localizedString("competitions.subheadings.notFound", R.string.no_tournaments_available),
                     color = Color.White,
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge
@@ -661,7 +662,7 @@ fun TournamentCard(tournament: Tournament) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.tournament_enroll), color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            Text(localizedString("competitions.events.eventLayoutSignIn", R.string.tournament_enroll), color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.width(8.dp))
             Icon(FeatherIcons.ArrowRightCircle, contentDescription = null, tint = Color.White)
         }
@@ -682,11 +683,11 @@ fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
     ) {
         NavigationBar(modifier = Modifier.fillMaxWidth(), containerColor = Color.Transparent, contentColor = Color.White) {
             val tabs = listOf(
-                stringResource(R.string.overview_section_label)    to Icons.Default.Info,
-                stringResource(R.string.details_section_label)     to Icons.Default.List,
-                stringResource(R.string.rules_section_label)       to Icons.Default.Rule,
-                stringResource(R.string.contact_section_label)     to Icons.Default.Email,
-                stringResource(R.string.tournament_section_label)  to FontAwesomeIcons.Solid.Trophy
+                localizedString("competitions.overview", R.string.overview_section_label)   to Icons.Default.Info,
+                localizedString("competitions.details", R.string.details_section_label)    to Icons.Default.List,
+                localizedString("competitions.rules", R.string.rules_section_label)        to Icons.Default.Rule,
+                localizedString("competitions.contact", R.string.contact_section_label)    to Icons.Default.Email,
+                localizedString("competitions.tournaments", R.string.tournament_section_label) to FontAwesomeIcons.Solid.Trophy
             )
             tabs.forEachIndexed { index, (title, icon) ->
                 NavigationBarItem(
@@ -793,7 +794,7 @@ fun PdfViewer(url: String, modifier: Modifier = Modifier) {
         when {
             isLoading -> CircularProgressIndicator(color = Color.Cyan, modifier = Modifier.padding(32.dp))
             loadFailed -> Text(
-                text = stringResource(R.string.no_information_available),
+                text = localizedString("competitions.subheadings.notFound", R.string.no_information_available),
                 color = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier.padding(24.dp)
             )

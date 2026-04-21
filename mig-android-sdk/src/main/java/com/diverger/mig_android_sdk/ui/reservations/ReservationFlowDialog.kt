@@ -34,6 +34,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.data.GamingSpaceTime
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.Space
@@ -111,7 +112,7 @@ fun ReservationFlowDialog(
                     }
                     Spacer(Modifier.weight(1f))
                     IconButton(onClick = { if (!isProcessing) onDismiss() }, modifier = Modifier.size(44.dp)) {
-                        Icon(FeatherIcons.XCircle, stringResource(R.string.close_label), tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                        Icon(FeatherIcons.XCircle, localizedString("tournament.incription.dialog.closeButton", R.string.close_label), tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -169,7 +170,7 @@ fun ReservationFlowDialog(
 @Composable
 private fun SummaryBanner(vm: ReservationFlowViewModel) {
     val tokens = vm.getSummaryTokens()
-    val title = if (vm.isEditing && !vm.personalReservations) stringResource(R.string.edit_players_title) else stringResource(R.string.book_space)
+    val title = if (vm.isEditing && !vm.personalReservations) stringResource(R.string.edit_players_title) else localizedString("dashboard.teams.teamAreas.reserves.reserveSpace", R.string.book_space)
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         if (tokens.isNotEmpty()) Text(tokens.joinToString(" · "), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp, textAlign = TextAlign.Center, maxLines = 2)
@@ -189,7 +190,7 @@ private fun SelectPlaceAndNotesStep(vm: ReservationFlowViewModel) {
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle(stringResource(R.string.select_space))
+        StepTitle(localizedString("dashboard.teams.teamAreas.reserves.reserveSpace", R.string.select_space))
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
             Box(modifier = Modifier.fillMaxWidth().menuAnchor().background(SurfaceColor, RoundedCornerShape(12.dp)).border(1.dp, BorderColor, RoundedCornerShape(12.dp)).clickable { expanded = true }.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -201,9 +202,9 @@ private fun SelectPlaceAndNotesStep(vm: ReservationFlowViewModel) {
                 spaceTypes.forEach { type -> DropdownMenuItem(text = { Row { Text(type); if (selectedType == type) { Spacer(Modifier.weight(1f)); Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) } } }, onClick = { vm.setSelectedSpaceType(type); expanded = false }) }
             }
         }
-        OutlinedTextField(value = notes, onValueChange = { vm.setReservationNotes(it) }, placeholder = { Text(stringResource(R.string.notes_optional), color = Color.White.copy(alpha = 0.3f)) }, modifier = Modifier.fillMaxWidth().height(120.dp), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White, focusedBorderColor = BorderColor, unfocusedBorderColor = BorderColor, focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor), shape = RoundedCornerShape(12.dp))
+        OutlinedTextField(value = notes, onValueChange = { vm.setReservationNotes(it) }, placeholder = { Text(localizedString("dashboard.teams.teamAreas.training.notesPlaceholder", R.string.notes_optional), color = Color.White.copy(alpha = 0.3f)) }, modifier = Modifier.fillMaxWidth().height(120.dp), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White, focusedBorderColor = BorderColor, unfocusedBorderColor = BorderColor, focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor), shape = RoundedCornerShape(12.dp))
         Spacer(Modifier.weight(1f))
-        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedType != null) { vm.goToNextStep() }
+        PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = selectedType != null) { vm.goToNextStep() }
     }
 }
 
@@ -219,11 +220,11 @@ private fun SelectPlayerStep(vm: ReservationFlowViewModel) {
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StepTitle(stringResource(R.string.select_a_player))
+        StepTitle(localizedString("dashboard.teams.teamAreas.reserves.reserveIdRequired", R.string.select_a_player))
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
             Box(modifier = Modifier.fillMaxWidth().menuAnchor().background(SurfaceColor, RoundedCornerShape(12.dp)).border(1.dp, BorderColor, RoundedCornerShape(12.dp)).clickable { expanded = true }.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.select_a_player), color = SubtleText, modifier = Modifier.weight(1f))
+                    Text(localizedString("dashboard.teams.teamAreas.reserves.reserveIdRequired", R.string.select_a_player), color = SubtleText, modifier = Modifier.weight(1f))
                     Icon(Icons.Default.KeyboardArrowDown, null, tint = SubtleText, modifier = Modifier.size(14.dp))
                 }
             }
@@ -241,8 +242,8 @@ private fun SelectPlayerStep(vm: ReservationFlowViewModel) {
         }
         Spacer(Modifier.weight(1f))
         if (!(vm.isEditing && !vm.personalReservations)) {
-            SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
-            PrimaryFlowButton(stringResource(R.string.next), enabled = players.isNotEmpty()) { vm.goToNextStep() }
+            SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
+            PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = players.isNotEmpty()) { vm.goToNextStep() }
         }
     }
 }
@@ -271,8 +272,8 @@ private fun SelectDateStep(vm: ReservationFlowViewModel) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StepTitle(stringResource(R.string.select_date), modifier = Modifier.weight(1f))
-            TextButton(onClick = { vm.toggleLegendPopup() }) { Text(stringResource(R.string.legend), color = Color.Cyan, fontSize = 13.sp) }
+            StepTitle(localizedString("dashboard.teams.teamAreas.reserves.selectDate", R.string.select_date), modifier = Modifier.weight(1f))
+            TextButton(onClick = { vm.toggleLegendPopup() }) { Text(localizedString("legend", R.string.legend), color = Color.Cyan, fontSize = 13.sp) }
         }
         if (isLoading) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else {
@@ -285,7 +286,7 @@ private fun SelectDateStep(vm: ReservationFlowViewModel) {
             markedDates.any { it.isReservation && it.date == selectedDate }
         if (hasReservationOnDate) {
             Text(
-                text = stringResource(R.string.no_more_reservations_on_date),
+                text = localizedString("dashboard.teams.teamAreas.reserves.noMoreReservesOnDate", R.string.no_more_reservations_on_date),
                 color = Color.Red.copy(alpha = 0.85f),
                 fontSize = 13.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -293,8 +294,8 @@ private fun SelectDateStep(vm: ReservationFlowViewModel) {
             )
             Spacer(Modifier.height(8.dp))
         }
-        if (vm.currentStep.collectAsState().value > 0) SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedDate != null && !hasReservationOnDate) { vm.goToNextStep() }
+        if (vm.currentStep.collectAsState().value > 0) SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
+        PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = selectedDate != null && !hasReservationOnDate) { vm.goToNextStep() }
     }
 }
 
@@ -331,7 +332,7 @@ private fun SelectTimeStep(vm: ReservationFlowViewModel) {
             }
         }
         Spacer(Modifier.weight(1f))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
     }
 }
 
@@ -344,12 +345,12 @@ private fun SelectSpaceStep(vm: ReservationFlowViewModel) {
     val spaces by vm.availableSpaces.collectAsState(); val selectedSpace by vm.selectedSpace.collectAsState()
     LaunchedEffect(Unit) { vm.fetchAvailableSpaces() }
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle(stringResource(R.string.select_space)); Spacer(Modifier.height(16.dp))
+        StepTitle(localizedString("dashboard.teams.teamAreas.reserves.reserveSpace", R.string.select_space)); Spacer(Modifier.height(16.dp))
         if (spaces.isEmpty()) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { items(spaces) { space -> PillButton(space.device, selectedSpace?.id == space.id, true) { vm.selectSpace(space) } } } }
         Spacer(Modifier.height(16.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.cleanSpace(); vm.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = selectedSpace != null) { vm.goToNextStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.cleanSpace(); vm.goToPreviousStep() }
+        PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = selectedSpace != null) { vm.goToNextStep() }
     }
 }
 
@@ -370,7 +371,7 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
     val maxLabel = if (isSim) stringResource(R.string.max_1_slot) else if (vm.personalReservations) stringResource(R.string.maximum_3_consecutive_slots) else stringResource(R.string.max_2_consecutive_slots)
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle(stringResource(R.string.select_time_slot)); Spacer(Modifier.height(16.dp))
+        StepTitle(localizedString("dashboard.teams.teamAreas.reserves.selectTimeSlot", R.string.select_time_slot)); Spacer(Modifier.height(16.dp))
         if (slots.isEmpty() || isLoadingOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
         else { LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(slots) { slot -> val isEnabled = enabledSlots.contains(slot); val isSelected = selectedSlots.contains(slot)
@@ -382,9 +383,9 @@ private fun SelectSlotStep(vm: ReservationFlowViewModel) {
         }}
         Text(maxLabel, color = Color.White.copy(alpha = 0.35f), fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.cleanSlots(); vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.cleanSlots(); vm.goToPreviousStep() }
         if (vm.shouldGoToAskAddon) {
-            PrimaryFlowButton(stringResource(R.string.next), enabled = selectedSlots.isNotEmpty()) { vm.goToNextStep() }
+            PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = selectedSlots.isNotEmpty()) { vm.goToNextStep() }
         }
     }
 }
@@ -403,7 +404,7 @@ private fun AskSimulatorStep(vm: ReservationFlowViewModel, onNoClick: () -> Unit
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.ask_simulator_description), color = Color.White.copy(alpha = 0.5f), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 30.dp))
         Spacer(Modifier.weight(1f))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
         Spacer(Modifier.height(4.dp))
         SecondaryFlowButton(stringResource(R.string.no_reserve_without_simulator)) { onNoClick() }
     }
@@ -437,7 +438,7 @@ private fun SelectSimulatorSlotStep(vm: ReservationFlowViewModel) {
         }}
         Text(stringResource(R.string.max_1_simulator_slot), color = Color.White.copy(alpha = 0.35f), fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
     }
 }
 
@@ -455,7 +456,7 @@ private fun AskExtraSpaceStep(vm: ReservationFlowViewModel) {
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.ask_extra_space_description), color = Color.White.copy(alpha = 0.5f), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 30.dp))
         Spacer(Modifier.weight(1f))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
         Spacer(Modifier.height(4.dp))
         Button(onClick = { vm.setWantsExtraSpace(true); vm.goToNextStep() },
             modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
@@ -478,8 +479,8 @@ private fun SelectExtraSpaceStep(vm: ReservationFlowViewModel) {
             items(spaces) { space -> PillButton(space.device, extraSpace?.id == space.id, true) { vm.selectExtraSpace(space) } }
         }}
         Spacer(Modifier.height(16.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
-        PrimaryFlowButton(stringResource(R.string.next), enabled = extraSpace != null) { vm.fetchExtraSpaceSlots(); vm.goToNextStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
+        PrimaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.next", R.string.next), enabled = extraSpace != null) { vm.fetchExtraSpaceSlots(); vm.goToNextStep() }
     }
 }
 
@@ -497,7 +498,7 @@ private fun SelectExtraSlotStep(vm: ReservationFlowViewModel) {
     val isLoadingExtraSpaceOccupancy by vm.isLoadingExtraSpaceOccupancy.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        StepTitle(stringResource(R.string.select_time_slot))
+        StepTitle(localizedString("dashboard.teams.teamAreas.reserves.selectTimeSlot", R.string.select_time_slot))
         extraSpace?.let { Text(it.device, color = Color.Cyan, fontSize = 14.sp) }
         Spacer(Modifier.height(16.dp))
         if (slots.isEmpty() || isLoadingExtraSpaceOccupancy) { Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.Cyan) } }
@@ -513,7 +514,7 @@ private fun SelectExtraSlotStep(vm: ReservationFlowViewModel) {
         }}
         Text(stringResource(R.string.maximum_3_consecutive_slots), color = Color.White.copy(alpha = 0.35f), fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
-        SecondaryFlowButton(stringResource(R.string.back)) { vm.goToPreviousStep() }
+        SecondaryFlowButton(localizedString("dashboard.teams.teamAreas.reserves.back", R.string.back)) { vm.goToPreviousStep() }
     }
 }
 
@@ -563,7 +564,7 @@ private fun BottomButtons(
                 isAskSimulatorStep -> stringResource(R.string.yes_add_simulator)
                 isAskExtraSpaceStep -> stringResource(R.string.no_reserve_only_simulator)
                 vm.isEditing -> stringResource(R.string.save)
-                else -> stringResource(R.string.book)
+                else -> localizedString("dashboard.profile.reserves.reserveButton", R.string.book)
             }
 
             PrimaryFlowButton(buttonLabel, enabled = canConfirm) {

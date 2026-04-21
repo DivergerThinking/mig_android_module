@@ -55,6 +55,8 @@ import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.LocalizationManager
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.components.TrainingCellOption
 import com.diverger.mig_android_sdk.ui.components.TrainingCell
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
@@ -123,7 +125,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                 IconButton(onClick = {
                     viewModel.refreshData(personalReservation, userId)
                 }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Recargar", tint = Color.White)
+                    Icon(Icons.Filled.Refresh, contentDescription = null, tint = Color.White)
                 }
             }
 
@@ -150,7 +152,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                stringResource(R.string.no_bookings),
+                                localizedString("dashboard.profile.reserves.noReserves", R.string.no_bookings),
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelMedium
                             )
@@ -163,7 +165,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                stringResource(R.string.no_bookings),
+                                localizedString("dashboard.profile.reserves.noReserves", R.string.no_bookings),
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelMedium
                             )
@@ -255,7 +257,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             if (viewModel.userIsValidated() && !viewModel.userCanBook()) {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.booking_limit_reached),
+                                    LocalizationManager.string("dashboard.profile.reserves.maxReserves") ?: context.getString(R.string.booking_limit_reached),
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else if (!viewModel.userIsValidated() && !viewModel.userCanBook()) {
@@ -278,7 +280,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             if (!viewModel.teamCanBook()) {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.booking_limit_reached),
+                                    LocalizationManager.string("dashboard.profile.reserves.maxReserves") ?: context.getString(R.string.booking_limit_reached),
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else {
@@ -298,7 +300,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                         .padding(horizontal = 50.dp)
                 ) {
                     Text(
-                        stringResource(R.string.book_label),
+                        localizedString("dashboard.profile.reserves.reserveButton", R.string.book_label),
                         color = Color.Black,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -420,7 +422,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                stringResource(R.string.confirm_dni_warning),
+                                localizedString("dashboard.teams.teamAreas.reserves.dniWarning", R.string.confirm_dni_warning),
                                 style = MaterialTheme.typography.labelMedium,
                                 textAlign = TextAlign.Center
                             )
@@ -442,9 +444,9 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                                                 showReservationFlow.value = true
                                             } else if (isDuplicate) {
                                                 dniError = when (selectedDocType) {
-                                                    DocumentType.DNI_ID   -> context.getString(R.string.duplicate_document_dni_id)
-                                                    DocumentType.NIE      -> context.getString(R.string.duplicate_document_nie)
-                                                    DocumentType.PASSPORT -> context.getString(R.string.duplicate_document_passport)
+                                                    DocumentType.DNI_ID   -> LocalizationManager.string("doc.duplicate.dni_id") ?: context.getString(R.string.duplicate_document_dni_id)
+                                                    DocumentType.NIE      -> LocalizationManager.string("doc.duplicate.nie") ?: context.getString(R.string.duplicate_document_nie)
+                                                    DocumentType.PASSPORT -> LocalizationManager.string("doc.duplicate.passport") ?: context.getString(R.string.duplicate_document_passport)
                                                 }
                                             } else {
                                                 dniError = context.getString(R.string.error_document_update)
@@ -455,7 +457,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             },
                             enabled = selectedDocType.validate(enteredDni) && !isLoading,
                         ) {
-                            Text(stringResource(R.string.accept_label), color = Color.Black)
+                            Text(localizedString("dashboard.teams.teamAreas.reserves.accept", R.string.accept_label), color = Color.Black)
                         }
                     },
                     dismissButton = {
@@ -468,7 +470,7 @@ fun ReservationsScreen(userId: String, personalReservation: Boolean) {
                             },
                             enabled = !isLoading
                         ) {
-                            Text(stringResource(R.string.cancel_label), color = Color.Black)
+                            Text(localizedString("dashboard.profile.reserves.cancel", R.string.cancel_label), color = Color.Black)
                         }
                     },
                     containerColor = Color.DarkGray,
@@ -551,12 +553,12 @@ fun CancelTeamReservationPopup(
                 onClick = onConfirmCancel,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
             ) {
-                Text(stringResource(R.string.accept_label), color = Color.White)
+                Text(localizedString("dashboard.teams.accept", R.string.accept_label), color = Color.White)
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel_label), color = Color.White)
+                Text(localizedString("dashboard.profile.reserves.cancel", R.string.cancel_label), color = Color.White)
             }
         },
         containerColor = Color.DarkGray

@@ -54,6 +54,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
 @Composable
@@ -238,7 +239,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         .padding(vertical = 20.dp)
                 ) {
                     Text(
-                        stringResource(R.string.personal_area),
+                        localizedString("dashboard.profile.about.title", R.string.personal_area),
                         style = MaterialTheme.typography.headlineSmall
                     )
                 }
