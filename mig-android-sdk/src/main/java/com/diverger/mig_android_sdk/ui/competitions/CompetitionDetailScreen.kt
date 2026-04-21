@@ -208,7 +208,7 @@ fun OverviewTabContent(overview: String?) {
             text = localizedString("competitions.about", R.string.tournament_about_this_competition),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 10.dp)
         )
         Text(
@@ -258,7 +258,7 @@ fun DetailsTabContent() {
             text = localizedString("competitions.details", R.string.tournament_details),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         items.forEachIndexed { index, item ->
@@ -335,21 +335,19 @@ private fun ExpandableDetailCell(item: DetailItem, isExpanded: Boolean, onToggle
 @Composable
 fun RulesTabContent(rules: String?, pdfFile: String?) {
     val context = LocalContext.current
-    val hasText = !rules.isNullOrBlank()
     val pdfUrl = pdfFile?.takeIf { it.isNotBlank() }
         ?.let { "${EnvironmentManager.getAssetsBaseUrl()}$it" }
     var expandedSection by remember { mutableStateOf<String?>(null) }
 
-    // "Only PDF" case: PDF viewer fills the whole tab — no outer scroll needed
-    if (!hasText && pdfUrl != null) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            RulesTitleRow(pdfUrl = pdfUrl, context = context, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
-            PdfViewer(url = pdfUrl, modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 12.dp).padding(bottom = 8.dp))
-        }
-        return
-    }
+    val ruleItems = listOf(
+        Icons.Default.SmokeFree     to stringResource(R.string.rule_smoke_free),
+        Icons.Default.Fastfood      to stringResource(R.string.rule_no_food),
+        Icons.Default.DirectionsRun to stringResource(R.string.rule_no_running),
+        Icons.Default.VolumeOff     to stringResource(R.string.rule_respect_environment),
+        Icons.Default.Delete        to stringResource(R.string.rule_keep_clean),
+        Icons.Default.CloudOff      to stringResource(R.string.rule_no_downloads)
+    )
 
-    // Text-only or both: scrollable column
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -357,55 +355,65 @@ fun RulesTabContent(rules: String?, pdfFile: String?) {
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         RulesTitleRow(pdfUrl = pdfUrl, context = context, modifier = Modifier)
-
         Spacer(modifier = Modifier.height(12.dp))
 
-        when {
-            hasText && pdfUrl != null -> {
-                // Accordion: text section
-                RulesAccordionRow(
-                    label = localizedString("rules.section.text", R.string.rules_section_text),
-                    icon = Icons.Default.Description,
-                    isExpanded = expandedSection == "text",
-                    onToggle = { expandedSection = if (expandedSection == "text") null else "text" }
-                )
-                AnimatedVisibility(visible = expandedSection == "text", enter = expandVertically(), exit = shrinkVertically()) {
-                    Text(
-                        text = cleanHtml(rules!!),
-                        color = Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 10.dp)
-                    )
-                }
-                HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
-                // Accordion: PDF section
-                RulesAccordionRow(
-                    label = localizedString("rules.section.pdf", R.string.rules_section_pdf),
-                    icon = Icons.Default.PictureAsPdf,
-                    isExpanded = expandedSection == "pdf",
-                    onToggle = { expandedSection = if (expandedSection == "pdf") null else "pdf" }
-                )
-                AnimatedVisibility(visible = expandedSection == "pdf", enter = expandVertically(), exit = shrinkVertically()) {
-                    PdfViewer(
-                        url = pdfUrl,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(460.dp)
-                            .padding(top = 8.dp, bottom = 16.dp)
-                    )
-                }
+        if (pdfUrl != null) {
+            RulesAccordionRow(
+                label = localizedString("rules.section.text", R.string.rules_section_text),
+                icon = Icons.Default.Description,
+                isExpanded = expandedSection == "text",
+                onToggle = { expandedSection = if (expandedSection == "text") null else "text" }
+            )
+            AnimatedVisibility(visible = expandedSection == "text", enter = expandVertically(), exit = shrinkVertically()) {
+                RulesGrid(ruleItems = ruleItems, modifier = Modifier.padding(vertical = 10.dp))
             }
-            hasText -> {
-                Text(
-                    text = cleanHtml(rules!!),
-                    color = Color.White.copy(alpha = 0.85f),
-                    style = MaterialTheme.typography.bodyMedium
+            HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
+            RulesAccordionRow(
+                label = localizedString("rules.section.pdf", R.string.rules_section_pdf),
+                icon = Icons.Default.PictureAsPdf,
+                isExpanded = expandedSection == "pdf",
+                onToggle = { expandedSection = if (expandedSection == "pdf") null else "pdf" }
+            )
+            AnimatedVisibility(visible = expandedSection == "pdf", enter = expandVertically(), exit = shrinkVertically()) {
+                PdfViewer(
+                    url = pdfUrl,
+                    modifier = Modifier.fillMaxWidth().height(460.dp).padding(top = 8.dp, bottom = 16.dp)
                 )
             }
-            else -> {
-                Text(stringResource(R.string.no_rules_defined), color = Color.White.copy(alpha = 0.6f))
+        } else {
+            RulesGrid(ruleItems = ruleItems)
+        }
+    }
+}
+
+@Composable
+private fun RulesGrid(ruleItems: List<Pair<androidx.compose.ui.graphics.vector.ImageVector, String>>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ruleItems.chunked(2).forEach { row ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                row.forEach { (icon, text) ->
+                    RuleCard(icon = icon, text = text, modifier = Modifier.weight(1f))
+                }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+private fun RuleCard(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+        Text(text, color = Color.White, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
     }
 }
 
@@ -416,7 +424,7 @@ private fun RulesTitleRow(pdfUrl: String?, context: Context, modifier: Modifier)
             text = localizedString("competitions.rules", R.string.tournament_rules),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.weight(1f)
         )
         if (pdfUrl != null) {
@@ -495,7 +503,7 @@ fun ContactTabContent(contact: String?) {
             text = localizedString("competitions.contact", R.string.tournament_contact),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
@@ -699,8 +707,17 @@ fun TournamentTab(selectedSplit: Split?) {
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
+        item {
+            Text(
+                text = localizedString("competitions.tournaments", R.string.tournaments_title),
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
         if (tournaments.isEmpty()) {
             item {
                 Text(

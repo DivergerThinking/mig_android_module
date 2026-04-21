@@ -188,8 +188,16 @@
     <string name="see_less">See less</string>
     <string name="pdf_download">Download PDF</string>
     <string name="pdf_open">Open PDF</string>
-    <string name="rules_section_text">Text</string>
+    <string name="rules_section_text">Rules</string>
     <string name="rules_section_pdf">PDF Document</string>
     <string name="contact_card_title">WANT TO KNOW MORE?</string>
     <string name="contact_join_discord">Join Discord</string>
+
+    <!-- Rules grid items -->
+    <string name="rule_smoke_free">Smoke-free zone</string>
+    <string name="rule_no_food">No eating or drinking allowed</string>
+    <string name="rule_no_running">No running in the venue</string>
+    <string name="rule_respect_environment">Respect the environment</string>
+    <string name="rule_keep_clean">Keep the space clean</string>
+    <string name="rule_no_downloads">No downloads or installations</string>
 </resources>
