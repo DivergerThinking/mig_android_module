@@ -5,8 +5,10 @@ import com.google.gson.annotations.SerializedName
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -54,6 +56,16 @@ data class Split(
     val tournaments: List<Tournament>?
 )
 
+// 📌 **Inscripción a torneo**
+data class TournamentInscriptionRequest(
+    val alias: String,
+    val status: String = "published",
+    @SerializedName("id_user") val idUser: String?,
+    @SerializedName("id_tournament") val idTournament: Int,
+    @SerializedName("id_team") val idTeam: String?,
+    val email: String?
+)
+
 // 📌 **Modelo de Torneo**
 data class Tournament(
     val id: Int,
@@ -80,6 +92,12 @@ interface CompetitionsService {
         @Query("filter[start_date][_between]") yearRange: String?,
         @Header("Authorization") token: String
     ): CompetitionResponse
+
+    @POST("tournament_inscriptions")
+    suspend fun createTournamentInscription(
+        @Body body: TournamentInscriptionRequest,
+        @Header("Authorization") token: String
+    ): Unit
 
     @GET("competitions/{id}")
     suspend fun getCompetitionById(
@@ -119,5 +137,9 @@ object CompetitionsApi {
 
     suspend fun getCompetitionById(competitionId: String): Competition {
         return service.getCompetitionById(competitionId, token = TOKEN).data
+    }
+
+    suspend fun createTournamentInscription(request: TournamentInscriptionRequest) {
+        service.createTournamentInscription(request, token = TOKEN)
     }
 }

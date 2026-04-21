@@ -50,9 +50,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Competition
+import com.diverger.mig_android_sdk.data.CompetitionsApi
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
+import com.diverger.mig_android_sdk.data.TournamentInscriptionRequest
+import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.data.getUnsafeOkHttpClient
+import kotlinx.coroutines.launch
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
@@ -599,6 +603,98 @@ private fun ContactCard(email: String, textBefore: String, textAfter: String, di
 @Composable
 fun TournamentTab(selectedSplit: Split?) {
     val tournaments = selectedSplit?.tournaments ?: emptyList()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedTournament by remember { mutableStateOf<Tournament?>(null) }
+    var nickname by remember { mutableStateOf("") }
+    var isSubmitting by remember { mutableStateOf(false) }
+
+    if (showDialog && selectedTournament != null) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color(0xFF1C1C1C),
+            title = {
+                Text(
+                    text = "Antes de continuar…",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "¿Con qué alias competirás en el torneo?",
+                        color = Color.White.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = { nickname = it },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.Cyan,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                            cursorColor = Color.Cyan
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = "Lo usamos para rastrear tus stats automáticamente.",
+                        color = Color.White.copy(alpha = 0.4f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !isSubmitting,
+                    onClick = {
+                        val tournament = selectedTournament ?: return@Button
+                        val user = UserManager.getUser()
+                        val request = TournamentInscriptionRequest(
+                            alias = nickname,
+                            idUser = user?.id,
+                            idTournament = tournament.id,
+                            idTeam = UserManager.getSelectedTeam()?.id,
+                            email = user?.email
+                        )
+                        isSubmitting = true
+                        scope.launch {
+                            try {
+                                android.util.Log.d("TournamentInscription", "Sending POST: $request")
+                                CompetitionsApi.createTournamentInscription(request)
+                                android.util.Log.d("TournamentInscription", "✅ Inscription created successfully")
+                            } catch (e: Exception) {
+                                android.util.Log.e("TournamentInscription", "❌ Error: ${e.message}")
+                            }
+                            isSubmitting = false
+                            showDialog = false
+                            val link = tournament.link?.takeIf { it.isNotBlank() }
+                                ?: "https://webesports.madridingame.es/esports-center/"
+                            android.util.Log.d("TournamentInscription", "Opening URL: $link")
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black, strokeWidth = 2.dp)
+                    } else {
+                        Text("Continuar e Inscribirme", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(text = stringResource(R.string.close_label), color = Color.White.copy(alpha = 0.6f))
+                }
+            }
+        )
+    }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -615,15 +711,18 @@ fun TournamentTab(selectedSplit: Split?) {
             }
         } else {
             items(tournaments) { tournament ->
-                TournamentCard(tournament)
+                TournamentCard(tournament) {
+                    nickname = UserManager.getUser()?.username ?: ""
+                    selectedTournament = tournament
+                    showDialog = true
+                }
             }
         }
     }
 }
 
 @Composable
-fun TournamentCard(tournament: Tournament) {
-    val context = LocalContext.current
+fun TournamentCard(tournament: Tournament, onSubscribeTapped: () -> Unit) {
     val (day, month) = getDayAndMonth(tournament.tournamentDate)
 
     Column(
@@ -633,11 +732,7 @@ fun TournamentCard(tournament: Tournament) {
             .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
             .padding(8.dp)
             .shadow(2.dp, RoundedCornerShape(20.dp))
-            .clickable {
-                tournament.link?.let { link ->
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-                } ?: Toast.makeText(context, context.getString(R.string.unavailable_link), Toast.LENGTH_SHORT).show()
-            }
+            .clickable { onSubscribeTapped() }
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             DateBox(day = day, month = month)
@@ -653,12 +748,7 @@ fun TournamentCard(tournament: Tournament) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    tournament.link?.let { link ->
-                        val url = if (link.startsWith("http")) link else "https://webesports.madridingame.es/esports-center/"
-                        context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = url.toUri() })
-                    } ?: Toast.makeText(context, context.getString(R.string.unavailable_link), Toast.LENGTH_SHORT).show()
-                },
+                .clickable { onSubscribeTapped() },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {

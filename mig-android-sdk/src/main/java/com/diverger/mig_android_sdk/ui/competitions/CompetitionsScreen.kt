@@ -299,33 +299,15 @@ fun CompetitionsViewModel.getLeaguesWithCompetitions(context: Context): List<Lea
     val allCompetitions = competitions.value
     val list: MutableList<LeagueModel> = mutableListOf()
 
-    val esm = allCompetitions.filter { it.type == "esm" }
-    val junior = allCompetitions.filter { it.type == "junior" }
-    val stormCircuit = allCompetitions.filter { it.type == "stormCircuit" }
+    val municipal = allCompetitions.filter { it.type != "other" }
     val other = allCompetitions.filter { it.type == "other" }
 
-    if (esm.isNotEmpty()) {
+    if (municipal.isNotEmpty()) {
         list.add(LeagueModel(
             title = LocalizationManager.string("competitions.municipalLeague") ?: context.getString(R.string.local_league_title),
             seriesTitle = context.getString(R.string.local_league_description),
             description = LocalizationManager.string("competitions.subheadings.townLeague") ?: context.getString(R.string.local_league_overview),
-            competitions = esm
-        ))
-    }
-    if (junior.isNotEmpty()) {
-        list.add(LeagueModel(
-            title = LocalizationManager.string("competitions.juniorLeague") ?: context.getString(R.string.junior_league_title),
-            seriesTitle = context.getString(R.string.junior_league_description),
-            description = LocalizationManager.string("competitions.subheadings.junior") ?: context.getString(R.string.junior_league_overview),
-            competitions = junior
-        ))
-    }
-    if (stormCircuit.isNotEmpty()) {
-        list.add(LeagueModel(
-            title = LocalizationManager.string("competitions.stormCircuit") ?: context.getString(R.string.storm_circuit_title),
-            seriesTitle = context.getString(R.string.storm_circuit_description),
-            description = LocalizationManager.string("competitions.subheadings.storm") ?: context.getString(R.string.storm_circuit_overview),
-            competitions = stormCircuit
+            competitions = municipal
         ))
     }
     if (other.isNotEmpty()) {
