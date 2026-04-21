@@ -24,7 +24,9 @@ class CompetitionDetailViewModel : ViewModel() {
             try {
                 val competition = CompetitionsApi.getCompetitionById(competitionId)
                 _competition.value = competition
-                _selectedSplit.value = competition.splits?.firstOrNull() // ✅ Seleccionamos el primer Split por defecto
+                _selectedTab.value = 0
+                val splits = competition.splits ?: emptyList()
+                _selectedSplit.value = splits.firstOrNull { it.active == true } ?: splits.firstOrNull()
             } catch (e: Exception) {
                 _competition.value = null
             }

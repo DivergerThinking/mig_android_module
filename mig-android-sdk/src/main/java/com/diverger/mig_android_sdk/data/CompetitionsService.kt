@@ -53,6 +53,12 @@ data class Game(
 data class Split(
     val id: Int,
     val name: String,
+    val active: Boolean?,
+    val banner: String?,
+    val overview: String?,
+    val details: String?,
+    val rules: String?,
+    val contact: String?,
     val tournaments: List<Tournament>?
 )
 
