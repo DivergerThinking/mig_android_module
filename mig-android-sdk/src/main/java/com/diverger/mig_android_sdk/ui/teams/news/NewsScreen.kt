@@ -8,18 +8,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.NewsModel
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
@@ -34,21 +39,50 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
         Column(
             Modifier.background(Color.Black)
         ) {
-            Text(
-                "NOTICIAS",
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-                color = Color.White,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 10.dp, start = 16.dp),
-            )
-            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            ) {
+                Text(
+                    stringResource(R.string.news_label).uppercase(),
+                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { viewModel.forceFetchNews() }) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Recargar", tint = Color.White)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
                 when {
-                    isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)
-                    allNews.isEmpty() -> Text("No hay noticias disponibles", color = Color.White, modifier = Modifier.align(Alignment.Center))
+                    isLoading -> CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color.White
+                    )
+
+                    allNews.isEmpty() -> Text(
+                        stringResource(R.string.no_news_available),
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+
                     else -> {
-                        LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp).padding(horizontal = 5.dp)) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .padding(horizontal = 5.dp)
+                        ) {
                             items(allNews) { news ->
                                 NewsItem(news, onNewsSelected = { selectedNews = it })
                                 Spacer(Modifier.height(16.dp))
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(64.dp))
                             }
                         }
                     }
@@ -65,37 +99,56 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
 
 @Composable
 fun NewsItem(news: NewsModel, onNewsSelected: (NewsModel) -> Unit) {
-    Card (
-        modifier = Modifier
-            .fillMaxWidth(),
+    Card(
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onNewsSelected(news) }
-                .background(Color.White.copy(0.1f))
+                .background(Color.White.copy(alpha = 0.1f))
                 .padding(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data("${EnvironmentManager.getBaseUrl()}${news.image ?: ""}")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Imagen de noticia",
-                modifier = Modifier.size(100.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(news.title ?: "Sin título", color = Color.White, style = MaterialTheme.typography.bodyLarge)
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    news.title ?: stringResource(R.string.no_title_news),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge
+                )
                 Spacer(Modifier.height(6.dp))
-                Text(news.body ?: "Sin descripción", color = Color.Gray, style = MaterialTheme.typography.bodySmall, maxLines = 3)
+                Text(
+                    news.body ?: stringResource(R.string.no_description_news),
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 6
+                )
+                Spacer(Modifier.height(20.dp))
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("${EnvironmentManager.getAssetsBaseUrl()}${news.image ?: ""}")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Imagen de noticia",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentScale = ContentScale.Crop // Optional: scale image to fill width nicely
+                )
             }
-
-            Icon(Icons.Default.ArrowForward, contentDescription = "Ver más", tint = Color.White)
+            Spacer(modifier = Modifier.width(16.dp))
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "Ver más",
+                tint = Color.White,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
         }
     }
+
 }

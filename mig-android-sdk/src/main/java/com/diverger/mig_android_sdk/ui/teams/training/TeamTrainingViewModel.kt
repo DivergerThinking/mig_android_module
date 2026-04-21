@@ -1,17 +1,23 @@
-package com.diverger.mig_android_sdk.ui.teams
+package com.diverger.mig_android_sdk.ui.teams.training
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.data.BlockedDaysService
 import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
-import com.diverger.mig_android_sdk.data.ReservationApi
 import com.diverger.mig_android_sdk.data.TrainingApi
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.dateFromString
+import com.diverger.mig_android_sdk.support.isDateOlderThanToday
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
+import com.diverger.mig_android_sdk.ui.reservations.ReservationFlowViewModel.MarkedDate
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TeamTrainingViewModel : ViewModel() {
+class TeamTrainingViewModel(private val stringResourcesProvider: StringResourcesProvider) : ViewModel() {
     private val _trainings = MutableStateFlow<List<EventModel>>(emptyList())
     val trainings: StateFlow<List<EventModel>> = _trainings
 
@@ -30,14 +36,17 @@ class TeamTrainingViewModel : ViewModel() {
     private val user = UserManager.getUser()
     private val teamId = UserManager.selectedTeam.value?.id
 
+    private val _teamLogo = MutableStateFlow<String?>(null)
+    val teamLogo: StateFlow<String?> = _teamLogo
+
+
     init {
         if (teamId != null) {
-            //fetchTeamReservations()
-            //fetchTeamTrainings()
             observeSelectedTeam()
         } else {
-            _errorMessage.value = "El usuario no pertenece a ningún equipo."
+            _errorMessage.value = stringResourcesProvider.getString(R.string.user_no_belongs_to_any_team)
         }
+        getMarkedDates()
     }
 
     private fun observeSelectedTeam() {
@@ -48,48 +57,28 @@ class TeamTrainingViewModel : ViewModel() {
                     _errorMessage.value = null
 
                     if (team?.id != null) {
+                        UserManager.selectedTeam.value?.picture.also { _teamLogo.value = it }
                         val result = TrainingApi.getTrainings(team.id)
                         result.onSuccess { trainings ->
-                            _trainings.value = trainings
+                            _trainings.value = trainings.filter { dateFromString(it.startDate)?.isDateOlderThanToday() == true }
                             _isLoading.value = false
                         }.onFailure {
                             _isLoading.value = false
-                            _errorMessage.value = "Error al obtener entrenamientos."
+                            _errorMessage.value = stringResourcesProvider.getString(R.string.error_getting_trainings)
                         }
                     }
                 }
         }
     }
 
-    fun fetchTeamReservations() {
+    private fun getMarkedDates() {
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            val result = ReservationApi.getReservationsByTeam(teamId!!)
+            val blockedDatesDeferred = async { BlockedDaysService.fetchBlockedDates() }
 
-            result.onSuccess { reservations ->
-                _teamReservations.value = reservations
-                _markedDates.value = reservations.map { it.date }
-                _isLoading.value = false
-            }.onFailure {
-                _isLoading.value = false
-                _teamReservations.value = emptyList()
-            }
-        }
-    }
+            val blockedDatesResult = blockedDatesDeferred.await()
 
-    fun fetchTeamTrainings() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-
-            val result = TrainingApi.getTrainings(teamId!!)
-            result.onSuccess { trainings ->
-                _trainings.value = trainings
-                _isLoading.value = false
-            }.onFailure {
-                _isLoading.value = false
-                _errorMessage.value = "Error al obtener entrenamientos."
+            blockedDatesResult.onSuccess { dates ->
+                _markedDates.value = dates
             }
         }
     }

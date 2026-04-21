@@ -1,55 +1,82 @@
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import com.diverger.mig_android_sdk.R
+import com.diverger.mig_android_sdk.data.EventModel
 import com.diverger.mig_android_sdk.data.Reservation
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import com.diverger.mig_android_sdk.ui.competitions.formatDateFromShort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.text.slice
 
-class ReservationDetailViewModel(reservation: Reservation) : ViewModel() {
+class ReservationDetailViewModel(
+    private val stringResourcesProvider: StringResourcesProvider,
+    private val reservation: Reservation? = null,
+    private val training: EventModel? = null
+) : ViewModel() {
 
-    // Estado de la reserva
-    private val _reservation = MutableStateFlow(reservation)
-    val reservation: StateFlow<Reservation> = _reservation
-
-    // Estado del giro de la tarjeta
+    // We expose the flipped state and rotation as before
     private val _isFlipped = MutableStateFlow(false)
     val isFlipped: StateFlow<Boolean> = _isFlipped
 
-    // Control de la rotación en el eje Y
     private val _rotationY = MutableStateFlow(0f)
     val rotationY: StateFlow<Float> = _rotationY
 
-    // 📌 **Girar la tarjeta**
+    // Flip card toggle
     fun flipCard() {
         _isFlipped.value = !_isFlipped.value
         _rotationY.value = if (_isFlipped.value) 180f else 0f
     }
 
-    // 📌 **Obtener la ubicación de la reserva**
     fun getReservationLocation(): String {
-        return if (_reservation.value.slot.space.translations.first().description.contains("Virtual", true)) {
-            "Virtual"
-        } else {
-            "Centro Esports Madrid"
+        reservation?.let {
+            return if (it.slot.space.translations.first().description?.lowercase()
+                    ?.contains("virtual", true) == true) {
+                stringResourcesProvider.getString(R.string.esports_virtual_center)
+            } else {
+                stringResourcesProvider.getString(R.string.esports_madrid_center)
+            }
         }
+        training?.let {
+            return if (it.type == "virtual") {
+                stringResourcesProvider.getString(R.string.esports_virtual_center)
+            } else {
+                stringResourcesProvider.getString(R.string.esports_madrid_center)
+            }
+        }
+        return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
-    // 📌 **Obtener la plataforma de la reserva**
     fun getReservationConsole(): String {
-        return when {
-            _reservation.value.slot.space.translations.first().device.contains("PlayStation", true) -> "PlayStation"
-            _reservation.value.slot.space.translations.first().device.contains("Xbox", true) -> "Xbox"
-            _reservation.value.slot.space.translations.first().device.contains("PC", true) -> "PC"
-            else -> "Desconocida"
+        reservation?.let {
+            return when {
+                it.slot.space.translations.first().device.contains("PlayStation", true) -> "PlayStation"
+                it.slot.space.translations.first().device.contains("Xbox", true) -> "Xbox"
+                it.slot.space.translations.first().device.contains("PC", true) -> "PC"
+                it.slot.space.translations.first().device.contains("Tablet", true) -> "Tablet"
+                else -> stringResourcesProvider.getString(R.string.unknown_label_female)
+            }
         }
+        // No console info for training, or add if applicable
+        return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
-    // 📌 **Formatear la fecha de la reserva**
-    fun getFormattedDate(): String {
-        return formatDateFromShort(_reservation.value.date)
+    fun getFormattedDate(context: Context): String {
+        reservation?.let { return formatDateFromShort(it.date, context) }
+        training?.let { return formatDateFromShort(it.startDate, context) }
+        return stringResourcesProvider.getString(R.string.unknown_label_female)
     }
 
-    // 📌 **Formatear las horas de la reserva**
     fun getFormattedTimes(): String {
-        return _reservation.value.times.joinToString(", ") { it.time }
+        reservation?.let { return it.times.joinToString(", ") { time -> time.time } }
+        training?.let { return it.time.slice(0..4) }
+        return stringResourcesProvider.getString(R.string.unknown_label_female)
+    }
+
+    fun getQRValue(): String? {
+        reservation?.let { return it.qrValue }
+        training?.let { return null }
+        return null
     }
 }

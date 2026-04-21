@@ -11,6 +11,8 @@ val MadridingameFont = FontFamily(
     Font(R.font.madrid_in_game_font)
 )
 
+val MadridingameBodyFont = FontFamily.Default
+
 // Definir la tipografía general del módulo
 val Typography = Typography(
     displayLarge = TextStyle(
@@ -50,15 +52,15 @@ val Typography = Typography(
         fontSize = 12.sp
     ),
     bodyLarge = TextStyle(
-        fontFamily = MadridingameFont,
+        fontFamily = MadridingameBodyFont,
         fontSize = 16.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = MadridingameFont,
+        fontFamily = MadridingameBodyFont,
         fontSize = 14.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = MadridingameFont,
+        fontFamily = MadridingameBodyFont,
         fontSize = 12.sp
     ),
     labelLarge = TextStyle(

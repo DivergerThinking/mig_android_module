@@ -1,6 +1,7 @@
 // UploadImageService.kt
 package com.diverger.mig_android_sdk.data
 
+import android.graphics.Bitmap
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,6 +15,7 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import java.io.ByteArrayOutputStream
 
 class UploadImageService {
     private val api by lazy {
@@ -23,6 +25,14 @@ class UploadImageService {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UploadApiService::class.java)
+    }
+
+    suspend fun uploadQrBitmap(qrBitmap: Bitmap, fileName: String): String {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        qrBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+        val imageBytes = byteArrayOutputStream.toByteArray()
+
+        return uploadImageSuspend(imageBytes, fileName)
     }
 
     /**

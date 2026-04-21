@@ -1,12 +1,18 @@
 package com.diverger.mig_android_sdk.data
 
 import com.diverger.mig_android_sdk.support.EnvironmentManager
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.*
 import com.google.gson.annotations.SerializedName
 import okhttp3.logging.HttpLoggingInterceptor
-import java.util.Date
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ReservationService {
     @GET("gaming_space_reserves")
@@ -15,6 +21,7 @@ interface ReservationService {
         @Query("filter[status][_neq]") status: String = "cancelled",
         @Query("filter[date][_gte]") date: String = "\$NOW",
         @Query("filter[team][_null]") team: String = "true",
+        @Query("filter[training][_null]") training: String = "true",  // ← AÑADIDO
         @Query("fields") fields: String = "id,date,slot.*,qrImage,qrValue,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
     ): ReservationResponse
@@ -23,7 +30,14 @@ interface ReservationService {
     suspend fun createReservation(
         @Body reservation: ReservationWrapper,
         @Header("Authorization") token: String
-    ): Unit
+    ): ReservationCreatedResponse
+
+    @PATCH("gaming_space_reserves/{id}")
+    suspend fun updateReservation(
+        @Path("id") id: Int,
+        @Body reservation: ReservationWrapper,
+        @Header("Authorization") token: String
+    ): ReservationCreatedResponse
 
     @DELETE("gaming_space_reserves/{id}")
     suspend fun deleteReservation(
@@ -39,6 +53,16 @@ interface ReservationService {
         @Query("fields") fields: String = "id,date,slot.*,times.gaming_space_times_id.time,times.gaming_space_times_id.id,slot.space.*,slot.space.translations.*",
         @Header("Authorization") token: String
     ): ReservationResponse
+
+    // 📌 Ocupación de slots por espacio y fecha
+    @GET("gaming_space_reserves")
+    suspend fun getReservationsBySlots(
+        @Query("filter[slot][_in]") slotIds: String,
+        @Query("filter[date][_eq]") date: String,
+        @Query("fields") fields: String = "slot.id,times.gaming_space_times_id.id",
+        @Query("limit") limit: String = "-1",
+        @Header("Authorization") token: String
+    ): SlotOccupancyResponse
 
     // 📌 Obtener reservas de equipo filtradas por usuario
     @GET("gaming_space_reserves")
@@ -85,7 +109,7 @@ object ReservationApi {
     // ✅ Obtener reservas de equipo
     suspend fun getReservationsByTeam(teamId: String): Result<List<Reservation>> {
         return try {
-            val response = service.getReservationsByTeam("6d8fd820-5aa4-479a-89e9-1f85c906f189", token = TOKEN)
+            val response = service.getReservationsByTeam(teamId, token = TOKEN)
             Result.success(response.data)
         } catch (e: Exception) {
             Result.failure(e)
@@ -102,12 +126,35 @@ object ReservationApi {
         }
     }
 
-    suspend fun createReservation(reservation: ReservationWrapper): Result<Unit> {
+    suspend fun createReservation(reservation: ReservationWrapper): Result<ReservationCreated> {
         return try {
-            service.createReservation(reservation, token = TOKEN)
-            Result.success(Unit) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
+            val response = service.createReservation(reservation, token = TOKEN).data
+            Result.success(response) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
         } catch (e: Exception) {
             Result.failure(e) // ✅ Si hay error, devolvemos `Result.failure`
+        }
+    }
+
+
+    suspend fun updateReservation(reservation: ReservationWrapper): Result<ReservationCreated> {
+        return try {
+            val response = service.updateReservation(reservation.id!!, reservation, token = TOKEN).data
+            Result.success(response) // ✅ Si se ejecuta correctamente, devolvemos `Result.success`
+        } catch (e: Exception) {
+            Result.failure(e) // ✅ Si hay error, devolvemos `Result.failure`
+        }
+    }
+
+    suspend fun getReservationsBySlots(slotIds: List<Int>, date: String): Result<List<SlotOccupancyEntry>> {
+        return try {
+            val response = service.getReservationsBySlots(
+                slotIds = slotIds.joinToString(","),
+                date = date,
+                token = TOKEN
+            )
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -139,6 +186,20 @@ data class Reservation(
     // Extraemos `gaming_space_times_id` correctamente
     val times: List<GamingSpaceTime> get() = timesContainer.mapNotNull { it["gaming_space_times_id"] }
 }
+
+data class ReservationCreated(
+    val id: Int?,
+    val status: String?,
+    val slot: Int,
+    val date: String,
+    val user: String?,
+    val team: String?,
+    val training: String?,
+    @SerializedName("qrImage") val qrImage: String?,
+    @SerializedName("qrValue") val qrValue: String?,
+)
+
+data class ReservationCreatedResponse(val data: ReservationCreated)
 
 data class ReservationWrapper(
     val id: Int?,
@@ -175,3 +236,16 @@ data class GamingSpaceTimeId(
 data class SlotId(
     val id:Int
 )
+
+// Occupancy query response models
+data class SlotOccupancyResponse(val data: List<SlotOccupancyEntry>)
+
+data class SlotOccupancyEntry(
+    val slot: SlotIdOnly,
+    @SerializedName("times") val timesContainer: List<Map<String, OccupancyTimeId>>
+) {
+    val timeIds: List<Int> get() = timesContainer.mapNotNull { it["gaming_space_times_id"]?.id }
+}
+
+data class SlotIdOnly(val id: Int)
+data class OccupancyTimeId(val id: Int)

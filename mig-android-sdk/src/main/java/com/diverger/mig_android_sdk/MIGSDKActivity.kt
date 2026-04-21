@@ -3,6 +3,7 @@ package com.diverger.mig_android_sdk
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.diverger.mig_android_sdk.data.MadridInGameUserData
 
 class MIGSDKActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -12,9 +13,9 @@ class MIGSDKActivity : ComponentActivity() {
         val accessToken = intent.getStringExtra("ACCESS_TOKEN") ?: ""
         val userName = intent.getStringExtra("USERNAME") ?: ""
         val dni = intent.getStringExtra("DNI") ?: ""
-
+        val madridInGameUserData = intent.getParcelableExtra<MadridInGameUserData>("USER_DATA") ?: MadridInGameUserData(email = email, userName = userName, dni = dni)
         setContent {
-            MIGAndroidSDKScreen(email = email, userName = userName, dni = dni, accessToken = accessToken)
+            MIGAndroidSDKScreen(madridInGameUserData = madridInGameUserData, accessToken = accessToken)
         }
     }
 }

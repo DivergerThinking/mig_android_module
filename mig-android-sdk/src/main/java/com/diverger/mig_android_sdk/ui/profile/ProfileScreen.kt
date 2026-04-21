@@ -1,39 +1,54 @@
 package com.diverger.mig_android_sdk.ui.profile
 
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -79,7 +94,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
         if (granted) {
             pickImageLauncher.launch("image/*")
         } else {
-            Toast.makeText(context, "Permiso denegado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.permission_denied), Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -92,12 +110,12 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 .padding(top = 80.dp)
         ) {
             Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "SOBRE MÍ",
+                    stringResource(R.string.profile).uppercase(),
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White,
@@ -107,111 +125,122 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // ─────── Cambios mínimos aquí ───────
-                Box(
+                Column(
                     modifier = Modifier
-                        .wrapContentSize()                         // Permite que el texto sea más ancho que 120dp
-                        .clickable {
-                            // Comprobamos permiso antes de lanzar el picker
-                            when {
-                                ContextCompat.checkSelfPermission(context, permission)
-                                        == PackageManager.PERMISSION_GRANTED -> {
-                                    pickImageLauncher.launch("image/*")
-                                }
-                                else -> {
-                                    permissionLauncher.launch(permission)
-                                }
-                            }
-                        },
-                    contentAlignment = Alignment.TopCenter         // Alinea la imagen circular en la parte superior
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // 1. El círculo de 120dp donde se recorta la imagen
                     Box(
                         modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(Color.Transparent),
-                        contentAlignment = Alignment.Center
+                            .wrapContentSize()
+                            .clickable {
+                                when {
+                                    ContextCompat.checkSelfPermission(context, permission)
+                                            == PackageManager.PERMISSION_GRANTED -> {
+                                        pickImageLauncher.launch("image/*")
+                                    }
+
+                                    else -> {
+                                        permissionLauncher.launch(permission)
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.TopCenter
                     ) {
-                        when {
-                            // Si se acaba de escoger uno, mostrar preview
-                            newAvatarUri != null -> AsyncImage(
-                                model = newAvatarUri,
-                                contentDescription = "Nuevo Avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            // Si ya había un avatar en servidor, mostrarlo
-                            user?.avatar?.isNotEmpty() == true -> AsyncImage(
-                                model = "${EnvironmentManager.getAssetsBaseUrl()}${user!!.avatar}",
-                                contentDescription = "Avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            else -> Icon(
-                                imageVector = Icons.Filled.AccountCircle,
-                                contentDescription = "Avatar por defecto",
-                                modifier = Modifier.size(100.dp),
-                                tint = Color.White
-                            )
+                        Box(
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .background(Color.Transparent),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                newAvatarUri != null -> AsyncImage(
+                                    model = newAvatarUri,
+                                    contentDescription = "Nuevo Avatar",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                    placeholder = rememberVectorPainter(Icons.Filled.AccountCircle),
+                                    error = rememberVectorPainter(Icons.Filled.AccountCircle)
+                                )
+
+                                user?.avatar?.isNotEmpty() == true -> AsyncImage(
+                                    model = "${EnvironmentManager.getAssetsBaseUrl()}${user!!.avatar}",
+                                    contentDescription = "Avatar",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().background(Color.LightGray),
+                                    placeholder = rememberVectorPainter(Icons.Filled.AccountCircle),
+                                    error = rememberVectorPainter(Icons.Filled.AccountCircle)
+                                )
+
+                                else -> Icon(
+                                    imageVector = Icons.Filled.AccountCircle,
+                                    contentDescription = "Avatar por defecto",
+                                    modifier = Modifier.size(100.dp),
+                                    tint = Color.White
+                                )
+                            }
                         }
+
+                        Text(
+                            text = stringResource(R.string.profile_chante_avatar_label),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .padding(top = 128.dp)
+                                .background(Color.Black.copy(alpha = 0.4f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
 
-                    // 2. Texto “Pulsar para cambiar” justo debajo del círculo
-                    Text(
-                        text = "Pulsar para cambiar",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .padding(top = 128.dp)                     // 120dp de altura del círculo + 8dp de separación
-                            .background(Color.Black.copy(alpha = 0.4f)) // Fondo semitransparente
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    ProfileForm(
+                        firstName = firstName,
+                        lastName = lastName,
+                        dni = dni,
+                        email = email,
+                        username = username,
+                        phone = phone,
+                        onValueChange = { key, value ->
+                            when (key) {
+                                "firstName" -> firstName = value
+                                "lastName" -> lastName = value
+                                "dni" -> dni = value
+                                "email" -> email = value
+                                "username" -> username = value
+                                "phone" -> phone = value
+                            }
+                        }
                     )
                 }
-                // ──────────────────────────────────────────────
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                ProfileForm(
-                    firstName = firstName,
-                    lastName = lastName,
-                    dni = dni,
-                    email = email,
-                    username = username,
-                    phone = phone,
-                    onValueChange = { key, value ->
-                        when (key) {
-                            "firstName" -> firstName = value
-                            "lastName" -> lastName = value
-                            "dni" -> dni = value
-                            "email" -> email = value
-                            "username" -> username = value
-                            "phone" -> phone = value
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row {
-                    Button(
-                        onClick = {
-                            val intent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://personal-area.azurewebsites.net")
-                            )
-                            context.startActivity(intent)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Cyan,
-                            contentColor = Color.Black
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("ÁREA PERSONAL", style = MaterialTheme.typography.headlineSmall)
-                    }
+                Button(
+                    onClick = {
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            "https://personal-area.azurewebsites.net".toUri()
+                        )
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Cyan,
+                        contentColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .padding(vertical = 20.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.personal_area),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
                 }
             }
         }

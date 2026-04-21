@@ -1,4 +1,3 @@
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.NewsModel
@@ -42,6 +41,13 @@ class NewsViewModel : ViewModel() {
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun forceFetchNews() {
+        val selectedTeam = UserManager.selectedTeam.value
+        if (selectedTeam != null) {
+            fetchNews(selectedTeam.id)
         }
     }
 }

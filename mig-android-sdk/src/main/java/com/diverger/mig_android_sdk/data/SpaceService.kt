@@ -55,7 +55,7 @@ object SpaceService {
 data class Space(
     val id: Int,
     val device: String,
-    val description: String,
+    val description: String?,
     val slots: List<Slot>
 )
 
@@ -93,5 +93,5 @@ data class Translation(
     @SerializedName("gaming_space_id") val gamingSpaceId: Int,
     @SerializedName("languages_code") val languagesCode: String,
     val device: String,
-    val description: String
+    val description: String?
 )

@@ -1,12 +1,13 @@
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.TeamUser
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.StringResourcesProvider
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class PlayersTeamViewModel : ViewModel() {
+class PlayersTeamViewModel(private val stringResourcesProvider: StringResourcesProvider) : ViewModel() {
 
     private val _teamName = MutableStateFlow("")
     val teamName: StateFlow<String> = _teamName
@@ -31,11 +32,11 @@ class PlayersTeamViewModel : ViewModel() {
                     _isLoading.value = true
 
                     if (team != null) {
-                        _teamName.value = team.name ?: "Sin equipo"
+                        _teamName.value = team.name ?: stringResourcesProvider.getString(R.string.no_team)
                         _teamPlayers.value = team.users ?: emptyList()
                         _errorMessage.value = null
                     } else {
-                        _errorMessage.value = "No se ha seleccionado ningún equipo"
+                        _errorMessage.value = stringResourcesProvider.getString(R.string.no_team_selected)
                         _teamPlayers.value = emptyList()
                     }
 

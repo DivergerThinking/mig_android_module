@@ -3,6 +3,7 @@ package com.diverger.mig_android_sdk
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diverger.mig_android_sdk.data.User
+import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.mig_android_sdk.data.UserManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,14 +18,12 @@ class MIGSDKViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    fun initializeUser(email: String, userName: String, dni: String, accessToken: String) {
+    fun initializeUser(madridInGameUserData: MadridInGameUserData, accessToken: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             val result = UserManager.initializeUser(
-                email= email,
-                userName = userName,
-                dni = dni,
+                madridInGameUserData,
                 accessToken = accessToken
             )
             result.fold(

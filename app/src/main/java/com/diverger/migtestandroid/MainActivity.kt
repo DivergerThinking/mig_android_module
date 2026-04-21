@@ -2,21 +2,15 @@ package com.diverger.migtestandroid
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.diverger.mig_android_sdk.MIGAndroidSDKScreen
-import com.diverger.mig_android_sdk.MadridInGameAndroidModule
 import com.diverger.mig_android_sdk.MadridInGameAndroidModuleEntryPoint
+import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
 
- class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /*enableEdgeToEdge()
@@ -27,12 +21,28 @@ import com.diverger.migtestandroid.ui.theme.MIGTestAndroidTheme
             //MIGAndroidSDKScreen(email = "joseluis.fernandez@diverger.ai")
         }*/
 
+//        MadridInGameAndroidModuleEntryPoint.launch(
+//            context = this,
+//            email = "adriortega19@gmail.com",
+//            userName = "Adri",
+//            //dni = "03427404J",
+//            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+//        )
+
+        val madridInGameUserData = MadridInGameUserData(
+            email = "aquinopaganipeter@gmail.com",
+            userName = "mikee11",
+            dni = "38876522L",
+//            //dni = "03427404J",
+            logoMIG = R.drawable.logo_mig,
+            qrMiddleLogo = R.drawable.qr_middle_logo
+        )
+
         MadridInGameAndroidModuleEntryPoint.launch(
             context = this,
-            email = "adriortega19@gmail.com",
-            userName = "Adri",
-            //dni = "03427404J",
-            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY"
+            madridInGameUserData = madridInGameUserData,
+            accessToken = "8TZMs1jYI1xIts2uyUnE_MJrPQG9KHfY",
+            isPreRelease = false
         )
 
 //        MadridInGameAndroidModuleEntryPoint.launch(
