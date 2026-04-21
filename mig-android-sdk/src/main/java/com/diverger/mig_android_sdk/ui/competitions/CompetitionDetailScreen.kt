@@ -95,9 +95,10 @@ fun CompetitionDetailScreen(
 
                     // Banner
                     Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+                        val bannerPath = selectedSplit?.banner?.takeIf { it.isNotBlank() } ?: comp.game?.banner
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data("${EnvironmentManager.getAssetsBaseUrl()}${comp.game?.banner}")
+                                .data("${EnvironmentManager.getAssetsBaseUrl()}$bannerPath")
                                 .crossfade(true)
                                 .build(),
                             contentDescription = null,
@@ -185,10 +186,10 @@ fun CompetitionDetailScreen(
 @Composable
 fun SelectedTabContent(competition: Competition, selectedTab: Int, selectedSplit: Split?) {
     when (selectedTab) {
-        0 -> OverviewTabContent(competition.overview)
+        0 -> OverviewTabContent(selectedSplit?.overview ?: competition.overview)
         1 -> DetailsTabContent()
-        2 -> RulesTabContent(rules = competition.rules, pdfFile = competition.pdfFile)
-        3 -> ContactTabContent(contact = competition.contact)
+        2 -> RulesTabContent(rules = selectedSplit?.rules ?: competition.rules, pdfFile = competition.pdfFile)
+        3 -> ContactTabContent(contact = selectedSplit?.contact ?: competition.contact)
         4 -> TournamentTab(selectedSplit)
     }
 }
