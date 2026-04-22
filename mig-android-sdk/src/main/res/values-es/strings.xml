@@ -93,6 +93,7 @@
     <string name="invalid_date">Fecha inválida</string>
     <string name="competitions_label">COMPETICIONES</string>
     <string name="select_season">Selecciona una temporada</string>
+    <string name="season_label">Temporada</string>
     <string name="local_league_title">Liga Municipal</string>
     <string name="local_league_description">Esports Series Madrid</string>
     <string name="local_league_overview">Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.</string>
@@ -200,4 +201,20 @@
     <string name="rule_respect_environment">Respeta el ambiente</string>
     <string name="rule_keep_clean">Mantén el espacio limpio</string>
     <string name="rule_no_downloads">No descargas ni instalaciones</string>
+    <string name="rule_no_smoking_cms">Zona libre de humo</string>
+    <string name="rule_no_food_cms">Prohibido comer o beber</string>
+    <string name="rule_no_running_cms">No corras por el recinto</string>
+    <string name="rule_respect_env_cms">Respeta el ambiente</string>
+    <string name="rule_keep_clean_cms">Mantén el espacio limpio</string>
+    <string name="rule_no_downloads_cms">No descargas ni instalaciones</string>
+
+    <!-- Tarjetas de detalle de competición -->
+    <string name="details_card_tournament_format_title">Formato de torneos</string>
+    <string name="details_card_tournament_format_desc">Cada torneo se juega en formato competitivo adaptado al juego. Incluye fases clasificatorias y eliminatorias según el número de participantes.</string>
+    <string name="details_card_points_system_title">Sistema de puntos</string>
+    <string name="details_card_points_system_desc">Los puntos se acumulan por cada partida jugada y se reflejan en la clasificación general.</string>
+    <string name="details_card_splits_season_title">Splits y temporada</string>
+    <string name="details_card_splits_season_desc">La temporada está dividida en splits. Cada split tiene su propio ranking y premio final.</string>
+    <string name="details_card_participation_title">Participación</string>
+    <string name="details_card_participation_desc">La liga está abierta a jugadores de todos los niveles.</string>
 </resources>

@@ -112,23 +112,29 @@ fun CompetitionDetailScreen(
                                 )
                             )
                         )
-                        Row(
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.BottomStart)
+                                .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(horizontal = 8.dp, vertical = 16.dp)
                         ) {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
-                            }
                             Text(
                                 text = comp.title.uppercase(),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.weight(1f).padding(end = 16.dp)
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 48.dp)
+                                    .align(Alignment.Center)
                             )
+                            IconButton(
+                                onClick = { navController.popBackStack() },
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                            }
                         }
                     }
 
@@ -208,7 +214,7 @@ fun OverviewTabContent(overview: String?) {
             text = localizedString("competitions.about", R.string.tournament_about_this_competition),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 10.dp)
         )
         Text(
@@ -231,17 +237,17 @@ private data class DetailItem(
 @Composable
 fun DetailsTabContent() {
     val items = listOf(
-        DetailItem(Icons.Default.Computer,  "Formato de torneos",
-            "Cada torneo se juega en formato competitivo adaptado al juego. Incluye fases clasificatorias y eliminatorias según el número de participantes.",
+        DetailItem(Icons.Default.Computer,  localizedString("competitions.details.cards.tournamentFormat.title", R.string.details_card_tournament_format_title),
+            localizedString("competitions.details.cards.tournamentFormat.description", R.string.details_card_tournament_format_desc),
             Color(0xFF2D59D9)),
-        DetailItem(Icons.Default.Star,      "Sistema de puntos",
-            "Los puntos se acumulan por cada partida jugada y se reflejan en la clasificación general.",
+        DetailItem(Icons.Default.Star,      localizedString("competitions.details.cards.pointsSystem.title", R.string.details_card_points_system_title),
+            localizedString("competitions.details.cards.pointsSystem.description", R.string.details_card_points_system_desc),
             Color(0xFFBF268C)),
-        DetailItem(Icons.Default.DateRange, "Splits y temporada",
-            "La temporada está dividida en splits. Cada split tiene su propio ranking y premio final.",
+        DetailItem(Icons.Default.DateRange, localizedString("competitions.details.cards.splitsAndSeason.title", R.string.details_card_splits_season_title),
+            localizedString("competitions.details.cards.splitsAndSeason.description", R.string.details_card_splits_season_desc),
             Color(0xFF7326BF)),
-        DetailItem(Icons.Default.Group,     "Participación",
-            "La liga está abierta a jugadores de todos los niveles.",
+        DetailItem(Icons.Default.Group,     localizedString("competitions.details.cards.participation.title", R.string.details_card_participation_title),
+            localizedString("competitions.details.cards.participation.description", R.string.details_card_participation_desc),
             Color(0xFF268C40))
     )
 
@@ -258,7 +264,7 @@ fun DetailsTabContent() {
             text = localizedString("competitions.details", R.string.tournament_details),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         items.forEachIndexed { index, item ->
@@ -302,10 +308,10 @@ private fun ExpandableDetailCell(item: DetailItem, isExpanded: Boolean, onToggle
                 Icon(item.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
             }
             Text(
-                text = item.title,
+                text = item.title.uppercase(),
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f)
             )
             Icon(
@@ -340,12 +346,12 @@ fun RulesTabContent(rules: String?, pdfFile: String?) {
     var expandedSection by remember { mutableStateOf<String?>(null) }
 
     val ruleItems = listOf(
-        Icons.Default.SmokeFree     to stringResource(R.string.rule_smoke_free),
-        Icons.Default.Fastfood      to stringResource(R.string.rule_no_food),
-        Icons.Default.DirectionsRun to stringResource(R.string.rule_no_running),
-        Icons.Default.VolumeOff     to stringResource(R.string.rule_respect_environment),
-        Icons.Default.Delete        to stringResource(R.string.rule_keep_clean),
-        Icons.Default.CloudOff      to stringResource(R.string.rule_no_downloads)
+        Icons.Default.SmokeFree     to localizedString("competitions.rules.cards.noSmoking", R.string.rule_no_smoking_cms),
+        Icons.Default.Fastfood      to localizedString("competitions.rules.cards.noFoodOrDrink", R.string.rule_no_food_cms),
+        Icons.Default.DirectionsRun to localizedString("competitions.rules.cards.noRunning", R.string.rule_no_running_cms),
+        Icons.Default.VolumeOff     to localizedString("competitions.rules.cards.respectEnvironment", R.string.rule_respect_env_cms),
+        Icons.Default.Delete        to localizedString("competitions.rules.cards.keepClean", R.string.rule_keep_clean_cms),
+        Icons.Default.CloudOff      to localizedString("competitions.rules.cards.noDownloads", R.string.rule_no_downloads_cms)
     )
 
     Column(
@@ -424,7 +430,7 @@ private fun RulesTitleRow(pdfUrl: String?, context: Context, modifier: Modifier)
             text = localizedString("competitions.rules", R.string.tournament_rules),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.weight(1f)
         )
         if (pdfUrl != null) {
@@ -503,7 +509,7 @@ fun ContactTabContent(contact: String?) {
             text = localizedString("competitions.contact", R.string.tournament_contact),
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
@@ -714,7 +720,7 @@ fun TournamentTab(selectedSplit: Split?) {
                 text = localizedString("competitions.tournaments", R.string.tournaments_title),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }

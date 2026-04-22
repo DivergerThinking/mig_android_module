@@ -35,7 +35,8 @@ data class Competition(
     val splits: List<Split>?,
     val game: Game?,
     val type: String?,
-    @SerializedName("pdf_file") val pdfFile: String?
+    @SerializedName("pdf_file") val pdfFile: String?,
+    val image: String?
 )
 
 // 📌 **Modelo de Juego**

@@ -214,7 +214,7 @@ fun CompetitionLeagueSection(league: LeagueModel, navController: NavController) 
 
 @Composable
 fun CompetitionCard(competition: Competition, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val imageUrl = "${EnvironmentManager.getAssetsBaseUrl()}${competition.game?.image ?: ""}"
+    val imageUrl = "${EnvironmentManager.getAssetsBaseUrl()}${competition.image ?: competition.game?.image ?: ""}"
     val gameType = competition.game?.type
     val modalityText = when (gameType) {
         "in-person" -> localizedString("competition.modality.hybrid", R.string.modality_in_person)
@@ -234,10 +234,10 @@ fun CompetitionCard(competition: Competition, modifier: Modifier = Modifier, onC
             AsyncImage(
                 model = imageUrl,
                 contentDescription = competition.game?.name,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(110.dp)
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             )
 
@@ -249,15 +249,13 @@ fun CompetitionCard(competition: Competition, modifier: Modifier = Modifier, onC
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    competition.game?.name?.let { name ->
-                        Text(
-                            text = name,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1
-                        )
-                    }
+                    Text(
+                        text = competition.title.uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 2
+                    )
                     competition.game?.description?.let { desc ->
                         if (desc.isNotBlank()) {
                             Text(
@@ -314,7 +312,7 @@ fun CompetitionsViewModel.getLeaguesWithCompetitions(context: Context): List<Lea
         list.add(LeagueModel(
             title = LocalizationManager.string("competitions.otherLeague") ?: context.getString(R.string.other_competition_title),
             seriesTitle = "",
-            description = context.getString(R.string.other_competition_description),
+            description = "",
             competitions = other
         ))
     }
