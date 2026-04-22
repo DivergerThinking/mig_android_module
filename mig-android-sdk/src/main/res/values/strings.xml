@@ -89,6 +89,11 @@
     <string name="no_tournaments_available">No tournaments available</string>
     <string name="unavailable_link">Link not available</string>
     <string name="tournament_enroll">SIGN UP</string>
+    <string name="tournament_type_elimination">Elimination</string>
+    <string name="tournament_type_points">By points</string>
+    <string name="tournament_type_groups">Groups</string>
+    <string name="tournament_type_round_robin">Round robin</string>
+    <string name="no_active_tournaments">No active competitions at the moment</string>
     <string name="unknown_date">Unknown date</string>
     <string name="invalid_date">Invalid date</string>
     <string name="competitions_label">COMPETITIONS</string>

@@ -80,7 +80,10 @@ data class Tournament(
     @SerializedName("date") val tournamentDate: String?,
     val link: String?,
     val split: Int?,
-    val status: String?
+    val status: String?,
+    val type: String?,
+    @SerializedName("start_sign_date") val startSignDate: String?,
+    @SerializedName("end_sign_date") val endSignDate: String?
 )
 
 interface CompetitionsService {

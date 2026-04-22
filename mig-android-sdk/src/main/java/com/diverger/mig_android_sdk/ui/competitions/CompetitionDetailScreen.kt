@@ -58,6 +58,7 @@ import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.data.getUnsafeOkHttpClient
 import kotlinx.coroutines.launch
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.support.LocalizationManager
 import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
@@ -617,7 +618,8 @@ private fun ContactCard(email: String, textBefore: String, textAfter: String, di
 
 @Composable
 fun TournamentTab(selectedSplit: Split?) {
-    val tournaments = selectedSplit?.tournaments ?: emptyList()
+    val now = remember { java.util.Date() }
+    val tournaments = (selectedSplit?.tournaments ?: emptyList()).filter { it.isRegistrationOpen(now) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -727,7 +729,7 @@ fun TournamentTab(selectedSplit: Split?) {
         if (tournaments.isEmpty()) {
             item {
                 Text(
-                    text = localizedString("competitions.subheadings.notFound", R.string.no_tournaments_available),
+                    text = stringResource(R.string.no_active_tournaments),
                     color = Color.White,
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge
@@ -763,7 +765,7 @@ fun TournamentCard(tournament: Tournament, onSubscribeTapped: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(tournament.name.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 4.dp))
-                Text("${tournament.status?.capitalize()}", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                Text(localizedTournamentType(tournament.type, LocalContext.current), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
@@ -815,6 +817,36 @@ fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
             }
         }
     }
+}
+
+fun localizedTournamentType(type: String?, context: Context): String {
+    return when (type?.lowercase()) {
+        "elimination"              -> LocalizationManager.string("competitions.tournament.type.elimination") ?: context.getString(R.string.tournament_type_elimination)
+        "points"                   -> LocalizationManager.string("competitions.tournament.type.points") ?: context.getString(R.string.tournament_type_points)
+        "groups"                   -> LocalizationManager.string("competitions.tournament.type.groups") ?: context.getString(R.string.tournament_type_groups)
+        "roundrobin", "round_robin" -> LocalizationManager.string("competitions.tournament.type.roundRobin") ?: context.getString(R.string.tournament_type_round_robin)
+        else                       -> type?.replaceFirstChar { it.uppercase() } ?: ""
+    }
+}
+
+fun Tournament.isRegistrationOpen(now: java.util.Date = java.util.Date()): Boolean {
+    val start = parseSignDate(startSignDate) ?: return true
+    val end   = parseSignDate(endSignDate)   ?: return true
+    return !now.before(start) && !now.after(end)
+}
+
+private fun parseSignDate(raw: String?): java.util.Date? {
+    if (raw.isNullOrBlank()) return null
+    val formats = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd")
+    for (fmt in formats) {
+        try {
+            val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.US)
+            sdf.isLenient = false
+            val parsed = sdf.parse(raw)
+            if (parsed != null) return parsed
+        } catch (_: Exception) {}
+    }
+    return null
 }
 
 // ─── Shared composables ───────────────────────────────────────────────────────

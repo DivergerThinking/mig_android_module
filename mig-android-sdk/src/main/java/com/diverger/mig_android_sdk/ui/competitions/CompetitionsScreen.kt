@@ -75,9 +75,17 @@ fun CompetitionsScreen(navController: NavController, viewModel: CompetitionsView
                 Text(text = errorMessage!!, color = Color.Red, fontWeight = FontWeight.Bold)
             } else {
                 val leagues = viewModel.getLeaguesWithCompetitions(context = LocalContext.current)
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    items(leagues) { league ->
-                        CompetitionLeagueSection(league, navController)
+                if (leagues.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_active_tournaments),
+                        color = Color.White,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                        items(leagues) { league ->
+                            CompetitionLeagueSection(league, navController)
+                        }
                     }
                 }
             }
@@ -237,7 +245,7 @@ fun CompetitionCard(competition: Competition, modifier: Modifier = Modifier, onC
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp)
+                    .heightIn(min = 110.dp, max = 320.dp)
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             )
 

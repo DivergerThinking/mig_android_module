@@ -28,9 +28,6 @@ class CompetitionsViewModel : ViewModel() {
     private val _availableYears = MutableStateFlow<List<String>>(emptyList())
     val availableYears: StateFlow<List<String>> = _availableYears
 
-    // Matches competition.type (the competition's own type, not game.type)
-    private val validCompetitions = arrayOf("esm", "junior", "stormCircuit", "other")
-
     init {
         // Mirror iOS: build year list from 2024 to current year, then fetch current year
         _availableYears.value = initAvailableYears()
@@ -57,16 +54,9 @@ class CompetitionsViewModel : ViewModel() {
                     CompetitionsApi.getAllCompetitions(year)
                 }
 
-                // Mirror iOS filterCompetitonsByType: filter by competition.type, not game.type
-                val filtered = response.filter { it.type in validCompetitions }
-                val sorted = filtered.sortedBy { it.game?.priority ?: Int.MAX_VALUE }
+                val sorted = response.sortedBy { it.game?.priority ?: Int.MAX_VALUE }
 
-                if (sorted.isNotEmpty()) {
-                    _competitions.value = sorted
-                } else {
-                    _competitions.value = emptyList()
-                    _errorMessage.value = "No hay competiciones disponibles para este año."
-                }
+                _competitions.value = sorted
 
             } catch (e: Exception) {
                 _competitions.value = emptyList()
