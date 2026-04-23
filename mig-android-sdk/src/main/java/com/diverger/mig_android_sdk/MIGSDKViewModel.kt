@@ -2,9 +2,11 @@ package com.diverger.mig_android_sdk
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diverger.mig_android_sdk.data.TextContentApi
 import com.diverger.mig_android_sdk.data.User
 import com.diverger.mig_android_sdk.data.MadridInGameUserData
 import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.support.LocalizationManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -22,6 +24,20 @@ class MIGSDKViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
+
+            // Set token first so translations fetch can authenticate
+            UserManager.setAccessToken(accessToken)
+
+            // Fetch remote translations before rendering (mirrors iOS initializeModule)
+            launch {
+                try {
+                    val items = TextContentApi.fetchTextContent()
+                    LocalizationManager.load(items)
+                } catch (_: Exception) {
+                    // Non-fatal: static strings.xml used as fallback
+                }
+            }
+
             val result = UserManager.initializeUser(
                 madridInGameUserData,
                 accessToken = accessToken

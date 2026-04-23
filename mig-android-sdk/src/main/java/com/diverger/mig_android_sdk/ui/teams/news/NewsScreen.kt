@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.NewsModel
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 
@@ -44,7 +45,7 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
                 modifier = Modifier.padding(bottom = 10.dp, start = 16.dp),
             ) {
                 Text(
-                    stringResource(R.string.news_label).uppercase(),
+                    localizedString("dashboard.teams.teamAreas.news.newsListTitle", R.string.news_label).uppercase(),
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                 )
@@ -65,7 +66,7 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
                     )
 
                     allNews.isEmpty() -> Text(
-                        stringResource(R.string.no_news_available),
+                        localizedString("dashboard.teams.teamAreas.news.noNewsList", R.string.no_news_available),
                         color = Color.White,
                         modifier = Modifier.align(Alignment.Center)
                     )

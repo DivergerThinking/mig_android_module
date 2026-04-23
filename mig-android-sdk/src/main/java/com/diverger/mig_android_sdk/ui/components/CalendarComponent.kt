@@ -44,6 +44,7 @@ import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
+import com.diverger.mig_android_sdk.support.localizedString
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.XCircle
 
@@ -84,7 +85,7 @@ fun CalendarComponent(
 
             Box(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.trainings_calendar),
+                    text = localizedString("dashboard.sections.calendar", R.string.trainings_calendar),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleLarge,
@@ -103,7 +104,7 @@ fun CalendarComponent(
             }
             TextButton(onClick = { showLegend.value = true }, modifier = Modifier.padding(horizontal = 8.dp)) {
                 Text(
-                    stringResource(R.string.legend),
+                    localizedString("legend", R.string.legend),
                     color = Color.Cyan,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -162,7 +163,7 @@ fun LegendDialog(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = stringResource(R.string.legend),
+                    text = localizedString("legend", R.string.legend),
                     color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp,

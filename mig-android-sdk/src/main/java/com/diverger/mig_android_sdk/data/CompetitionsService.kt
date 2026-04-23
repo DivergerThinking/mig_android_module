@@ -5,8 +5,10 @@ import com.google.gson.annotations.SerializedName
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -31,7 +33,10 @@ data class Competition(
     val details: String?,
     val contact: String?,
     val splits: List<Split>?,
-    val game: Game?
+    val game: Game?,
+    val type: String?,
+    @SerializedName("pdf_file") val pdfFile: String?,
+    val image: String?
 )
 
 // 📌 **Modelo de Juego**
@@ -41,14 +46,31 @@ data class Game(
     val image: String?,
     val banner: String?,
     val type: String,
-    val description: String?
+    val description: String?,
+    val priority: Int?
 )
 
 // 📌 **Modelo de Split**
 data class Split(
     val id: Int,
     val name: String,
+    val active: Boolean?,
+    val banner: String?,
+    val overview: String?,
+    val details: String?,
+    val rules: String?,
+    val contact: String?,
     val tournaments: List<Tournament>?
+)
+
+// 📌 **Inscripción a torneo**
+data class TournamentInscriptionRequest(
+    val alias: String,
+    val status: String = "published",
+    @SerializedName("id_user") val idUser: String?,
+    @SerializedName("id_tournament") val idTournament: Int,
+    @SerializedName("id_team") val idTeam: String?,
+    val email: String?
 )
 
 // 📌 **Modelo de Torneo**
@@ -58,7 +80,10 @@ data class Tournament(
     @SerializedName("date") val tournamentDate: String?,
     val link: String?,
     val split: Int?,
-    val status: String?
+    val status: String?,
+    val type: String?,
+    @SerializedName("start_sign_date") val startSignDate: String?,
+    @SerializedName("end_sign_date") val endSignDate: String?
 )
 
 interface CompetitionsService {
@@ -66,7 +91,7 @@ interface CompetitionsService {
     @GET("competitions")
     suspend fun getAllCompetitions(
         @Query("fields") fields: String = "*,game.*, splits.*, splits.tournaments.*",
-        @Query("filter[start_date][_between]") yearRange: String?,
+        @Query(value = "filter[season][_eq]", encoded = true) season: String?,
         @Header("Authorization") token: String
     ): CompetitionResponse
 
@@ -77,6 +102,12 @@ interface CompetitionsService {
         @Query("filter[start_date][_between]") yearRange: String?,
         @Header("Authorization") token: String
     ): CompetitionResponse
+
+    @POST("tournament_inscriptions")
+    suspend fun createTournamentInscription(
+        @Body body: TournamentInscriptionRequest,
+        @Header("Authorization") token: String
+    ): Unit
 
     @GET("competitions/{id}")
     suspend fun getCompetitionById(
@@ -100,18 +131,25 @@ object CompetitionsApi {
     }
 
     suspend fun getAllCompetitions(year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01,$it-12-31" }
-        return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
+        val season = year?.toString()
+        return service.getAllCompetitions(
+            fields = "*,game.*,splits.*,splits.tournaments.*",
+            season = season,
+            token = TOKEN
+        ).data
     }
 
     suspend fun getCompetitionsByTeam(teamId: String, year: Int? = null): List<Competition> {
-        val yearRange = year?.let { "$it-01-01$it-12-31" }
-        // TODO : Cambiar cuando haya competiciones para mi team
-        //return service.getCompetitionsByTeam(teamId = teamId, yearRange = yearRange, token = TOKEN).data
-        return service.getAllCompetitions(yearRange = yearRange, token = TOKEN).data
+        val season = year?.toString()
+        // TODO: Filter by team when team competitions are available
+        return service.getAllCompetitions(season = season, token = TOKEN).data
     }
 
     suspend fun getCompetitionById(competitionId: String): Competition {
         return service.getCompetitionById(competitionId, token = TOKEN).data
+    }
+
+    suspend fun createTournamentInscription(request: TournamentInscriptionRequest) {
+        service.createTournamentInscription(request, token = TOKEN)
     }
 }

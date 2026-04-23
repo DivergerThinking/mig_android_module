@@ -1,60 +1,48 @@
+package com.diverger.mig_android_sdk.ui.competitions
+
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Rule
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -62,18 +50,30 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.Competition
+import com.diverger.mig_android_sdk.data.CompetitionsApi
 import com.diverger.mig_android_sdk.data.Split
 import com.diverger.mig_android_sdk.data.Tournament
+import com.diverger.mig_android_sdk.data.TournamentInscriptionRequest
+import com.diverger.mig_android_sdk.data.UserManager
+import com.diverger.mig_android_sdk.data.getUnsafeOkHttpClient
+import kotlinx.coroutines.launch
 import com.diverger.mig_android_sdk.support.EnvironmentManager
-import com.diverger.mig_android_sdk.ui.competitions.cleanHtml
+import com.diverger.mig_android_sdk.support.LocalizationManager
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.theme.MIGAndroidSDKTheme
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowRightCircle
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Trophy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.Request
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
 
 @Composable
 fun CompetitionDetailScreen(
@@ -90,83 +90,93 @@ fun CompetitionDetailScreen(
     }
 
     MIGAndroidSDKTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             competition?.let { comp ->
-                Column(modifier = Modifier
-                    //.fillMaxHeight()
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)) {
+                Column(modifier = Modifier.fillMaxSize()) {
 
-                    // 🔙 **Barra Superior**
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
-                        }
-                        Text(
-                            text = comp.title.uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier.weight(1f)
+                    // Banner
+                    Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+                        val bannerPath = selectedSplit?.banner?.takeIf { it.isNotBlank() } ?: comp.game?.banner
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data("${EnvironmentManager.getAssetsBaseUrl()}$bannerPath")
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.7f), Color.Black)
+                                )
+                            )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 16.dp)
+                        ) {
+                            Text(
+                                text = comp.title.uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 48.dp)
+                                    .align(Alignment.Center)
+                            )
+                            IconButton(
+                                onClick = { navController.popBackStack() },
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                            }
+                        }
                     }
 
-                    // 📌 **Banner**
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data("${EnvironmentManager.getAssetsBaseUrl()}${comp.game?.banner}")
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Banner",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .background(Color.Gray, shape = RoundedCornerShape(30.dp))
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 📌 **Dropdown de Splits**
-                    DropdownMenuComponent(
-                        selectedSplit = selectedSplit,
-                        splits = comp.splits ?: emptyList(),
-                        onSplitSelected = { viewModel.selectSplit(it) }
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    when (selectedTab) {
-                        0 -> Text(text = stringResource(R.string.tournament_about_this_competition), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        1 -> Text(text = stringResource(R.string.tournament_details), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        2 -> Text(text = stringResource(R.string.tournament_rules), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        3 -> Text(text = stringResource(R.string.tournament_contact), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        4 -> Text(text = stringResource(R.string.tournaments_title), color = Color.White, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    // Split chips
+                    val splits = comp.splits ?: emptyList()
+                    if (splits.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            splits.forEach { split ->
+                                val isSelected = selectedSplit?.id == split.id
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            if (isSelected) Color.Cyan else Color.White.copy(alpha = 0.12f),
+                                            RoundedCornerShape(20.dp)
+                                        )
+                                        .clickable { viewModel.selectSplit(split) }
+                                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = split.name,
+                                        color = if (isSelected) Color.Black else Color.White,
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    //Spacer(modifier = Modifier.height(16.dp))
-
-                    // 📌 **Contenido de la pestaña seleccionada (Scroll habilitado)**
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f) // 🔹 IMPORTANTE para que la bottom bar se muestre bien
-                            //.verticalScroll(rememberScrollState())
-                            .padding(8.dp)
-                    ) {
-                        SelectedTabContent(competition = comp, selectedTab = selectedTab)
+                    // Tab content
+                    Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        SelectedTabContent(competition = comp, selectedTab = selectedTab, selectedSplit = selectedSplit)
                     }
 
-                    // 📌 **Tab Layout en la parte inferior**
                     BottomNavigationTabs(viewModel)
                 }
             } ?: run {
@@ -178,166 +188,567 @@ fun CompetitionDetailScreen(
     }
 }
 
-// 📌 **Dropdown de Splits**
-@Composable
-fun DropdownMenuComponent(selectedSplit: Split?, splits: List<Split>, onSplitSelected: (Split) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Transparent)
-            .border(1.dp, Color.White, RoundedCornerShape(22.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable { expanded = !expanded }
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = selectedSplit?.name ?: stringResource(R.string.select_an_split),
-                    color = Color.White,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir", tint = Color.Cyan)
-                }
-            }
-
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier
-                .background(Color.Black)
-                .border(1.dp, Color.White, RoundedCornerShape(12.dp))) {
-                splits.forEach { split ->
-                    DropdownMenuItem(
-                        text = { Text(split.name, color = Color.White) },
-                        onClick = {
-                            onSplitSelected(split)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
+// ─── Tab dispatcher ───────────────────────────────────────────────────────────
 
 @Composable
-fun SelectedTabContent(competition: Competition, selectedTab: Int) {
+fun SelectedTabContent(competition: Competition, selectedTab: Int, selectedSplit: Split?) {
     when (selectedTab) {
-        0 -> ScrollableTextContent(if(competition.overview.isNullOrEmpty()) stringResource(R.string.no_information_available) else competition.overview)
-        1 -> ScrollableTextContent(if(competition.details.isNullOrEmpty()) stringResource(R.string.no_information_details_available) else competition.details)
-        2 -> ScrollableTextContent(if(competition.rules.isNullOrEmpty()) stringResource(R.string.no_rules_defined) else competition.rules)
-        3 -> ScrollableTextContent(if(competition.contact.isNullOrEmpty()) stringResource(R.string.no_contact_information_available) else competition.contact)
-        4 -> TournamentTab(competition) // ✅ Torneos se mantiene igual
+        0 -> OverviewTabContent(selectedSplit?.overview ?: competition.overview)
+        1 -> DetailsTabContent()
+        2 -> RulesTabContent(rules = selectedSplit?.rules ?: competition.rules, pdfFile = competition.pdfFile)
+        3 -> ContactTabContent(contact = selectedSplit?.contact ?: competition.contact)
+        4 -> TournamentTab(selectedSplit)
     }
 }
 
+// ─── Tab 0 · Overview ─────────────────────────────────────────────────────────
+
 @Composable
-fun ScrollableTextContent(content: String) {
-    Box(
+fun OverviewTabContent(overview: String?) {
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()) // 🔹 Habilita el scroll
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Text(
-            text = cleanHtml(content),
+            text = localizedString("competitions.about", R.string.tournament_about_this_competition),
             color = Color.White,
-            style = MaterialTheme.typography.bodyLarge
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 10.dp)
+        )
+        Text(
+            text = if (overview.isNullOrBlank()) localizedString("competitions.subheadings.notFound", R.string.no_information_available) else cleanHtml(overview),
+            color = Color.White.copy(alpha = 0.85f),
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
 
-// 📌 **Tab Layout en la parte inferior**
+// ─── Tab 1 · Details (expandable accordion) ───────────────────────────────────
+
+private data class DetailItem(
+    val icon: ImageVector,
+    val title: String,
+    val description: String,
+    val color: Color
+)
+
 @Composable
-fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
-    val selectedTab by viewModel.selectedTab.collectAsState()
+fun DetailsTabContent() {
+    val items = listOf(
+        DetailItem(Icons.Default.Computer,  localizedString("competitions.details.cards.tournamentFormat.title", R.string.details_card_tournament_format_title),
+            localizedString("competitions.details.cards.tournamentFormat.description", R.string.details_card_tournament_format_desc),
+            Color(0xFF2D59D9)),
+        DetailItem(Icons.Default.Star,      localizedString("competitions.details.cards.pointsSystem.title", R.string.details_card_points_system_title),
+            localizedString("competitions.details.cards.pointsSystem.description", R.string.details_card_points_system_desc),
+            Color(0xFFBF268C)),
+        DetailItem(Icons.Default.DateRange, localizedString("competitions.details.cards.splitsAndSeason.title", R.string.details_card_splits_season_title),
+            localizedString("competitions.details.cards.splitsAndSeason.description", R.string.details_card_splits_season_desc),
+            Color(0xFF7326BF)),
+        DetailItem(Icons.Default.Group,     localizedString("competitions.details.cards.participation.title", R.string.details_card_participation_title),
+            localizedString("competitions.details.cards.participation.description", R.string.details_card_participation_desc),
+            Color(0xFF268C40))
+    )
 
-    Box(
+    var expandedIndex by remember { mutableStateOf<Int?>(null) }
+
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.93f),
-                        Color.Black.copy(alpha = 0.82f)
-                    )
-                )
-            )
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-    NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.Transparent,
-        contentColor = Color.White
-    ) {
-        val tabs = listOf(
-            stringResource(R.string.overview_section_label) to Icons.Default.Info,
-            stringResource(R.string.details_section_label) to Icons.Default.List,
-            stringResource(R.string.rules_section_label) to Icons.Default.Rule,
-            stringResource(R.string.contact_section_label) to Icons.Default.Email,
-            stringResource(R.string.tournament_section_label) to FontAwesomeIcons.Solid.Trophy
+        Text(
+            text = localizedString("competitions.details", R.string.tournament_details),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 4.dp)
         )
-
-        tabs.forEachIndexed { index, (title, icon) ->
-            NavigationBarItem(
-                modifier = Modifier.size(22.dp),
-                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
-                icon = {
-                    Icon(
-                        icon,
-                        contentDescription = title,
-                        tint = if (selectedTab == index) Color.Cyan else Color.White
-                    )
-                },
-                label = {
-                    Text(
-                        title,
-                        color = if (selectedTab == index) Color.Cyan else Color.White
-                    )
-                },
-                selected = selectedTab == index,
-                onClick = { viewModel.selectTab(index) }
+        items.forEachIndexed { index, item ->
+            ExpandableDetailCell(
+                item = item,
+                isExpanded = expandedIndex == index,
+                onToggle = { expandedIndex = if (expandedIndex == index) null else index }
             )
         }
     }
 }
+
+@Composable
+private fun ExpandableDetailCell(item: DetailItem, isExpanded: Boolean, onToggle: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(item.color.copy(alpha = 0.45f), Color.Black.copy(alpha = 0.75f))
+                )
+            )
+            .border(1.dp, item.color.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+    ) {
+        // Header row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggle() }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(item.color, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(item.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Text(
+                text = item.title.uppercase(),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.Add,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Expanded content
+        AnimatedVisibility(visible = isExpanded, enter = expandVertically(), exit = shrinkVertically()) {
+            Text(
+                text = item.description,
+                color = Color.White.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            )
+        }
+    }
 }
 
-// 📌 **Pestaña de Torneos**
+// ─── Tab 2 · Rules ────────────────────────────────────────────────────────────
+
 @Composable
-fun TournamentTab(competition: Competition) {
-    val selectedSplit by remember { mutableStateOf(competition.splits?.firstOrNull()) }
+fun RulesTabContent(rules: String?, pdfFile: String?) {
+    val context = LocalContext.current
+    val pdfUrl = pdfFile?.takeIf { it.isNotBlank() }
+        ?.let { "${EnvironmentManager.getAssetsBaseUrl()}$it" }
+    var expandedSection by remember { mutableStateOf<String?>(null) }
+
+    val ruleItems = listOf(
+        Icons.Default.SmokeFree     to localizedString("competitions.rules.cards.noSmoking", R.string.rule_no_smoking_cms),
+        Icons.Default.Fastfood      to localizedString("competitions.rules.cards.noFoodOrDrink", R.string.rule_no_food_cms),
+        Icons.Default.DirectionsRun to localizedString("competitions.rules.cards.noRunning", R.string.rule_no_running_cms),
+        Icons.Default.VolumeOff     to localizedString("competitions.rules.cards.respectEnvironment", R.string.rule_respect_env_cms),
+        Icons.Default.Delete        to localizedString("competitions.rules.cards.keepClean", R.string.rule_keep_clean_cms),
+        Icons.Default.CloudOff      to localizedString("competitions.rules.cards.noDownloads", R.string.rule_no_downloads_cms)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        RulesTitleRow(pdfUrl = pdfUrl, context = context, modifier = Modifier)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (pdfUrl != null) {
+            RulesAccordionRow(
+                label = localizedString("rules.section.text", R.string.rules_section_text),
+                icon = Icons.Default.Description,
+                isExpanded = expandedSection == "text",
+                onToggle = { expandedSection = if (expandedSection == "text") null else "text" }
+            )
+            AnimatedVisibility(visible = expandedSection == "text", enter = expandVertically(), exit = shrinkVertically()) {
+                RulesGrid(ruleItems = ruleItems, modifier = Modifier.padding(vertical = 10.dp))
+            }
+            HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
+            RulesAccordionRow(
+                label = localizedString("rules.section.pdf", R.string.rules_section_pdf),
+                icon = Icons.Default.PictureAsPdf,
+                isExpanded = expandedSection == "pdf",
+                onToggle = { expandedSection = if (expandedSection == "pdf") null else "pdf" }
+            )
+            AnimatedVisibility(visible = expandedSection == "pdf", enter = expandVertically(), exit = shrinkVertically()) {
+                PdfViewer(
+                    url = pdfUrl,
+                    modifier = Modifier.fillMaxWidth().height(460.dp).padding(top = 8.dp, bottom = 16.dp)
+                )
+            }
+        } else {
+            RulesGrid(ruleItems = ruleItems)
+        }
+    }
+}
+
+@Composable
+private fun RulesGrid(ruleItems: List<Pair<androidx.compose.ui.graphics.vector.ImageVector, String>>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ruleItems.chunked(2).forEach { row ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                row.forEach { (icon, text) ->
+                    RuleCard(icon = icon, text = text, modifier = Modifier.weight(1f))
+                }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RuleCard(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+        Text(text, color = Color.White, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun RulesTitleRow(pdfUrl: String?, context: Context, modifier: Modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = localizedString("competitions.rules", R.string.tournament_rules),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.weight(1f)
+        )
+        if (pdfUrl != null) {
+            Box(
+                modifier = Modifier
+                    .background(Color.Cyan, RoundedCornerShape(20.dp))
+                    .clickable {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl)))
+                    }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                    Text(localizedString("pdf.download", R.string.pdf_download), color = Color.Black, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RulesAccordionRow(label: String, icon: ImageVector, isExpanded: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle() }
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.Cyan, modifier = Modifier.size(16.dp))
+        Text(label, color = Color.White, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
+        Icon(
+            if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.5f),
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+// ─── Tab 3 · Contact ──────────────────────────────────────────────────────────
+
+private val FALLBACK_EMAIL = "info@madridingame.es"
+private val FALLBACK_ADDRESS = "Casa de Campo. Avenida Principal.\n3.28011. Madrid"
+
+private fun extractEmail(text: String): String? =
+    Regex("[A-Z0-9a-z._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}").find(text)?.value
+
+private fun extractDiscordUrl(text: String): String? =
+    Regex("https?://[^\\s]*discord[^\\s]*", RegexOption.IGNORE_CASE).find(text)?.value
+
+@Composable
+fun ContactTabContent(contact: String?) {
+    val decoded = contact?.let { cleanHtml(it) } ?: ""
+    val email = extractEmail(decoded) ?: FALLBACK_EMAIL
+    val discordUrl = contact?.let { extractDiscordUrl(it) }
+
+    val textBeforeEmail = if (extractEmail(decoded) != null)
+        decoded.substringBefore(email).trim()
+    else decoded
+
+    val textAfterEmail = if (extractEmail(decoded) != null) {
+        decoded.substringAfter(email)
+            .let { if (discordUrl != null) it.replace(discordUrl, "") else it }
+            .trim()
+    } else ""
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = localizedString("competitions.contact", R.string.tournament_contact),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        ContactCard(
+            email = email,
+            textBefore = textBeforeEmail.ifBlank { FALLBACK_ADDRESS },
+            textAfter = textAfterEmail,
+            discordUrl = discordUrl
+        )
+    }
+}
+
+@Composable
+private fun ContactCard(email: String, textBefore: String, textAfter: String, discordUrl: String?) {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF6B0DAD), Color(0xFFD400C7))
+                )
+            )
+            .padding(horizontal = 24.dp, vertical = 44.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.contact_card_title),
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = textBefore,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+
+            // Email button
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFF9EE8E0), RoundedCornerShape(50.dp))
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("mailto:$email"))
+                        context.startActivity(intent)
+                    }
+                    .padding(horizontal = 28.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = email,
+                    color = Color(0xFF1A1A2E),
+                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (textAfter.isNotBlank()) {
+                Text(
+                    text = textAfter,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Discord button
+            if (discordUrl != null) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFF5966D9), RoundedCornerShape(50.dp))
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(discordUrl))
+                            context.startActivity(intent)
+                        }
+                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Forum, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Text(stringResource(R.string.contact_join_discord), color = Color.White, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            Text(
+                text = FALLBACK_ADDRESS,
+                color = Color.White,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+// ─── Tab 4 · Tournaments ──────────────────────────────────────────────────────
+
+@Composable
+fun TournamentTab(selectedSplit: Split?) {
+    val now = remember { java.util.Date() }
+    val tournaments = (selectedSplit?.tournaments ?: emptyList()).filter { it.isRegistrationOpen(now) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedTournament by remember { mutableStateOf<Tournament?>(null) }
+    var nickname by remember { mutableStateOf("") }
+    var isSubmitting by remember { mutableStateOf(false) }
+
+    if (showDialog && selectedTournament != null) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color(0xFF1C1C1C),
+            title = {
+                Text(
+                    text = "Antes de continuar…",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "¿Con qué alias competirás en el torneo?",
+                        color = Color.White.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = { nickname = it },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.Cyan,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                            cursorColor = Color.Cyan
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = "Lo usamos para rastrear tus stats automáticamente.",
+                        color = Color.White.copy(alpha = 0.4f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !isSubmitting,
+                    onClick = {
+                        val tournament = selectedTournament ?: return@Button
+                        val user = UserManager.getUser()
+                        val request = TournamentInscriptionRequest(
+                            alias = nickname,
+                            idUser = user?.id,
+                            idTournament = tournament.id,
+                            idTeam = UserManager.getSelectedTeam()?.id,
+                            email = user?.email
+                        )
+                        isSubmitting = true
+                        scope.launch {
+                            try {
+                                android.util.Log.d("TournamentInscription", "Sending POST: $request")
+                                CompetitionsApi.createTournamentInscription(request)
+                                android.util.Log.d("TournamentInscription", "✅ Inscription created successfully")
+                            } catch (e: Exception) {
+                                android.util.Log.e("TournamentInscription", "❌ Error: ${e.message}")
+                            }
+                            isSubmitting = false
+                            showDialog = false
+                            val link = tournament.link?.takeIf { it.isNotBlank() }
+                                ?: "https://webesports.madridingame.es/esports-center/"
+                            android.util.Log.d("TournamentInscription", "Opening URL: $link")
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black, strokeWidth = 2.dp)
+                    } else {
+                        Text("Continuar e Inscribirme", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(text = stringResource(R.string.close_label), color = Color.White.copy(alpha = 0.6f))
+                }
+            }
+        )
+    }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
-        if (selectedSplit?.tournaments.isNullOrEmpty()) {
+        item {
+            Text(
+                text = localizedString("competitions.tournaments", R.string.tournaments_title),
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+        if (tournaments.isEmpty()) {
             item {
                 Text(
-                    text = stringResource(R.string.no_tournaments_available),
+                    text = stringResource(R.string.no_active_tournaments),
                     color = Color.White,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         } else {
-            items(selectedSplit?.tournaments ?: emptyList()) { tournament ->
-                TournamentCard(tournament)
+            items(tournaments) { tournament ->
+                TournamentCard(tournament) {
+                    nickname = UserManager.getUser()?.username ?: ""
+                    selectedTournament = tournament
+                    showDialog = true
+                }
             }
         }
     }
 }
 
 @Composable
-fun TournamentCard(tournament: Tournament) {
-    val context = LocalContext.current
-    val formattedDate = getFormattedDate(tournament.tournamentDate, context = context)
+fun TournamentCard(tournament: Tournament, onSubscribeTapped: () -> Unit) {
     val (day, month) = getDayAndMonth(tournament.tournamentDate)
 
     Column(
@@ -347,143 +758,228 @@ fun TournamentCard(tournament: Tournament) {
             .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
             .padding(8.dp)
             .shadow(2.dp, RoundedCornerShape(20.dp))
-            .clickable {
-                tournament.link?.let { link ->
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                    context.startActivity(intent)
-                } ?: Toast.makeText(
-                    context,
-                    context.getString(R.string.unavailable_link), Toast.LENGTH_SHORT
-                ).show()
-            }
+            .clickable { onSubscribeTapped() }
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 📆 **Fecha en cuadro con gradiente**
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             DateBox(day = day, month = month)
-
             Spacer(modifier = Modifier.width(16.dp))
-
-            // 🎮 **Nombre del torneo y estado**
             Column {
-                Text(
-                    text = tournament.name.uppercase(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                Text(
-                    text = "${tournament.status?.capitalize()}",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(tournament.name.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 4.dp))
+                Text(localizedTournamentType(tournament.type, LocalContext.current), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 📌 **Botón de inscripción**
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    tournament.link?.let { link ->
-                        if (link.startsWith("http")) {
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = link.toUri()
-                            }
-                            context.startActivity(intent)
-                        } else { // To be aligned with iOS
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = "https://webesports.madridingame.es/esports-center/".toUri()
-                            }
-                            context.startActivity(intent)
-                        }
-                    } ?: Toast.makeText(
-                        context,
-                        context.getString(R.string.unavailable_link),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
+                .clickable { onSubscribeTapped() },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(R.string.tournament_enroll),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(localizedString("competitions.events.eventLayoutSignIn", R.string.tournament_enroll), color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.width(8.dp))
             Icon(FeatherIcons.ArrowRightCircle, contentDescription = null, tint = Color.White)
         }
     }
 }
 
-// 📌 **Componente de fecha con Gradiente (Igual que en iOS)**
+// ─── Bottom nav ───────────────────────────────────────────────────────────────
+
+@Composable
+fun BottomNavigationTabs(viewModel: CompetitionDetailViewModel) {
+    val selectedTab by viewModel.selectedTab.collectAsState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.93f), Color.Black.copy(alpha = 0.82f))))
+    ) {
+        NavigationBar(modifier = Modifier.fillMaxWidth(), containerColor = Color.Transparent, contentColor = Color.White) {
+            val tabs = listOf(
+                localizedString("competitions.overview", R.string.overview_section_label)   to Icons.Default.Info,
+                localizedString("competitions.details", R.string.details_section_label)    to Icons.Default.List,
+                localizedString("competitions.rules", R.string.rules_section_label)        to Icons.Default.Rule,
+                localizedString("competitions.contact", R.string.contact_section_label)    to Icons.Default.Email,
+                localizedString("competitions.tournaments", R.string.tournament_section_label) to FontAwesomeIcons.Solid.Trophy
+            )
+            tabs.forEachIndexed { index, (title, icon) ->
+                NavigationBarItem(
+                    modifier = Modifier.size(22.dp),
+                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent),
+                    icon = { Icon(icon, contentDescription = title, tint = if (selectedTab == index) Color.Cyan else Color.White) },
+                    label = { Text(title, color = if (selectedTab == index) Color.Cyan else Color.White) },
+                    selected = selectedTab == index,
+                    onClick = { viewModel.selectTab(index) }
+                )
+            }
+        }
+    }
+}
+
+fun localizedTournamentType(type: String?, context: Context): String {
+    return when (type?.lowercase()) {
+        "elimination"              -> LocalizationManager.string("competitions.tournament.type.elimination") ?: context.getString(R.string.tournament_type_elimination)
+        "points"                   -> LocalizationManager.string("competitions.tournament.type.points") ?: context.getString(R.string.tournament_type_points)
+        "groups"                   -> LocalizationManager.string("competitions.tournament.type.groups") ?: context.getString(R.string.tournament_type_groups)
+        "roundrobin", "round_robin" -> LocalizationManager.string("competitions.tournament.type.roundRobin") ?: context.getString(R.string.tournament_type_round_robin)
+        else                       -> type?.replaceFirstChar { it.uppercase() } ?: ""
+    }
+}
+
+fun Tournament.isRegistrationOpen(now: java.util.Date = java.util.Date()): Boolean {
+    val start = parseSignDate(startSignDate) ?: return true
+    val end   = parseSignDate(endSignDate)   ?: return true
+    return !now.before(start) && !now.after(end)
+}
+
+private fun parseSignDate(raw: String?): java.util.Date? {
+    if (raw.isNullOrBlank()) return null
+    val formats = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd")
+    for (fmt in formats) {
+        try {
+            val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.US)
+            sdf.isLenient = false
+            val parsed = sdf.parse(raw)
+            if (parsed != null) return parsed
+        } catch (_: Exception) {}
+    }
+    return null
+}
+
+// ─── Shared composables ───────────────────────────────────────────────────────
+
 @Composable
 fun DateBox(day: String, month: String) {
     Box(
         modifier = Modifier
             .size(70.dp)
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFFFF007F),
-                        Color(0xFF8000FF)
-                    )
-                ), // 🎨 Rosa a Morado
-                shape = RoundedCornerShape(10.dp)
-            ),
+            .background(Brush.linearGradient(listOf(Color(0xFFFF007F), Color(0xFF8000FF))), shape = RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = day,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
-            )
-            Text(
-                text = month.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
-                maxLines = 1
-            )
+            Text(day, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium, color = Color.White)
+            Text(month.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.White, maxLines = 1)
         }
     }
 }
 
-// 📌 **Función para obtener el Día y Mes separados**
-fun getDayAndMonth(dateString: String?): Pair<String, String> {
-    if (dateString.isNullOrEmpty()) return Pair("?", "?")
-
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val date = inputFormat.parse(dateString)
-
-        val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
-        val monthFormat = SimpleDateFormat("MMMM", Locale("es", "ES"))
-
-        Pair(dayFormat.format(date ?: return Pair("?", "?")), monthFormat.format(date))
-    } catch (e: Exception) {
-        Pair("?", "?")
+@Composable
+fun ScrollableTextContent(content: String) {
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        Text(text = cleanHtml(content), color = Color.White, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
-// 📌 **Función para formatear la fecha en "DD/MM/YYYY"**
+// ─── PDF Viewer ───────────────────────────────────────────────────────────────
+
+@Composable
+fun PdfViewer(url: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    var pages by remember(url) { mutableStateOf<List<Bitmap>>(emptyList()) }
+    var isLoading by remember(url) { mutableStateOf(true) }
+    var loadFailed by remember(url) { mutableStateOf(false) }
+
+    val widthPx = with(density) {
+        (context.resources.displayMetrics.widthPixels - 48.dp.roundToPx()).coerceAtLeast(100)
+    }
+
+    LaunchedEffect(url) {
+        withContext(Dispatchers.IO) {
+            try {
+                val client = getUnsafeOkHttpClient()
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+                val bytes = response.body?.bytes() ?: throw Exception("Empty body")
+                response.close()
+
+                val tempFile = File(context.cacheDir, "pdf_${url.hashCode()}.pdf")
+                tempFile.writeBytes(bytes)
+
+                val pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                val renderer = PdfRenderer(pfd)
+
+                val rendered = (0 until renderer.pageCount).map { i ->
+                    val page = renderer.openPage(i)
+                    val scale = widthPx.toFloat() / page.width
+                    val bmp = Bitmap.createBitmap(widthPx, (page.height * scale).toInt(), Bitmap.Config.ARGB_8888)
+                    bmp.eraseColor(android.graphics.Color.WHITE)
+                    page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    page.close()
+                    bmp
+                }
+                renderer.close()
+                pfd.close()
+
+                withContext(Dispatchers.Main) {
+                    pages = rendered
+                    isLoading = false
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    loadFailed = true
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    DisposableEffect(url) {
+        onDispose { pages.forEach { it.recycle() } }
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.05f)),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isLoading -> CircularProgressIndicator(color = Color.Cyan, modifier = Modifier.padding(32.dp))
+            loadFailed -> Text(
+                text = localizedString("competitions.subheadings.notFound", R.string.no_information_available),
+                color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.padding(24.dp)
+            )
+            else -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                pages.forEach { bmp ->
+                    Image(
+                        bitmap = bmp.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillWidth,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+fun getDayAndMonth(dateString: String?): Pair<String, String> {
+    if (dateString.isNullOrEmpty()) return Pair("?", "?")
+    return try {
+        val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(dateString)
+        Pair(
+            SimpleDateFormat("dd", Locale.getDefault()).format(date ?: return Pair("?", "?")),
+            SimpleDateFormat("MMMM", Locale("es", "ES")).format(date)
+        )
+    } catch (e: Exception) { Pair("?", "?") }
+}
+
 fun getFormattedDate(dateString: String?, context: Context): String {
     if (dateString.isNullOrEmpty()) return context.getString(R.string.unknown_date)
-
     return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val date = inputFormat.parse(dateString)
-        outputFormat.format(date ?: return context.getString(R.string.invalid_date))
-    } catch (e: Exception) {
-        context.getString(R.string.invalid_date)
-    }
+        val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(dateString)
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date ?: return context.getString(R.string.invalid_date))
+    } catch (e: Exception) { context.getString(R.string.invalid_date) }
 }

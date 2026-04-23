@@ -89,10 +89,16 @@
     <string name="no_tournaments_available">No tournaments available</string>
     <string name="unavailable_link">Link not available</string>
     <string name="tournament_enroll">SIGN UP</string>
+    <string name="tournament_type_elimination">Elimination</string>
+    <string name="tournament_type_points">By points</string>
+    <string name="tournament_type_groups">Groups</string>
+    <string name="tournament_type_round_robin">Round robin</string>
+    <string name="no_active_tournaments">No active competitions at the moment</string>
     <string name="unknown_date">Unknown date</string>
     <string name="invalid_date">Invalid date</string>
     <string name="competitions_label">COMPETITIONS</string>
     <string name="select_season">Select a season</string>
+    <string name="season_label">Season</string>
     <string name="local_league_title">Municipal League</string>
     <string name="local_league_description">Esports Series Madrid</string>
     <string name="local_league_overview">Madrid in Game is the Madrid City Council\'s initiative to elevate amateur Esports talent through the creation of the Esports Series Madrid competitions. They consist of two seasons per year in which you can face the best players in a safe and optimal gaming environment.</string>
@@ -182,4 +188,38 @@
     <string name="error_document_update">An error occurred. Please try again.</string>
     <string name="user_banned_title">Account Suspended</string>
     <string name="user_banned_message">Your account has been suspended. You cannot make reservations.</string>
+    <string name="modality_in_person">Presencial / Online</string>
+    <string name="modality_online">Online</string>
+    <string name="see_more">See more</string>
+    <string name="see_less">See less</string>
+    <string name="pdf_download">Download PDF</string>
+    <string name="pdf_open">Open PDF</string>
+    <string name="rules_section_text">Rules</string>
+    <string name="rules_section_pdf">PDF Document</string>
+    <string name="contact_card_title">WANT TO KNOW MORE?</string>
+    <string name="contact_join_discord">Join Discord</string>
+
+    <!-- Rules grid items -->
+    <string name="rule_smoke_free">Smoke-free zone</string>
+    <string name="rule_no_food">No eating or drinking allowed</string>
+    <string name="rule_no_running">No running in the venue</string>
+    <string name="rule_respect_environment">Respect the environment</string>
+    <string name="rule_keep_clean">Keep the space clean</string>
+    <string name="rule_no_downloads">No downloads or installations</string>
+    <string name="rule_no_smoking_cms">Smoke-free zone</string>
+    <string name="rule_no_food_cms">No eating or drinking allowed</string>
+    <string name="rule_no_running_cms">No running in the venue</string>
+    <string name="rule_respect_env_cms">Respect the environment</string>
+    <string name="rule_keep_clean_cms">Keep the space clean</string>
+    <string name="rule_no_downloads_cms">No downloads or installations</string>
+
+    <!-- Competition detail cards -->
+    <string name="details_card_tournament_format_title">Tournament Format</string>
+    <string name="details_card_tournament_format_desc">Each tournament is played in a competitive format adapted to the game. Includes qualifying and elimination rounds based on the number of participants.</string>
+    <string name="details_card_points_system_title">Points System</string>
+    <string name="details_card_points_system_desc">Points are accumulated for each game played and reflected in the overall standings.</string>
+    <string name="details_card_splits_season_title">Splits &amp; Season</string>
+    <string name="details_card_splits_season_desc">The season is divided into splits. Each split has its own ranking and final prize.</string>
+    <string name="details_card_participation_title">Participation</string>
+    <string name="details_card_participation_desc">The league is open to players of all skill levels.</string>
 </resources>

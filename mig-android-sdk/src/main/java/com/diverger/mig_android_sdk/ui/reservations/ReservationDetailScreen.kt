@@ -73,6 +73,7 @@ import com.diverger.mig_android_sdk.data.UnsafeAsyncImage
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.EnvironmentManager
 import com.diverger.mig_android_sdk.support.StringResourcesProvider
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.support.generateQrBitmap
 import com.diverger.mig_android_sdk.ui.components.GradientCard
 import com.diverger.mig_android_sdk.ui.components.HolographicFlippableCard
@@ -152,7 +153,7 @@ fun ReservationDetailContent(
             IconButton(onClick = onDismiss) {
                 Icon(
                     FeatherIcons.XCircle,
-                    contentDescription = stringResource(R.string.close_label),
+                    contentDescription = localizedString("tournament.incription.dialog.closeButton", R.string.close_label),
                     tint = Color.Gray.copy(alpha = 0.4f)
                 )
             }
@@ -217,7 +218,7 @@ fun ReservationDetailContent(
                     val title = if (flipped)
                         stringResource(R.string.details_label).uppercase()
                     else
-                        stringResource(R.string.terms_of_use_label).uppercase()
+                        localizedString("dashboard.teams.teamAreas.reserves.reserveTerms", R.string.terms_of_use_label).uppercase()
 
                     Text(title, color = Color.Black, fontWeight = FontWeight.ExtraBold)
                 }
@@ -232,7 +233,7 @@ fun ReservationDetailContent(
 
 @Composable
 private fun ReservationHeader(
-    title: String = stringResource(R.string.booking_confirmed),
+    title: String = localizedString("dashboard.teams.teamAreas.reserves.reservedSpace", R.string.booking_confirmed),
 ) {
     Text(
         title.uppercase(),
@@ -423,7 +424,7 @@ private fun ColumnScope.UnifiedQrCardContent(
         } else {
             RemoteQrImage(
                 url = "${EnvironmentManager.getAssetsBaseUrl()}${training?.reserves?.firstOrNull()?.qrImage.orEmpty()}",
-                contentDescription = stringResource(R.string.qr_code)
+                contentDescription = localizedString("dashboard.teams.teamAreas.reserves.qrUsage", R.string.qr_code)
             )
         }
     } else {
@@ -431,7 +432,7 @@ private fun ColumnScope.UnifiedQrCardContent(
             if (res.qrImage != null) {
                 RemoteQrImage(
                     url = "${EnvironmentManager.getAssetsBaseUrl()}${res.qrImage}",
-                    contentDescription = stringResource(R.string.qr_code)
+                    contentDescription = localizedString("dashboard.teams.teamAreas.reserves.qrUsage", R.string.qr_code)
                 )
             } else {
                 UserManager.qr_logo?.let { logo ->
@@ -459,7 +460,7 @@ private fun ColumnScope.UnifiedQrCardContent(
 @Composable
 private fun ColumnScope.ReservationRulesCardContent() {
     Text(
-        stringResource(R.string.terms_of_use_label).uppercase(),
+        localizedString("dashboard.teams.teamAreas.reserves.reserveTerms", R.string.terms_of_use_label).uppercase(),
         color = Color.White,
         style = MaterialTheme.typography.headlineMedium
     )
@@ -471,7 +472,7 @@ private fun ColumnScope.ReservationRulesCardContent() {
             .data("${EnvironmentManager.getBaseServerUrl()}/_next/static/media/reserve-rules.e49650ad.png")
             .crossfade(true)
             .build(),
-        contentDescription = stringResource(R.string.terms_of_use_label),
+        contentDescription = localizedString("dashboard.teams.teamAreas.reserves.reserveTerms", R.string.terms_of_use_label),
         contentScale = ContentScale.Fit,
         modifier = Modifier
             .fillMaxSize()
@@ -490,7 +491,7 @@ private fun ColumnScope.ReservationRulesCardContent() {
 fun PlayersCarousel(training: EventModel) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            stringResource(R.string.players_label),
+            localizedString("dashboard.sections.players", R.string.players_label),
             color = Color.White,
             style = MaterialTheme.typography.labelMedium
         )

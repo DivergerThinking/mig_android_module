@@ -89,10 +89,16 @@
     <string name="no_tournaments_available">No hay información disponible.</string>
     <string name="unavailable_link">Enlace no disponible</string>
     <string name="tournament_enroll">INSCRÍBETE</string>
+    <string name="tournament_type_elimination">Eliminación</string>
+    <string name="tournament_type_points">Por puntos</string>
+    <string name="tournament_type_groups">Grupos</string>
+    <string name="tournament_type_round_robin">Todos contra todos</string>
+    <string name="no_active_tournaments">No hay competiciones activas actualmente</string>
     <string name="unknown_date">Fecha desconocida</string>
     <string name="invalid_date">Fecha inválida</string>
     <string name="competitions_label">COMPETICIONES</string>
     <string name="select_season">Selecciona una temporada</string>
+    <string name="season_label">Temporada</string>
     <string name="local_league_title">Liga Municipal</string>
     <string name="local_league_description">Esports Series Madrid</string>
     <string name="local_league_overview">Madrid in Game es la apuesta del Ayuntamiento de Madrid para elevar el talento amateur de los Esports con la creación de las competiciones: Esports Series Madrid. Constan de dos temporadas al año en las que podrás enfrentarte a los mejores jugadores en un entorno de juego seguro y óptimo.</string>
@@ -182,4 +188,38 @@
     <string name="error_document_update">Ha ocurrido un error. Por favor, inténtalo de nuevo.</string>
     <string name="user_banned_title">Cuenta Suspendida</string>
     <string name="user_banned_message">Tu cuenta ha sido suspendida. No puedes realizar reservas.</string>
+    <string name="modality_in_person">Presencial / Online</string>
+    <string name="modality_online">Online</string>
+    <string name="see_more">Ver más</string>
+    <string name="see_less">Ver menos</string>
+    <string name="pdf_download">Descargar PDF</string>
+    <string name="pdf_open">Abrir PDF</string>
+    <string name="rules_section_text">Normas</string>
+    <string name="rules_section_pdf">Documento PDF</string>
+    <string name="contact_card_title">¿QUIERES SABER MÁS?</string>
+    <string name="contact_join_discord">Unirse a Discord</string>
+
+    <!-- Elementos del grid de reglas -->
+    <string name="rule_smoke_free">Zona libre de humo</string>
+    <string name="rule_no_food">Prohibido comer o beber</string>
+    <string name="rule_no_running">No corras por el recinto</string>
+    <string name="rule_respect_environment">Respeta el ambiente</string>
+    <string name="rule_keep_clean">Mantén el espacio limpio</string>
+    <string name="rule_no_downloads">No descargas ni instalaciones</string>
+    <string name="rule_no_smoking_cms">Zona libre de humo</string>
+    <string name="rule_no_food_cms">Prohibido comer o beber</string>
+    <string name="rule_no_running_cms">No corras por el recinto</string>
+    <string name="rule_respect_env_cms">Respeta el ambiente</string>
+    <string name="rule_keep_clean_cms">Mantén el espacio limpio</string>
+    <string name="rule_no_downloads_cms">No descargas ni instalaciones</string>
+
+    <!-- Tarjetas de detalle de competición -->
+    <string name="details_card_tournament_format_title">Formato de torneos</string>
+    <string name="details_card_tournament_format_desc">Cada torneo se juega en formato competitivo adaptado al juego. Incluye fases clasificatorias y eliminatorias según el número de participantes.</string>
+    <string name="details_card_points_system_title">Sistema de puntos</string>
+    <string name="details_card_points_system_desc">Los puntos se acumulan por cada partida jugada y se reflejan en la clasificación general.</string>
+    <string name="details_card_splits_season_title">Splits y temporada</string>
+    <string name="details_card_splits_season_desc">La temporada está dividida en splits. Cada split tiene su propio ranking y premio final.</string>
+    <string name="details_card_participation_title">Participación</string>
+    <string name="details_card_participation_desc">La liga está abierta a jugadores de todos los niveles.</string>
 </resources>

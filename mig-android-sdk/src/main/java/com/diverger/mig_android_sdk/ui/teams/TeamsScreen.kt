@@ -25,6 +25,7 @@ import androidx.navigation.compose.*
 import com.diverger.mig_android_sdk.R
 import com.diverger.mig_android_sdk.data.UserManager
 import com.diverger.mig_android_sdk.support.StringResourcesProvider
+import com.diverger.mig_android_sdk.support.localizedString
 import com.diverger.mig_android_sdk.ui.reservations.ReservationsScreen
 import com.diverger.mig_android_sdk.ui.teams.news.NewsScreen
 import com.diverger.mig_android_sdk.ui.teams.playersTeam.PlayersTeamScreen
@@ -80,10 +81,10 @@ fun TeamsScreen(user: com.diverger.mig_android_sdk.data.User) {
 @Composable
 fun TeamBottomNavigation(navController: NavHostController, onChangeTeam: () -> Unit) {
     val items = mutableListOf(
-        TeamNavItem("training", stringResource(R.string.trainings_label), Icons.Default.CalendarMonth),
-        TeamNavItem("individualReservations", stringResource(R.string.bookings), Icons.Default.DateRange),
-        TeamNavItem("news", stringResource(R.string.news_label), Icons.Default.Newspaper),
-        TeamNavItem("players", stringResource(R.string.players_label), FontAwesomeIcons.Solid.PeopleCarry),
+        TeamNavItem("training", localizedString("dashboard.layout.trainings", R.string.trainings_label), Icons.Default.CalendarMonth),
+        TeamNavItem("individualReservations", localizedString("dashboard.profile.reserves.title", R.string.bookings), Icons.Default.DateRange),
+        TeamNavItem("news", localizedString("dashboard.teams.teamAreas.news.newsListTitle", R.string.news_label), Icons.Default.Newspaper),
+        TeamNavItem("players", localizedString("dashboard.sections.players", R.string.players_label), FontAwesomeIcons.Solid.PeopleCarry),
     )
 
     if ((UserManager.getUser()?.teams?.size ?: 0) > 1) {
