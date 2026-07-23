@@ -50,3 +50,6 @@ Thumbs.db
 
 .gradle
 local.properties
+
+# Excepción: el wrapper de Gradle SÍ se versiona (sin él el repo no compila)
+!gradle/wrapper/gradle-wrapper.jar
