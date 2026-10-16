@@ -1,11 +1,9 @@
 package com.diverger.mig_android_sdk.ui.profile
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -72,33 +69,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
     var newAvatarUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Lanzador para elegir imagen
+    // Photo Picker del sistema: no requiere permisos de galería (política Google Play)
     val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
             newAvatarUri = it
-            // Iniciamos la subida y actualización
             viewModel.onAvatarSelected(it, context)
-        }
-    }
-
-    // Selección de permiso según versión de Android
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        android.Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        android.Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            pickImageLauncher.launch("image/*")
-        } else {
-            Toast.makeText(
-                context,
-                context.getString(R.string.permission_denied), Toast.LENGTH_SHORT
-            ).show()
         }
     }
 
@@ -138,16 +115,9 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         modifier = Modifier
                             .wrapContentSize()
                             .clickable {
-                                when {
-                                    ContextCompat.checkSelfPermission(context, permission)
-                                            == PackageManager.PERMISSION_GRANTED -> {
-                                        pickImageLauncher.launch("image/*")
-                                    }
-
-                                    else -> {
-                                        permissionLauncher.launch(permission)
-                                    }
-                                }
+                                pickImageLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
                             },
                         contentAlignment = Alignment.TopCenter
                     ) {

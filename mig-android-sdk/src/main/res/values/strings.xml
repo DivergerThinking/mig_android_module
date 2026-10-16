@@ -129,8 +129,8 @@
     <string name="user_no_belongs_to_any_team">The user does not belong to any team.</string>
     <string name="trainings_label">Training</string>
     <string name="change_teams">Change team</string>
-    <string name="permission_denied">Permission denied</string>
     <string name="updated_avatar">Avatar updated!</string>
+    <string name="error_reading_avatar">Could not read the selected image</string>
     <string name="error_updating_avatar">Error updating avatar: %1$s</string>
     <string name="team_reservations">Team Bookings</string>
     <string name="personal_area">PERSONAL AREA</string>

@@ -55,9 +55,9 @@ class ProfileViewModel() : ViewModel() {
             _isUploading.value = true
             try {
                 // 2.1 Convertir URI a ByteArray o File
-                val inputStream = context.contentResolver.openInputStream(uri)!!
-                val bytes = inputStream.readBytes()
-                inputStream.close()
+                val bytes = AvatarImageReader.readBytes {
+                    context.contentResolver.openInputStream(uri)
+                }
 
                 // 2.2 Subir la imagen (igual que en iOS updateAvatar)
                 val avatarId = UploadImageService().uploadImageSuspend(bytes, "${UUID.randomUUID()}.jpg")
@@ -68,6 +68,8 @@ class ProfileViewModel() : ViewModel() {
                 // 2.4 Actualizar localmente
                 _user.value = _user.value?.copy(avatar = avatarId)
                 _toastMsg.value = context.getString(R.string.updated_avatar)
+            } catch (e: AvatarImageReader.UnreadableImageException) {
+                _toastMsg.value = context.getString(R.string.error_reading_avatar)
             } catch (e: Exception) {
                 _toastMsg.value =
                     context.getString(R.string.error_updating_avatar, e.localizedMessage)
