@@ -48,7 +48,7 @@ publishing {
         create<MavenPublication>("release") {
             groupId = "com.github.DivergerThinking"
             artifactId = "mig-android-module"
-            version = "2.0.8"
+            version = "2.0.9"
 
             afterEvaluate {
                 from(components["release"])
